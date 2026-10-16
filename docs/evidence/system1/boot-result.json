@@ -1,0 +1,22 @@
+{
+  "iso": "HuskOS-system-1.iso",
+  "accelerator": "tcg",
+  "boot": "PASSED",
+  "shutdown": "PASSED",
+  "problems": [],
+  "desktop_status": {
+    "backend": "wayland",
+    "bridge_connected": true,
+    "desktop": "Husk Desktop",
+    "desktop_surfaces": 1,
+    "keyring_ready": true,
+    "live": true,
+    "os": "Husk OS",
+    "panel_mapped": true,
+    "panel_visible": true,
+    "renderer": "pixman",
+    "version": "system-1",
+    "window_count": 0
+  },
+  "terminal_shortcut_sent": true
+}

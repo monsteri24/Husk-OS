@@ -1,5 +1,13 @@
 # Husk OS – todelliset testitulokset, 14.10.2026 🦅
 
+**Uudempi System 1 -tulos 16.10.2026:** ISO rakennettu, ladattu GitHub Releaseen
+ja latauksen SHA-256 varmennettu; oikea QEMU/OVMF/Wayland-työpöytäkäynnistys
+ja sammutus läpäisty. Viimeisin GTK/Xvfb-ajo: **124 läpäistyä, 0 epäonnistunutta,
+0 ohitettua**. Headless: 116 läpäistyä / 8 GUI-ohitusta. Syntaksi: 101 tarkistusta.
+[Raportti, epäonnistuneet aiemmat yritykset ja todistusaineisto](../HuskOS-system-1-REPORT.md).
+Alla olevat 14.10.2026 tulokset ja viisi kierrosta ovat säilytettyä historiaa;
+niitä ei pidä tulkita nykyisen ISO:n tai tämän päivän viideksi testikierrokseksi.
+
 Versio: 0.1.1-dev. Vertailu: edellinen lähdekooditoimitus 0742805, jossa
 65 testiä löytyi, 61 läpäisi ja 4 GUI-testiä ohitettiin; 77 syntaksitarkistusta.
 Aikaisemmat testit ja lokit säilyvät. Nyt testitapauksia on 90.

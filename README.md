@@ -2,9 +2,20 @@
 
 **Husk OS** on omaa käyttökokemusta ja järjestelmäsovelluksia kehittävä
 gaming-käyttöjärjestelmä, jonka tekninen perusta on **Arch Linux**.
-Tämä toimitus on **Experimental 0.1.1-dev** -lähdekoodiversio.
+Tämä julkaisu on **Husk OS System 1 — Experimental Live**.
 Sisäiset `ownos`-paketti-, asetus- ja D-Bus-tunnisteet säilyvät yhteensopivuuden
-vuoksi. Projektia jatketaan alkuperäisestä `mvp`-haarasta.
+vuoksi. Pysyvä lähdekoodi ja jatkokehitys ovat tämän repositorion `main`-haarassa.
+
+**[Lataa HuskOS-system-1.iso](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1.iso)**
+— 2 103 050 240 tavua.
+[SHA-256](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1-SHA256.txt)
+ja [todellinen rakennus-/käynnistysraportti](HuskOS-system-1-REPORT.md).
+
+ISO on rakennettu Archisolla, tallennettu GitHub Releaseen ja ladattu takaisin
+tarkistussummaa vasten. **QEMU/OVMF-käynnistys oikeaan Labwc/Wayland-istuntoon,
+Husk Desktopiin, Start-valikkoon ja taskbariin sekä terminaalin avaaminen ja
+hallittu sammutus on testattu.** Tämä on kevyt Live-versio ilman Calamaresia;
+asennusta, pelejä tai fyysistä laitteistoa ei ole testattu.
 
 Oma GTK3-käyttöliittymä tekee työpöydän, keskitetyn alapalkin, Start-valikon,
 ilmoituskeskuksen, Gaming Control Centerin ja yksinkertaisen tiedostonhallinnan.
@@ -23,11 +34,10 @@ Tämä ei ole KDE-teema. KDE ja GNOME ovat erillisiä asennusvaihtoehtoja.
 4. Käyttö ja pelien käynnistys: [INSTALL.md](docs/INSTALL.md) ja
    [GAMING.md](docs/GAMING.md).
 
-**Toimituksessa on lähdekoodi ja rakennusskriptit. Valmista ISOa ei ole
-rakennettu eikä ISO-käynnistystä tai graafista asennusta hyväksymistestattu.**
-GTK-koodi on toteutettu lähdekooditasolla; kahdeksan oikeiden ikkunoiden testiä
-odottaa sallittua näyttöympäristöä. Testien läpäisy ei todista pelien FPS:ää
-tai laitteistoajureita.
+Viimeisimmän GTK/Xvfb-regression kaikki 124 testiä läpäisivät. Tämä on erillinen
+tulos oikean Wayland-live-käynnistyksen hyväksynnästä. Tunnetut monitorinvaihdon,
+kuvakkeiden, taustan ja sr0-palvelun puutteet ovat julkaisuraportissa.
+Testien läpäisy ei todista pelien FPS:ää tai fyysisiä laitteistoajureita.
 
 ## Projektin osat
 
@@ -57,7 +67,8 @@ relengin pohjalta: [iso/PROFILE.md](iso/PROFILE.md).
 Husk Desktop on modulaarinen: `panel.py` vastaa taskbarista ja `launcher.py`
 Start-valikosta, `desktop_layout.py` sijoittelusta ja `themes.py` käyttäjän CSS:stä.
 Paneelin sijaintia, korostusväriä ja CSS:ää voi muuttaa lähdekoodin mukaan ilman
-ISO:n uudelleenrakentamista. Graafinen toiminta odottaa VM-hyväksyntää.
+ISO:n uudelleenrakentamista. Perustyöpöytä on käynnistetty VM:ssä; kaikkien
+asetusten vuorovaikutusta ei ole vielä hyväksymistestattu.
 Windows-henkinen MVP on välivaihe kohti omaa Husk Desktopia; Linux-ydin,
 labwc, GTK ja Calamares ovat avoimesti dokumentoituja upstream-komponentteja.
 

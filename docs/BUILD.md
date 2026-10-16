@@ -2,6 +2,10 @@
 
 ## System 1: GitHub-rakennus ja pysyvä julkaisu
 
+16.10.2026: oikea System 1 ISO on rakennettu, julkaistu ja käynnistetty
+QEMU/OVMF:ssä Husk Desktopiin. Tulokset ja tunnetut puutteet:
+[System 1 -raportti](../HuskOS-system-1-REPORT.md).
+
 GitHubin `Husk OS System 1 ISO` -työnkulku rakentaa kevyen Live-version
 virallisessa Arch Linux -kontissa. Se käyttää oikeaa Archisoa ja säilyttää
 Husk Desktopin; Calamares ja suuret pelipaketit jätetään tästä ISOsta pois.
@@ -44,9 +48,9 @@ chmod +x scripts/*.sh scripts/*.py bin/own-session iso/live-setup iso/live-keyri
 ```
 
 Jos pacman ilmoittaa paketin nimen muuttuneen, tarkista sen virallinen
-Arch-pakettisivu. Reseptien native-Arch-käännöstä ei ole tässä toimituksessa
-suoritettu; Calamaresin CMake/Qt/Frameworks-yhteensopivuus on ensimmäisen
-VM-rakennuksen tarkistettava. Calamares on lukittu versioon 3.3.14 ja
+Arch-pakettisivu. Husk-pakettien native-Arch-käännös ja allekirjoitustarkistus
+on suoritettu System 1 -rakennuksessa. Calamaresin CMake/Qt/Frameworks-
+yhteensopivuus on edelleen testaamatta. Calamares on lukittu versioon 3.3.14 ja
 ladatun upstream-release-arkiston SHA256:een. AUR-reseptejä ei suoriteta.
 Valinnaisen Calamaresin upstream-asetusten asennus on tarkoituksella pois: `ownos-live`
 toimittaa jokaisen käytetyn moduulin asetustiedoston, jolloin paketit eivät
@@ -170,7 +174,8 @@ Toimituksen Ubuntu-kontin todelliset tulokset ovat `TEST-RESULTS.md`:ssä.
 Täällä käytettiin yksityisesti purettuja GTK-/Wayland-riippuvuuksia, ei asennettu
 Husk OS:ää. Archissa käytetään VM:n normaalisti asennettuja kirjastoja.
 
-ZIP sisältää ylläpidetyn profiiligeneraattorin ja overlayn, ei valmista ISOa.
-Pakettien täysi riippuvuusratkaisu, allekirjoitusketjun pacstrap-käyttö ja
-ensimmäinen mkarchiso-ajo ovat vielä testaamatta. Pacmanin GPGDir ei siirry
+Lähdepuu sisältää ylläpidetyn profiiligeneraattorin ja overlayn; valmis ISO
+ja SHA-256 ovat GitHub Releasessa. Kevyen System 1 -profiilin riippuvuusratkaisu,
+allekirjoitusketjun pacstrap-käyttö ja mkarchiso-ajo on nyt testattu.
+Täyttä gaming-/Calamares-ISOa ei rakennettu. Pacmanin GPGDir ei siirry
 `--root`-polun mukana; rakennus-VM:n avaimen paikallinen luottamus on tarkoituksellinen.

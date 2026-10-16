@@ -1,0 +1,16 @@
+{
+  "iso": "HuskOS-system-1.iso",
+  "accelerator": "tcg",
+  "boot": "FAILED",
+  "shutdown": "NOT TESTED",
+  "problems": [
+    "Unexpected os: None",
+    "Unexpected desktop: None",
+    "Unexpected backend: None",
+    "Live check failed: live",
+    "Live check failed: panel_visible",
+    "Live check failed: panel_mapped",
+    "Live check failed: bridge_connected",
+    "No mapped desktop background surface."
+  ]
+}

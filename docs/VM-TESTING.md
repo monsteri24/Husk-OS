@@ -1,9 +1,14 @@
 # UEFI-virtuaalikoneen hyväksymistestit
 
-Tämä tarkistuslista on **ajamatta** toimituksen ympäristössä: QEMU, qemu-img
-ja OVMF puuttuvat. QEMU-komennon rajaukset on yksikkötestattu, mutta sitä
-ei ole käynnistetty. Käytä erillistä testikonetta/VM-isäntää, johon nämä
-työkalut on asennettu.
+System 1:n Live-käynnistys on **oikeasti testattu 16.10.2026** GitHubin
+testikoneella QEMU TCG/OVMF:llä: UEFI-valikko, Linux, automaattinen live-istunto,
+Labwc/Husk Desktop, Start/taskbar, Foot ja ACPI-sammutus läpäisivät rajatun
+hyväksynnän. Aito näyttö- ja lokitodiste on
+[System 1 -raportissa](../HuskOS-system-1-REPORT.md).
+
+Alla on laajempi tarkistuslista jatkotestausta varten. Asennus, uudelleenkäynnistys,
+ääni, hiiren klikkaukset, fyysiset laitteet ja VirtualBox ovat edelleen testaamatta.
+Käytä erillistä VM-isäntää, johon QEMU/qemu-img/OVMF on asennettu.
 
 ## Uusi virtuaalilevy ja live-ISO
 
