@@ -1,4 +1,4 @@
 Husk OS System 1
-Build source: ab628045ee8f821da34976f4e81e1e695d5e9636
-Requested: 2026-10-16, attempt 2 (container GUI sandbox test blocked)
-Publish the completed ISO to GitHub Release system-1 before optional boot testing.
+Requested: 2026-10-16, attempt 3
+Source verified before build. Initialize the disposable pacman local signing key.
+Publish the completed ISO before optional boot testing.
