@@ -1,6 +1,7 @@
 """Read-only checks of mkarchiso's installed live filesystem before delivery."""
 from collections import deque
 from pathlib import Path, PurePosixPath
+from ownos.installer import OPTIONAL_APPLICATION_PACKAGES
 
 
 def guest_path(root, relative):
@@ -82,11 +83,42 @@ def validate_rootfs(root, boot=None):
         required(relative, executable=True)
     for relative in ('usr/share/wayland-sessions/ownos-wayland.desktop',
                      'etc/ownos/labwc/rc.xml', 'etc/ownos/labwc/environment',
-                     'usr/lib/ownos/ownos/ui/shell.py', 'usr/lib/libgtk-3.so.0',
+                     'usr/lib/ownos/ownos/ui/shell.py', 'usr/lib/ownos/ownos/ui/common.py',
+                     'usr/lib/ownos/ownos/i18n.py', 'usr/lib/ownos/ownos/wallpaper.py',
+                     'usr/lib/ownos/ownos/ui/wallpaper.py',
+                     'usr/share/ownos/wallpapers/husk-desert.jpg', 'usr/lib/libgtk-3.so.0',
                      'usr/lib/libgtk-layer-shell.so.0',
                      'usr/lib/girepository-1.0/Gtk-3.0.typelib',
                      'usr/lib/girepository-1.0/GtkLayerShell-0.1.typelib'):
         required(relative)
+    for name in ('husk-start', 'husk-settings', 'husk-files', 'husk-games', 'husk-app'):
+        required('usr/share/icons/hicolor/scalable/apps/' + name + '.svg')
+
+    # Inspect the installed package database, including transitive dependencies,
+    # without executing any guest program. Directory names are not authoritative
+    # package identities; pacman's desc records carry the %NAME% field.
+    installed = set()
+    try:
+        database = guest_path(root, 'var/lib/pacman/local')
+        for entry in database.iterdir():
+            relative = str(entry.relative_to(root))
+            if not guest_path(root, relative).is_dir():
+                continue
+            descriptor = guest_path(root, relative + '/desc')
+            lines = descriptor.read_text(encoding='utf-8').splitlines()
+            if lines.count('%NAME%') != 1:
+                raise ValueError('Missing or duplicate %NAME% field in ' + relative + '/desc')
+            index = lines.index('%NAME%') + 1
+            name = lines[index].strip() if index < len(lines) else ''
+            if not name or name.startswith('%') or any(character.isspace() for character in name):
+                raise ValueError('Invalid %NAME% field in ' + relative + '/desc')
+            installed.add(name)
+        if not installed:
+            raise ValueError('No installed package records found')
+    except (OSError, ValueError, UnicodeError) as exc:
+        problems.append('Missing or invalid installed package inventory: ' + str(exc))
+    for package in sorted(installed.intersection(OPTIONAL_APPLICATION_PACKAGES)):
+        problems.append('Unexpected optional application in installed rootfs: ' + package)
 
     try:
         libraries = guest_path(root, 'usr/lib')

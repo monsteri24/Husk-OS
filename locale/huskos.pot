@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Husk OS system-2-dev\n"
 "Report-Msgid-Bugs-To: https://github.com/monsteri24/Husk-OS/issues\n"
-"POT-Creation-Date: 2026-10-16 07:32-0400\n"
+"POT-Creation-Date: 2026-10-16 07:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -90,24 +90,30 @@ msgstr ""
 msgid "Unknown application"
 msgstr ""
 
-#: src/ownos/cli.py:34
+#: src/ownos/cli.py:38
 msgid ""
 "Existing flathub remote points to an unexpected URL; review it before "
 "installation"
 msgstr ""
 
-#: src/ownos/cli.py:76
+#: src/ownos/cli.py:41
+msgid ""
+"Existing flathub remote has GPG verification disabled; review it before "
+"installation"
+msgstr ""
+
+#: src/ownos/cli.py:83
 #, python-brace-format
 msgid "Husk Desktop status unavailable: {error}"
 msgstr ""
 
-#: src/ownos/cli.py:81
+#: src/ownos/cli.py:88
 msgid ""
 "Live desktop status accepted. Input, audio, networking, games and "
 "installation require separate tests."
 msgstr ""
 
-#: src/ownos/cli.py:100
+#: src/ownos/cli.py:107
 msgid "Use one of the husk-* entrypoints"
 msgstr ""
 

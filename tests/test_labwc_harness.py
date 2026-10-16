@@ -17,4 +17,3 @@ class LabwcHarnessTests(unittest.TestCase):
   0x400002 "tiny helper": ()  1x1+0+0  +0+0
 '''
         self.assertEqual(harness.output_candidates(tree), ['0x400001'])
-

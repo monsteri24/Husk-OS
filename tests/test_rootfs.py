@@ -5,7 +5,18 @@ import sys
 import unittest
 from pathlib import Path
 
+from ownos.installer import OPTIONAL_APPLICATION_PACKAGES
 from ownos.rootfs import guest_path, validate_rootfs
+
+SYSTEM2_PAYLOADS = (
+    'usr/lib/ownos/ownos/i18n.py',
+    'usr/lib/ownos/ownos/wallpaper.py',
+    'usr/lib/ownos/ownos/ui/common.py',
+    'usr/lib/ownos/ownos/ui/wallpaper.py',
+    'usr/share/ownos/wallpapers/husk-desert.jpg',
+    *(f'usr/share/icons/hicolor/scalable/apps/{name}.svg'
+      for name in ('husk-start', 'husk-settings', 'husk-files', 'husk-games', 'husk-app')),
+)
 
 
 class RootfsTests(unittest.TestCase):
@@ -35,6 +46,9 @@ class RootfsTests(unittest.TestCase):
         self.put('usr/lib/girepository-1.0/GtkLayerShell-0.1.typelib', 'layer shell typelib')
         self.put('usr/lib/python3.14/site-packages/gi/__init__.py', '# PyGObject\n')
         self.put('usr/lib/ownos/ownos/ui/shell.py', '# Husk Desktop\n')
+        for relative in SYSTEM2_PAYLOADS:
+            self.put(relative, 'nonempty staged payload fixture\n')
+        self.put('var/lib/pacman/local/base-3-1/desc', '%NAME%\nbase\n\n%VERSION%\n3-1\n')
 
     def put(self, name, content, mode=0o644):
         path = self.root / name
@@ -47,6 +61,55 @@ class RootfsTests(unittest.TestCase):
         self.assertEqual(validate_rootfs(self.root), [])
         self.assertEqual(guest_path(self.root, 'usr/bin/husk-session'), self.root / 'usr/bin/own-session')
         self.assertEqual(guest_path(self.root, '/usr/bin/husk-desktop'), self.root / 'usr/lib/ownos/own.py')
+
+    def test_every_optional_application_is_rejected_from_installed_inventory(self):
+        descriptor = 'var/lib/pacman/local/dependency-record-1-1/desc'
+        for package in OPTIONAL_APPLICATION_PACKAGES:
+            with self.subTest(package=package):
+                self.put(descriptor, '%NAME%\n' + package + '\n\n%VERSION%\n1-1\n')
+                errors = validate_rootfs(self.root)
+                self.assertTrue(any('optional' in error.lower() and package in error for error in errors), errors)
+
+    def test_inventory_uses_name_fields_and_keeps_package_infrastructure_and_libraries(self):
+        for name in ('flatpak', 'lib32-mesa', 'vulkan-radeon', 'python-cairo', 'polkit-gnome'):
+            self.put(f'var/lib/pacman/local/{name}-1-1/desc', '%NAME%\n' + name + '\n\n%VERSION%\n1-1\n')
+        self.put('var/lib/pacman/local/steam-misleading-directory-1-1/desc', '%NAME%\nmesa\n\n')
+        self.assertEqual(validate_rootfs(self.root), [])
+
+    def test_missing_empty_or_malformed_package_inventory_fails(self):
+        descriptor = self.root / 'var/lib/pacman/local/base-3-1/desc'
+        for content in ('', '%VERSION%\n3-1\n', '%NAME%\n\n', '%NAME%\n%VERSION%\n3-1\n'):
+            with self.subTest(content=content):
+                descriptor.write_text(content)
+                self.assertTrue(any('inventory' in error.lower() for error in validate_rootfs(self.root)))
+        descriptor.unlink()
+        descriptor.parent.rmdir()
+        self.assertTrue(any('inventory' in error.lower() for error in validate_rootfs(self.root)))
+        descriptor.parent.parent.rmdir()
+        self.assertTrue(any('inventory' in error.lower() for error in validate_rootfs(self.root)))
+
+    def test_package_inventory_links_resolve_inside_guest_without_following_host_files(self):
+        descriptor = self.root / 'var/lib/pacman/local/base-3-1/desc'
+        descriptor.unlink()
+        self.put('usr/share/test-package-desc', '%NAME%\nbase\n\n')
+        descriptor.symlink_to('/usr/share/test-package-desc')
+        self.assertEqual(validate_rootfs(self.root), [])
+        external = Path(self.tmp.name) / 'host-desc'
+        external.write_text('%NAME%\nbase\n\n')
+        descriptor.unlink()
+        descriptor.symlink_to(external)
+        self.assertTrue(any('inventory' in error.lower() for error in validate_rootfs(self.root)))
+        self.assertEqual(external.read_text(), '%NAME%\nbase\n\n')
+
+    def test_system2_modules_wallpaper_and_icons_need_nonempty_installed_payloads(self):
+        for relative in SYSTEM2_PAYLOADS:
+            with self.subTest(payload=relative):
+                path = self.root / relative
+                path.unlink()
+                self.assertTrue(any(relative in error for error in validate_rootfs(self.root)))
+                self.put(relative, '')
+                self.assertTrue(any(relative in error for error in validate_rootfs(self.root)))
+                self.put(relative, 'restored staged payload fixture\n')
 
     def test_kernel_can_live_in_its_module_directory(self):
         (self.root / 'boot/vmlinuz-linux').unlink()
