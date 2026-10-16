@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import signal
@@ -23,6 +24,18 @@ import traceback
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def output_candidates(tree):
+    """Find nested outputs even when a bare X server has no WM name atoms."""
+    candidates = []
+    for line in tree.splitlines():
+        match = re.match(r'^\s*(0x[0-9a-fA-F]+)\s+.*?\s(\d+)x(\d+)[+-]\d+[+-]\d+', line)
+        if match:
+            identifier, width, height = match.groups()
+            if int(width) >= 320 and int(height) >= 200:
+                candidates.append((int(width) * int(height), identifier))
+    return [identifier for _, identifier in sorted(candidates, reverse=True)]
 
 
 class DesktopTest:
@@ -240,11 +253,11 @@ class DesktopTest:
                     return path.name
         self.environment['WAYLAND_DISPLAY'] = self.wait('real Labwc Wayland socket', wayland_socket)
         def output_window():
-            # Labwc versions override wlroots' default title differently and
-            # the nested output need not set WM_CLASS. At this point it is the
-            # only visible named client on our isolated parent X server.
-            output = self.command(['xdotool', 'search', '--onlyvisible', '--name', '.'], check=False)
-            for identifier in output.splitlines():
+            # The dedicated parent X server may lack both WM_CLASS and title
+            # atoms. Read its actual client geometry rather than those hints.
+            tree = self.command(['xwininfo', '-root', '-tree'])
+            (self.artifacts / 'parent-window-tree.txt').write_text(tree)
+            for identifier in output_candidates(tree):
                 geometry = self.command(['xdotool', 'getwindowgeometry', '--shell', identifier], check=False)
                 values = dict(line.split('=', 1) for line in geometry.splitlines() if '=' in line)
                 if int(values.get('WIDTH', 0)) >= 320 and int(values.get('HEIGHT', 0)) >= 200:
@@ -342,7 +355,7 @@ def main():
     args.artifacts = args.artifacts.resolve()
     args.artifacts.mkdir(parents=True, exist_ok=True)
     if not args.inside_session:
-        for executable in ('dbus-run-session', 'xvfb-run', 'labwc', 'xdotool', 'grim', 'foot', 'gdbus', 'own-toplevel'):
+        for executable in ('dbus-run-session', 'xvfb-run', 'labwc', 'xdotool', 'xwininfo', 'grim', 'foot', 'gdbus', 'own-toplevel'):
             if not shutil.which(executable):
                 # own-toplevel can be in the source build directory.
                 if executable == 'own-toplevel' and (ROOT / '.build/native/own-toplevel').exists():
