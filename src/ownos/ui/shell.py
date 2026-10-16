@@ -136,8 +136,16 @@ class HuskDesktop:
         edge = layout(self.settings)['popup_edge']
         anchors = (edge, 'RIGHT') if right else (edge,)
         window = self.make_window(title, width, height, 'OVERLAY', anchors)
+        # Layer-shell may configure an unspecified dimension to the widget's
+        # minimum rather than Gtk.Window's default size. Reserve a usable
+        # launcher/notification viewport while fitting the current output.
+        geometry = self.primary.get_geometry()
+        margin = layout(self.settings)['popup_margin']
+        window.set_size_request(min(width, max(1, geometry.width - 32)),
+                                min(height, max(1, geometry.height - margin - 16)))
         if self.layer:
-            self.layer.set_margin(window, getattr(self.layer.Edge, edge), layout(self.settings)['popup_margin'])
+            self.layer.set_exclusive_zone(window, -1)
+            self.layer.set_margin(window, getattr(self.layer.Edge, edge), margin)
             if right: self.layer.set_margin(window, self.layer.Edge.RIGHT, 16)
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
         box.get_style_context().add_class('popup'); window.add(box)

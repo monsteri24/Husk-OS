@@ -30,6 +30,9 @@ class UISmokeTests(unittest.TestCase):
         self.addCleanup(shell.shutdown)
         shell.toggle_start(); self.drain()
         self.assertTrue(shell.start_window.get_visible())
+        width, height = shell.start_window.get_size_request()
+        self.assertGreaterEqual(width, 400)
+        self.assertGreaterEqual(height, 400)
         shell.search.set_text('Heroic'); self.drain()
         self.assertTrue(any('Heroic' in row.app_name for row in shell.app_list.get_children()))
 

@@ -278,10 +278,14 @@ class DesktopTest:
         button = next(button for button in self.state()['panel_buttons']
                       if (button.get('tooltip') or '').startswith('Start'))
         self.click(button['rect'])
-        self.wait('Start popup mapped after taskbar click', lambda: self.state().get('start_mapped'))
+        self.wait('Start popup mapped and allocated after taskbar click', lambda:
+                  self.state().get('start_mapped') and self.state().get('start', [0, 0, 0, 0])[2] >= 400)
         self.screenshot('02-start-popup')
         self.click(self.state()['search'])
         self.command(['xdotool', 'type', '--clearmodifiers', '--delay', '30', 'Husk Integration Terminal'])
+        self.wait('search text delivered through real keyboard input', lambda:
+                  self.state().get('search_text') == 'Husk Integration Terminal' and
+                  len(self.state().get('rows', [])) == 1)
         row = self.wait('real launcher search result', lambda: next((row for row in
             self.state().get('rows', []) if row['name'] == 'Husk Integration Terminal'), None))
         self.click(row['rect'])

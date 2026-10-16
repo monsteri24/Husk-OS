@@ -91,6 +91,7 @@ if kind and directory:
                                                 rect=rectangle(w, shell.panel, panel))
                                            for w in descendants(shell.panel) if isinstance(w, Gtk.Button)]
                 latest['search'] = rectangle(shell.search, shell.start_window, start)
+                latest['search_text'] = shell.search.get_text()
                 latest['rows'] = [dict(name=row.app_name,
                                        rect=rectangle(row, shell.start_window, start))
                                   for row in shell.app_list.get_children()]
