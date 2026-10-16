@@ -10,6 +10,8 @@ from ownos.identity import OS_NAME, DESKTOP_NAME, VERSION
 from ownos.desktop_layout import layout
 from ownos.ui.panel import Panel
 from ownos.ui.launcher import Launcher
+from ownos.ui.wallpaper import Wallpaper
+from ownos.i18n import _
 from ownos.notifications import NotificationStore
 from ownos.toplevel import ToplevelStore
 from ownos.bridge import PipeLineReader
@@ -85,13 +87,8 @@ class HuskDesktop:
                                       600 if self.preview else geo.height, 'BACKGROUND', ('TOP', 'BOTTOM', 'LEFT', 'RIGHT'), monitor)
             window.get_style_context().add_class('desktop')
             overlay = Gtk.Overlay(); window.add(overlay)
-            background = Gtk.Box(); overlay.add(background)
-            wallpaper = self.settings['wallpaper']
-            if wallpaper:
-                try:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(wallpaper, geo.width, geo.height, False)
-                    background.pack_start(Gtk.Image.new_from_pixbuf(pixbuf), True, True, 0)
-                except GLib.Error: pass
+            background = Wallpaper(self.settings['wallpaper'])
+            overlay.add(background)
             if monitor == self.primary:
                 icons = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
                 icons.set_margin_top(layout(self.settings)["desktop_margin_top"]); icons.set_margin_start(22)
@@ -104,7 +101,7 @@ class HuskDesktop:
                     button = Gtk.Button(); button.get_style_context().add_class('desktop-icon')
                     box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
                     box.pack_start(icon('user-home' if entry == Path.home() else ('folder' if entry.is_dir() else 'text-x-generic'), 36), False, False, 0)
-                    label = Gtk.Label(label='Koti' if entry == Path.home() else entry.stem[:24]); label.set_max_width_chars(24)
+                    label = Gtk.Label(label=_('Home') if entry == Path.home() else entry.stem[:24]); label.set_max_width_chars(24)
                     box.pack_start(label, False, False, 0); button.add(box)
                     button.connect('clicked', lambda _, p=entry: self.open_desktop_entry(p))
                     icons.pack_start(button, False, False, 0)
@@ -118,6 +115,9 @@ class HuskDesktop:
     def monitors_changed(self, *_):
         if self.stopped: return
         self.primary = self.display.get_primary_monitor() or self.display.get_monitor(0)
+        # VT/output changes can briefly remove every monitor. Layer-shell
+        # rejects a None monitor; keep the shell alive until an output returns.
+        if self.primary is None: return
         self.build_desktop()
         if self.layer:
             for window in (self.panel, self.start_window, self.notification_window):
@@ -151,11 +151,11 @@ class HuskDesktop:
 
     def build_notifications(self):
         self.notification_window, box = self.popup('Husk Notifications', 370, 480, True)
-        label = Gtk.Label(label='Ilmoituskeskus', xalign=0); label.get_style_context().add_class('heading')
+        label = Gtk.Label(label=_('Notification Center'), xalign=0); label.get_style_context().add_class('heading')
         box.pack_start(label, False, False, 0)
         self.notification_list = Gtk.ListBox(); self.notification_list.set_selection_mode(Gtk.SelectionMode.NONE)
         scroll = Gtk.ScrolledWindow(); scroll.add(self.notification_list); box.pack_start(scroll, True, True, 0)
-        clear = Gtk.Button(label='Tyhjennä ilmoitukset'); clear.connect('clicked', self.clear_notifications)
+        clear = Gtk.Button(label=_('Clear Notifications')); clear.connect('clicked', self.clear_notifications)
         box.pack_end(clear, False, False, 0)
 
     def refresh_notifications(self):
@@ -189,10 +189,10 @@ class HuskDesktop:
         if self.status_busy: return True
         self.status_busy = True
         def read():
-            label = 'Verkko: ?'
+            label = _('Network: Unknown')
             try:
                 result = subprocess.run(['/usr/bin/nmcli', '-t', '-f', 'STATE', 'general'], capture_output=True, text=True, timeout=3)
-                if result.returncode == 0: label = 'Verkko ✓' if result.stdout.strip() in ('connected', 'connected (global)') else 'Ei yhteyttä'
+                if result.returncode == 0: label = _('Connected ✓') if result.stdout.strip() in ('connected', 'connected (global)') else _('Disconnected')
             except (OSError, subprocess.TimeoutExpired): pass
             def update():
                 self.status_busy = False
@@ -203,14 +203,14 @@ class HuskDesktop:
         return True
 
     def audio_dialog(self):
-        dialog = Gtk.Dialog(title='Äänenvoimakkuus', transient_for=self.panel, modal=True)
-        dialog.add_button('Sulje', Gtk.ResponseType.CLOSE)
+        dialog = Gtk.Dialog(title=_('Volume'), transient_for=self.panel, modal=True)
+        dialog.add_button(_('Close'), Gtk.ResponseType.CLOSE)
         scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1); scale.set_size_request(300, 70)
         try:
             result = subprocess.run(['/usr/bin/wpctl', 'get-volume', '@DEFAULT_AUDIO_SINK@'], capture_output=True, text=True, timeout=2)
             scale.set_value(float(result.stdout.split()[1]) * 100)
         except (OSError, ValueError, IndexError, subprocess.TimeoutExpired):
-            error(self.panel, 'PipeWiren oletusäänilaitetta ei löytynyt.'); dialog.destroy(); return
+            error(self.panel, _('No default PipeWire audio device was found.')); dialog.destroy(); return
         scale.connect('value-changed', lambda widget: spawn(['/usr/bin/wpctl', 'set-volume', '--limit', '1.0', '@DEFAULT_AUDIO_SINK@', f'{widget.get_value():.0f}%'], self.panel))
         dialog.get_content_area().add(scale); dialog.show_all(); dialog.run(); dialog.destroy()
 
@@ -235,7 +235,7 @@ class HuskDesktop:
     def show_style_warning(self):
         warning = self.provider.husk_style_warning
         if warning and warning != getattr(self, 'last_style_warning', ''):
-            self.notifications.notify(DESKTOP_NAME, 'Oma CSS ohitettiin', warning)
+            self.notifications.notify(DESKTOP_NAME, _('Custom CSS was skipped'), warning)
             self.refresh_notifications()
         self.last_style_warning = warning
 
@@ -268,12 +268,12 @@ class HuskDesktop:
     def start_bridge(self):
         executable = shutil.which('own-toplevel')
         if not executable:
-            self.notifications.notify(DESKTOP_NAME, 'Ikkunalista ei ole käytössä', 'own-toplevel-apuohjelma puuttuu.')
+            self.notifications.notify(DESKTOP_NAME, _('Window list unavailable'), _('The own-toplevel helper is missing.'))
             self.refresh_notifications(); return
         try:
             self.bridge = subprocess.Popen([executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
         except OSError as exc:
-            self.notifications.notify(DESKTOP_NAME, 'Ikkunalista ei käynnistynyt', str(exc))
+            self.notifications.notify(DESKTOP_NAME, _('Window list could not start'), str(exc))
             self.refresh_notifications(); return
         self.bridge_reader = PipeLineReader(self.bridge.stdout.fileno())
         self.bridge_watch = GLib.io_add_watch(self.bridge.stdout.fileno(), GLib.IO_IN | GLib.IO_HUP | GLib.IO_ERR, self.bridge_event)
@@ -293,7 +293,7 @@ class HuskDesktop:
             self.bridge_connected = False
             self.bridge_watch = None; self.toplevels.clear(); self.refresh_tasks()
             if not self.stopped:
-                self.notifications.notify(DESKTOP_NAME, 'Ikkunalista sulkeutui', 'Kompositorin foreign-toplevel-tuki tai apuohjelma ei ole käytettävissä.')
+                self.notifications.notify(DESKTOP_NAME, _('Window list disconnected'), _('The compositor foreign-toplevel protocol or helper is unavailable.'))
                 self.refresh_notifications()
             return False
         return True

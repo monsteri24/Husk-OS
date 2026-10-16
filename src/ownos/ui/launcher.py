@@ -1,5 +1,6 @@
 """Husk application launcher, replaceable independently of taskbar/compositor."""
 from ownos.catalog import APPS
+from ownos.i18n import _
 from pathlib import Path
 from ownos.ui.common import Gtk, Gio, GLib, icon, launch_app, spawn, error
 
@@ -7,10 +8,10 @@ from ownos.ui.common import Gtk, Gio, GLib, icon, launch_app, spawn, error
 class Launcher:
     def __init__(self, shell):
         self.shell = shell
-        self.window, box = shell.popup('Husk Start', 510, 540)
-        title = Gtk.Label(label='Start · Husk OS', xalign=0); title.get_style_context().add_class('title')
+        self.window, box = shell.popup(_('Husk Start'), 510, 540)
+        title = Gtk.Label(label=_('Start · Husk OS'), xalign=0); title.get_style_context().add_class('title')
         box.pack_start(title, False, False, 0)
-        self.search = Gtk.SearchEntry(); self.search.set_placeholder_text('Hae sovelluksia…')
+        self.search = Gtk.SearchEntry(); self.search.set_placeholder_text(_('Search applications…'))
         self.search.connect('search-changed', lambda _: self.refresh())
         self.search.connect('changed', lambda _: self.refresh())
         box.pack_start(self.search, False, False, 0)
@@ -20,12 +21,12 @@ class Launcher:
         self.system_apps = [app for app in Gio.AppInfo.get_all() if app.should_show()]
         self.refresh()
         footer = Gtk.Box(spacing=8)
-        for label, argv in [('Asetukset',['/usr/bin/husk-control']), ('Lukitse',['/usr/bin/husk-lock']),
-                            ('Kirjaudu ulos',['/usr/bin/labwc','--exit'])]:
+        for label, argv in [(_('Settings'),['/usr/bin/husk-control']), (_('Lock'),['/usr/bin/husk-lock']),
+                            (_('Log out'),['/usr/bin/labwc','--exit'])]:
             button = Gtk.Button(label=label)
-            if label == 'Lukitse' and Path('/run/archiso').is_dir():
+            if argv == ['/usr/bin/husk-lock'] and Path('/run/archiso').is_dir():
                 button.set_sensitive(False)
-                button.set_tooltip_text('Live-istunnolla ei ole salasanaa. Lukitse vasta asennettu käyttäjäistunto.')
+                button.set_tooltip_text(_('The live session has no password. Locking is available after installation.'))
             button.connect('clicked', lambda _, cmd=argv: (self.window.hide(), spawn(cmd, shell.panel)))
             footer.pack_start(button, True, True, 0)
         box.pack_end(footer, False, False, 0)

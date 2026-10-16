@@ -1,5 +1,6 @@
 """Curated launcher/install choices. No unreviewed AUR recipes."""
 from dataclasses import dataclass
+from ownos.i18n import _
 
 
 @dataclass(frozen=True)
@@ -28,7 +29,7 @@ def app_by_id(appid):
     for app in APPS:
         if app.id == appid:
             return app
-    raise ValueError('Unknown application')
+    raise ValueError(_('Unknown application'))
 
 
 def install_commands(appid):

@@ -1,7 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=Install Husk OS (Experimental)
-Name[fi]=Asenna Husk OS (Experimental)
 Exec=pkexec calamares
 TryExec=/usr/bin/calamares
 Icon=system-software-install

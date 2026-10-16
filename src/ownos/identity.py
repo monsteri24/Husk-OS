@@ -2,6 +2,6 @@
 OS_NAME = 'Husk OS'
 DESKTOP_NAME = 'Husk Desktop'
 TECHNICAL_BASE = 'Arch Linux'
-VERSION = 'system-1'
+VERSION = 'system-2-dev'
 OS_ID = 'huskos'
 LEGACY_OS_IDS = ('ownos',)

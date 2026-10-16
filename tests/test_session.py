@@ -181,9 +181,11 @@ session.start_session(state_dir=sys.argv[1])
         from ownos.session import lock_session
         with tempfile.TemporaryDirectory() as tmp:
             live = Path(tmp) / 'archiso'; live.mkdir()
-            with patch('ownos.session.subprocess.call') as run, contextlib.redirect_stderr(io.StringIO()):
+            with patch('ownos.session.subprocess.call') as run, contextlib.redirect_stderr(io.StringIO()) as errors:
                 self.assertEqual(lock_session(live), 1)
                 run.assert_not_called()
+                self.assertEqual(errors.getvalue(),
+                                 'The live session cannot be locked because the live user has no password.\n')
             with patch('ownos.session.subprocess.call', return_value=0) as run:
                 self.assertEqual(lock_session(Path(tmp) / 'installed'), 0)
                 run.assert_called_once_with(['/usr/bin/swaylock', '-f', '-c', '0b1321'])

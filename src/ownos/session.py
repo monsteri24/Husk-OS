@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from ownos.config import ConfigStore
+from ownos.i18n import _
 from ownos.input_config import _replace, write_input_config
 from ownos.live import session_renderer
 
@@ -44,6 +45,33 @@ def migrate_lock_binding(path):
     return changed
 
 
+def migrate_window_controls(path):
+    """Supply omitted decoration controls without replacing user mouse contexts."""
+    path = Path(path)
+    tree = ET.parse(path)
+    mice = tree.getroot().findall('mouse')
+    # Labwc already provides all defaults when no mousebinds are configured.
+    # Adding only controls in that case would disable its other default binds.
+    if (any(mouse.find('default') is not None for mouse in mice)
+            or not any(mouse.find('context/mousebind') is not None for mouse in mice)):
+        return False
+    existing = {name.casefold()
+                for mouse in mice for context in mouse.findall('context')
+                for name in (context.get('name') or context.findtext('name', '')).split()}
+    changed = False
+    for context, action in [('Close', 'Close'), ('Iconify', 'Iconify'), ('Maximize', 'ToggleMaximize')]:
+        # Even an empty context can be a deliberate user customization.
+        if context.casefold() in existing:
+            continue
+        target = ET.SubElement(mice[0], 'context', name=context)
+        binding = ET.SubElement(target, 'mousebind', button='Left', action='Click')
+        ET.SubElement(binding, 'action', name=action)
+        changed = True
+    if changed:
+        _replace(path, ET.tostring(tree.getroot(), encoding='utf-8', xml_declaration=True))
+    return changed
+
+
 def prepare_session(directory=None, template_dir='/etc/ownos/labwc', store=None):
     base = Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config'))
     directory = Path(directory) if directory is not None else base / 'ownos/labwc'
@@ -60,6 +88,7 @@ def prepare_session(directory=None, template_dir='/etc/ownos/labwc', store=None)
         autostart.chmod(0o755)
     write_input_config(directory, template_dir / 'rc.xml', (store or ConfigStore()).load())
     migrate_lock_binding(directory / 'rc.xml')
+    migrate_window_controls(directory / 'rc.xml')
     return directory
 
 
@@ -161,6 +190,6 @@ def start_desktop(state_dir=None):
 
 def lock_session(live_directory='/run/archiso'):
     if Path(live_directory).is_dir():
-        print('Live-istuntoa ei voi lukita: live-käyttäjällä ei ole salasanaa.', file=sys.stderr)
+        print(_('The live session cannot be locked because the live user has no password.'), file=sys.stderr)
         return 1
     return subprocess.call(['/usr/bin/swaylock', '-f', '-c', '0b1321'])

@@ -10,9 +10,17 @@
 - ISO files belong in GitHub Releases, not Git history. After successful
   creation, immediately compute SHA-256, upload, verify remote size/digest and
   download integrity, and provide the direct URL before optional testing.
-- Do not overwrite a known good asset before its replacement is verified.
-  Supersede/archive obsolete download assets after verifying a new release;
-  never remove source/history or required compatibility data.
+- Preserve System 1 permanently as a historical GitHub Release, including
+  its ISO, checksums and existing assets. Do not modify or delete that release.
+  System 2 belongs in a separate experimental release tagged `system-2`, with
+  `HuskOS-system-2.iso` and its own checksums/evidence after verification.
+  Never remove source/history or required compatibility data.
+- The default live and installed system must remain usable offline and must
+  not preinstall optional user applications. Keep essential desktop, drivers,
+  libraries and maintenance/recovery tools. Optional apps are installed only
+  at the user's request through authenticated package sources.
+- Retain the planned native `.hpk` format; do not claim an implemented store
+  or `.hpk` installer unless it has been implemented and tested.
 - Never upload credentials/private signing keys/configuration. Use only
   authorized access; do not force-push, bypass security or modify real disks.
 - Report build, upload and boot results separately, including failures/skips.

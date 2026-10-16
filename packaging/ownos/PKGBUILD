@@ -2,11 +2,11 @@
 pkgbase=ownos
 pkgname=(ownos-core ownos-ui ownos-desktop ownos-branding ownos-keyring ownos-live)
 pkgver=0.1.3.dev
-pkgrel=2
+pkgrel=3
 pkgdesc='Husk OS experimental desktop and system tools on an Arch Linux base'
 arch=('x86_64')
 license=('MIT')
-makedepends=('wayland' 'pkgconf' 'python' 'python-yaml')
+makedepends=('wayland' 'pkgconf' 'python' 'python-yaml' 'gettext')
 source=('ownos-source.tar.gz')
 sha256sums=('__SOURCE_SHA256__')
 
@@ -24,14 +24,23 @@ package_ownos-core() {
     ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"
   done
   install -Dm644 ownos/data/org.ownos.admin.policy "$pkgdir/usr/share/polkit-1/actions/org.ownos.admin.policy"
+  # English source strings need no catalog. Install only supported catalogs
+  # added deliberately in a later localization milestone.
+  for catalog in ownos/locale/*/LC_MESSAGES/huskos.po; do
+    [ -f "$catalog" ] || continue
+    language=${catalog#ownos/locale/}; language=${language%%/*}
+    install -dm755 "$pkgdir/usr/share/locale/$language/LC_MESSAGES"
+    msgfmt --check --check-format "$catalog" -o "$pkgdir/usr/share/locale/$language/LC_MESSAGES/huskos.mo"
+  done
   install -Dm644 ownos/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
 package_ownos-ui() {
-  depends=('ownos-core' 'python-gobject' 'gtk3' 'foot' 'flatpak' 'adwaita-icon-theme')
+  depends=('ownos-core' 'python-gobject' 'python-cairo' 'gtk3' 'foot' 'flatpak' 'adwaita-icon-theme')
   install -dm755 "$pkgdir/usr/lib/ownos/ownos/ui" "$pkgdir/usr/bin" "$pkgdir/usr/share/applications"
   install -m644 ownos/src/ownos/ui/*.py "$pkgdir/usr/lib/ownos/ownos/ui/"
   install -Dm644 ownos/data/style.css "$pkgdir/usr/share/ownos/style.css"
+  install -Dm644 ownos/data/wallpapers/husk-desert.jpg "$pkgdir/usr/share/ownos/wallpapers/husk-desert.jpg"
   for command in own-shell own-control own-files husk-desktop husk-shell husk-control husk-files; do ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"; done
   install -m644 ownos/data/org.ownos.*.desktop "$pkgdir/usr/share/applications/"
 }

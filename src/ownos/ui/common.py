@@ -7,12 +7,13 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gtk, Gdk, Gio, GLib, GdkPixbuf
 from ownos.catalog import app_by_id
 from ownos.config import ConfigStore
+from ownos.i18n import _
 from ownos.themes import read_user_css
 
 
 def require_display():
     if not Gtk.init_check()[0] or Gdk.Display.get_default() is None:
-        raise RuntimeError('GTK-näyttöyhteys puuttuu. Avaa ohjelma graafisessa istunnossa; headless-testissä käytä Xvfb:tä tai labwc:tä.')
+        raise RuntimeError(_('No GTK display connection. Open this application in a graphical session; use Xvfb or labwc for headless testing.'))
 
 
 def create_style_provider(settings=None, override_path=None):
@@ -45,15 +46,17 @@ def remove_style(provider):
 
 def error(parent, message):
     dialog = Gtk.MessageDialog(transient_for=parent, modal=True,
-                               message_type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.CLOSE,
-                               text='Toiminto ei onnistunut')
+                               message_type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.NONE,
+                               text=_('The operation could not be completed'))
+    dialog.add_button(_('Close'), Gtk.ResponseType.CLOSE)
     dialog.format_secondary_text(str(message)[:2000]); dialog.run(); dialog.destroy()
 
 
 def confirm(parent, title, detail):
     dialog = Gtk.MessageDialog(transient_for=parent, modal=True,
-                               message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.OK_CANCEL,
+                               message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
                                text=title)
+    dialog.add_buttons(_('Cancel'), Gtk.ResponseType.CANCEL, _('OK'), Gtk.ResponseType.OK)
     dialog.format_secondary_text(detail)
     result = dialog.run() == Gtk.ResponseType.OK; dialog.destroy()
     return result
@@ -70,7 +73,7 @@ def spawn(argv, parent=None):
 def terminal(argv, parent=None):
     exe = shutil.which('foot')
     if not exe:
-        error(parent, 'Foot-terminaali puuttuu. Asenna foot ennen tämän toiminnon käyttöä.')
+        error(parent, _('The foot terminal is not installed. Install foot to use this action.'))
         return None
     return spawn([exe, '-e', *argv], parent)
 
@@ -101,18 +104,18 @@ def installed(app):
 def launch_app(appid, parent=None):
     app = app_by_id(appid)
     if installed(app): return spawn(app.command, parent)
-    detail = ('Asennus käyttäjäkohtaiseen Flatpakiin Flathubista. Asentaja näyttää riippuvuudet ja pyytää vahvistuksen.'
-              if app.flatpak_id else 'Asennus Archin allekirjoitetuista paketeista täydellä järjestelmäpäivityksellä. Pacman näyttää muutokset ja pyytää vahvistuksen.')
-    if confirm(parent, 'Asennetaanko ' + app.name + '?', detail):
+    detail = (_('Install from Flathub as a Flatpak for this user. The installer will show dependencies and ask for confirmation.')
+              if app.flatpak_id else _('Install signed Arch packages with a full system upgrade. Pacman will show the changes and ask for confirmation.'))
+    if confirm(parent, _('Install {application}?').format(application=app.name), detail):
         return terminal(['/usr/bin/husk-install-app', appid], parent)
 
 
 def open_path(path, parent=None):
     path = Path(path)
     if path.suffix == '.desktop':
-        if not confirm(parent, 'Suoritetaanko pikakuvake?', str(path) + '\nVarmista, että luotat tämän tiedoston alkuperään.'): return
+        if not confirm(parent, _('Run this shortcut?'), _('{path}\nMake sure you trust the source of this file.').format(path=path)): return
         app = Gio.DesktopAppInfo.new_from_filename(str(path))
-        if not app: error(parent, 'Virheellinen .desktop-tiedosto'); return
+        if not app: error(parent, _('Invalid .desktop file')); return
         try: app.launch([], None)
         except GLib.Error as exc: error(parent, exc)
     else:

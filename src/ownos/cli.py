@@ -7,6 +7,7 @@ from pathlib import Path
 from ownos.config import ConfigStore
 from ownos.catalog import app_by_id, install_commands, FLATHUB_URLS
 from ownos.gaming import game_command
+from ownos.i18n import _
 
 
 def normalize_command(name):
@@ -30,7 +31,7 @@ def install_app(appid):
     for line in remotes.splitlines():
         values = line.split()
         if values and values[0] == 'flathub' and (len(values) < 2 or values[1] not in FLATHUB_URLS):
-            raise ValueError('Existing flathub remote points to an unexpected URL; review it before installation')
+            raise ValueError(_('Existing flathub remote points to an unexpected URL; review it before installation'))
     for command in install_commands(appid):
         result = subprocess.call(command)
         if result: return result
@@ -72,12 +73,12 @@ def main():
         from ownos.live import desktop_status, validate_live_status
         try: status = desktop_status()
         except Exception as exc:
-            print('Husk Desktop status unavailable: ' + str(exc), file=sys.stderr); return 1
+            print(_('Husk Desktop status unavailable: {error}').format(error=exc), file=sys.stderr); return 1
         print(json.dumps(status,ensure_ascii=False,sort_keys=True))
         if name == 'own-live-smoke':
             problems = validate_live_status(status)
             if problems: print('\n'.join(problems),file=sys.stderr); return 1
-            print('Live desktop status accepted. Input, audio, networking, games and installation require separate tests.')
+            print(_('Live desktop status accepted. Input, audio, networking, games and installation require separate tests.'))
     elif name == 'own-session-renderer':
         parser.parse_args()
         from ownos.live import session_renderer
@@ -96,5 +97,5 @@ def main():
         return lock_session()
     elif name == 'own-toggle-start': parser.parse_args(); toggle('ToggleStart')
     elif name == 'own-toggle-notifications': parser.parse_args(); toggle('ToggleNotifications')
-    else: parser.error('Use one of the husk-* entrypoints')
+    else: parser.error(_('Use one of the husk-* entrypoints'))
     return 0

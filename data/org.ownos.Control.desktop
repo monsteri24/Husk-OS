@@ -1,7 +1,9 @@
 [Desktop Entry]
-Name=Gaming Control Center
+Name=Husk Settings
+GenericName=Gaming Control Center
 Comment=Husk OS gaming, hardware and appearance settings
 Exec=husk-control
 Icon=preferences-system
 Type=Application
 Categories=Settings;System;
+Keywords=Husk;Settings;Gaming;GameMode;MangoHud;Control Center;
