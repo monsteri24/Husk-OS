@@ -11,8 +11,6 @@ import threading
 import time
 from pathlib import Path
 
-from PIL import Image
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 from ownos.live import validate_live_status
@@ -109,11 +107,23 @@ class Monitor:
         self.key('ret')
 
     def capture(self, name):
+        from PIL import Image
         ppm = OUT / (name + '.ppm')
         self.command('screendump', {'filename': str(ppm)})
         with Image.open(ppm) as frame:
             frame.save(OUT / (name + '.png'))
         ppm.unlink()
+
+
+def request_guest_evidence(monitor):
+    # A DRM compositor needs its own VT active even while starting. The first
+    # run left tty2 active and made Labwc time out waiting for its seat.
+    try:
+        monitor.key('ctrl-alt-f2')
+        time.sleep(0.7)
+        monitor.type_console('curl -fsS -o /tmp/probe.py http://10.0.2.2:8765/probe; python3 /tmp/probe.py')
+    finally:
+        monitor.key('ctrl-alt-f1')
 
 
 def main():
@@ -150,6 +160,7 @@ def main():
             monitor = Monitor(OUT / 'monitor.sock')
             started = time.monotonic()
             attempt = 0
+            next_probe = 45 if kvm else 300
             while time.monotonic() - started < 600:
                 elapsed = int(time.monotonic() - started)
                 if process.poll() is not None: raise RuntimeError('Guest/QEMU exited before desktop acceptance')
@@ -159,16 +170,17 @@ def main():
                     data = json.loads(guest.read_text())
                     problems = validate_live_status(data.get('status'))
                     if data.get('uid') == 1000 and data.get('live') is True and not problems and data.get('husk-live-smoke', {}).get('exit') == 0:
-                        result.update(boot='PASSED', desktop_status=data['status'])
+                        result.update(boot='PASSED', desktop_status=data['status'], problems=[])
                         break
                     result['problems'] = problems
-                if elapsed >= 90:
+                if elapsed >= next_probe:
                     attempt += 1
-                    monitor.key('ctrl-alt-f2')
-                    time.sleep(3)
-                    monitor.type_console('curl -fsS -o /tmp/probe.py http://10.0.2.2:8765/probe; python3 /tmp/probe.py')
+                    request_guest_evidence(monitor)
                     print('Guest evidence request', attempt, 'at', elapsed, 'seconds', flush=True)
+                    next_probe = elapsed + 60
                 time.sleep(10)
+            if result['boot'] != 'PASSED' and not result['problems']:
+                result['problems'].append('600-second deadline expired without accepted guest evidence.')
             if result['boot'] == 'PASSED':
                 monitor.key('ctrl-alt-f1')
                 time.sleep(5)
