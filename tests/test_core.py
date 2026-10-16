@@ -103,6 +103,18 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(plan.display_manager, 'sddm')
         self.assertNotIn('ownos-desktop', plan.remove)
 
+    def test_every_installer_choice_excludes_optional_user_apps(self):
+        optional = {'steam', 'proton', 'proton-ge-custom', 'wine', 'winetricks', 'lutris',
+                    'discord', 'firefox', 'obs-studio', 'libreoffice-fresh'}
+        for desktop in ('own', 'kde', 'gnome', 'minimal'):
+            for graphics in ('mesa', 'nvidia-open'):
+                with self.subTest(desktop=desktop, graphics=graphics):
+                    plan = self.installer.installation_plan(desktop, graphics)
+                    self.assertFalse(optional.intersection(plan.packages))
+                    self.assertTrue(optional.issubset(plan.remove))
+                    self.assertTrue({'linux', 'linux-firmware', 'networkmanager', 'mesa',
+                                     'vulkan-radeon', 'vulkan-intel', 'pipewire', 'wireplumber'}.issubset(plan.packages))
+
     def test_other_desktop_choices_have_correct_login_manager(self):
         for desktop, pkg, dm in [('kde', 'plasma-desktop', 'sddm'), ('gnome', 'gnome-shell', 'gdm')]:
             with self.subTest(desktop=desktop):

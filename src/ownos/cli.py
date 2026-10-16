@@ -26,12 +26,19 @@ def install_app(appid):
     app = app_by_id(appid)
     if not app.flatpak_id:
         return subprocess.call(['/usr/bin/pkexec', '/usr/lib/ownos/own-admin', 'install', appid])
-    remotes = subprocess.run(['/usr/bin/flatpak', 'remotes', '--user', '--columns=name,url'],
+    # Flatpak's documented options column reports `no-gpg-verify`. Include
+    # disabled remotes too: --if-not-exists must never reuse an unchecked one.
+    remotes = subprocess.run(['/usr/bin/flatpak', 'remotes', '--user', '--show-disabled', '--columns=name,url,options'],
                              capture_output=True, text=True, check=True).stdout
     for line in remotes.splitlines():
-        values = line.split()
-        if values and values[0] == 'flathub' and (len(values) < 2 or values[1] not in FLATHUB_URLS):
+        values = line.split(maxsplit=2)
+        if not values or values[0] != 'flathub':
+            continue
+        if len(values) < 2 or values[1] not in FLATHUB_URLS:
             raise ValueError(_('Existing flathub remote points to an unexpected URL; review it before installation'))
+        options = values[2].replace(',', ' ').split() if len(values) > 2 else ()
+        if 'no-gpg-verify' in options:
+            raise ValueError(_('Existing flathub remote has GPG verification disabled; review it before installation'))
     for command in install_commands(appid):
         result = subprocess.call(command)
         if result: return result

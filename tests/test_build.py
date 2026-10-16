@@ -46,14 +46,59 @@ class ProfileTests(unittest.TestCase):
         self.assertIn('airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)', definition)
         self.assertEqual(self.build.validate_profile(out), [])
 
-    def test_default_profile_keeps_gaming_and_upstream_compression(self):
+    def test_default_profile_keeps_desktop_graphics_and_upstream_compression(self):
         from ownos.installer import GAME_PACKAGES, MESA_PACKAGES
         with (self.releng / 'profiledef.sh').open('a') as stream:
             stream.write('airootfs_image_tool_options=(-comp zstd -Xcompression-level 15)\n')
         out = self.generate()
-        self.assertTrue(set(GAME_PACKAGES + MESA_PACKAGES).issubset((out / 'packages.x86_64').read_text().splitlines()))
-        self.assertEqual(json.loads((out / 'husk-profile.json').read_text())['edition'], 'gaming')
+        packages = (out / 'packages.x86_64').read_text().splitlines()
+        self.assertTrue(set(self.build.LIVE + MESA_PACKAGES).issubset(packages))
+        self.assertFalse(set(GAME_PACKAGES).intersection(packages))
+        self.assertEqual(json.loads((out / 'husk-profile.json').read_text())['edition'], 'desktop')
         self.assertNotIn('-processors 2', (out / 'profiledef.sh').read_text())
+
+    def test_both_editions_remove_inherited_optional_apps_and_keep_boot_recovery_tools(self):
+        optional = ('steam', 'proton', 'proton-ge-custom', 'wine', 'winetricks', 'lutris',
+                    'discord', 'firefox', 'obs-studio', 'libreoffice-fresh', 'irssi', 'lynx')
+        required = ('mkinitcpio', 'mkinitcpio-archiso', 'mkinitcpio-nfs-utils',
+                    'squashfs-tools', 'erofs-utils', 'syslinux', 'grub', 'efitools',
+                    'edk2-shell', 'memtest86+', 'memtest86+-efi', 'cryptsetup', 'lvm2',
+                    'mdadm', 'e2fsprogs', 'parted', 'smartmontools', 'usbutils',
+                    'nano', 'man-db', 'man-pages', 'sof-firmware', 'wireless-regdb')
+        (self.releng / 'packages.x86_64').write_text('\n'.join((*required, *optional)) + '\n')
+        for first_boot in (False, True):
+            with self.subTest(first_boot=first_boot):
+                out = self.generate(self.root / ('first-boot' if first_boot else 'desktop'), first_boot=first_boot)
+                packages = (out / 'packages.x86_64').read_text().splitlines()
+                self.assertTrue(set(required).issubset(packages))
+                self.assertFalse(set(optional).intersection(packages))
+                self.assertTrue({'ownos-desktop', 'ownos-ui', 'labwc', 'gtk3', 'gtk-layer-shell',
+                                 'python-gobject', 'foot', 'linux', 'linux-firmware', 'networkmanager',
+                                 'pipewire', 'wireplumber'}.issubset(packages))
+                self.assertEqual(self.build.validate_profile(out), [])
+
+    def test_unreviewed_upstream_package_rejects_profile_before_staging(self):
+        with (self.releng / 'packages.x86_64').open('a') as stream:
+            stream.write('unreviewed-upstream-package\n')
+        output = self.root / 'profile'
+        with self.assertRaisesRegex(ValueError, 'Unreviewed upstream package.*unreviewed-upstream-package'):
+            self.generate(output)
+        self.assertFalse(output.exists())
+
+    def test_default_validator_rejects_optional_or_unreviewed_package_additions(self):
+        out = self.generate()
+        packages = out / 'packages.x86_64'
+        packages.write_text(packages.read_text() + 'steam\nobs-studio\nunreviewed-app\n')
+        problems = self.build.validate_profile(out)
+        for package in ('steam', 'obs-studio', 'unreviewed-app'):
+            self.assertTrue(any(package in problem for problem in problems), problems)
+
+    def test_tracked_package_additions_match_clean_default(self):
+        project = Path(__file__).resolve().parents[1]
+        packages = {line.partition('#')[0].strip() for line in
+                    (project / 'iso/packages.husk.x86_64').read_text().splitlines()}
+        packages.discard('')
+        self.assertEqual(packages, set(self.build.live_packages()))
 
     def test_first_boot_uses_tty_login_and_keeps_rescue_console(self):
         out = self.generate(first_boot=True)
@@ -91,7 +136,7 @@ class ProfileTests(unittest.TestCase):
         self.assertIn("bootmodes=('bios.syslinux' 'uefi.systemd-boot')", text)
         self.assertEqual((out / 'bootstrap_packages.x86_64').read_text(), 'base\n')
         self.assertIn('ownos-desktop', (out / 'packages.x86_64').read_text())
-        self.assertIn('steam-devices', (out / 'packages.x86_64').read_text())
+        self.assertIn('mkinitcpio-archiso', (out / 'packages.x86_64').read_text())
 
     def test_generated_repositories_require_package_and_local_database_signatures(self):
         out = self.generate()

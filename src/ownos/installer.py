@@ -12,6 +12,14 @@ DESKTOP_PACKAGES = {
 }
 GAME_PACKAGES = ('steam', 'wine', 'winetricks', 'lutris', 'mangohud', 'lib32-mangohud',
                  'gamemode', 'lib32-gamemode', 'discord', 'firefox', 'flatpak', 'steam-devices')
+# Kept separate from the package managers and graphics libraries. These are
+# optional user applications/integrations, never part of a default install.
+# GAME_PACKAGES remains a compatibility name for the historical bundle.
+OPTIONAL_APPLICATION_PACKAGES = tuple(package for package in GAME_PACKAGES if package != 'flatpak') + (
+    'proton', 'proton-ge-custom', 'wine-staging', 'obs-studio', 'libreoffice-fresh',
+    'libreoffice-still', 'onlyoffice', 'gimp', 'inkscape', 'vlc', 'thunderbird',
+    'chromium', 'irssi', 'lynx',
+)
 MESA_PACKAGES = ('mesa', 'lib32-mesa', 'vulkan-radeon', 'lib32-vulkan-radeon',
                  'vulkan-intel', 'lib32-vulkan-intel', 'vulkan-icd-loader', 'lib32-vulkan-icd-loader')
 NVIDIA_PACKAGES = ('linux-headers', 'nvidia-open-dkms', 'nvidia-utils', 'lib32-nvidia-utils')
@@ -32,11 +40,12 @@ def installation_plan(desktop, graphics):
     packages = ('ownos-core', 'ownos-keyring', 'linux', 'linux-firmware', 'networkmanager',
                 'sudo', 'polkit', 'btrfs-progs', 'pipewire', 'pipewire-pulse', 'wireplumber')
     packages += MESA_PACKAGES + DESKTOP_PACKAGES[desktop]
-    remove = list(LIVE_PACKAGES)
+    # unpackfs can clone an older live image. Remove its optional app bundle
+    # for every desktop, while keeping Flatpak infrastructure for ownos-ui.
+    remove = list(LIVE_PACKAGES + OPTIONAL_APPLICATION_PACKAGES)
     if desktop == 'minimal':
-        remove += ['ownos-desktop', 'ownos-ui', 'ownos-branding', 'sddm'] + list(GAME_PACKAGES)
+        remove += ['ownos-desktop', 'ownos-ui', 'ownos-branding', 'sddm', 'flatpak']
     else:
-        packages += GAME_PACKAGES
         if desktop != 'own':
             remove += ['ownos-desktop']
         if desktop == 'gnome':
@@ -44,7 +53,7 @@ def installation_plan(desktop, graphics):
     if graphics == 'nvidia-open':
         packages += NVIDIA_PACKAGES
     manager = None if desktop == 'minimal' else ('gdm' if desktop == 'gnome' else 'sddm')
-    return InstallationPlan(desktop, tuple(dict.fromkeys(packages)), tuple(remove), manager)
+    return InstallationPlan(desktop, tuple(dict.fromkeys(packages)), tuple(dict.fromkeys(remove)), manager)
 
 
 def validate_target(root):

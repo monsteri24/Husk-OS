@@ -5,7 +5,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from ownos.installer import GAME_PACKAGES, MESA_PACKAGES
+from ownos.installer import GAME_PACKAGES, MESA_PACKAGES, OPTIONAL_APPLICATION_PACKAGES
 from ownos.identity import OS_ID, VERSION
 
 TOOLS = ('mkarchiso', 'pacman', 'pacman-key', 'gpgv', 'mksquashfs', 'xorriso')
@@ -18,7 +18,41 @@ LIVE = ('base', 'linux', 'archlinux-keyring', 'labwc', 'wayland', 'gtk3', 'gtk-l
         'dosfstools', 'pipewire', 'pipewire-pulse', 'wireplumber', 'pciutils',
         'noto-fonts', 'adwaita-icon-theme', 'python-yaml', 'wpa_supplicant',
         'intel-ucode', 'amd-ucode', 'bluez', 'bluez-utils', 'blueman', 'upower',
-        'power-profiles-daemon', 'pipewire-alsa', 'pavucontrol', 'alsa-utils', 'udisks2', 'gvfs')
+        'power-profiles-daemon', 'pipewire-alsa', 'pavucontrol', 'alsa-utils', 'udisks2', 'gvfs',
+        # Required by the inherited releng boot modes/initramfs and offline
+        # repair workflows, independently of the optional installer choice.
+        'arch-install-scripts', 'mkinitcpio', 'mkinitcpio-archiso', 'mkinitcpio-nfs-utils',
+        'squashfs-tools', 'erofs-utils', 'syslinux', 'efitools', 'edk2-shell',
+        'memtest86+', 'memtest86+-efi', 'cryptsetup', 'e2fsprogs', 'lvm2', 'mdadm',
+        'parted', 'gptfdisk', 'mtools', 'less', 'nano', 'man-db', 'man-pages', 'rsync',
+        'smartmontools', 'nvme-cli', 'usbutils', 'ethtool', 'sof-firmware', 'wireless-regdb')
+
+# Reviewed Archiso releng hardware, accessibility, networking and recovery
+# tools. Preserve them when present in the installed upstream profile. This
+# list follows Arch's official read-only mirror, reviewed 2026-10-16:
+# https://github.com/archlinux/archiso/blob/master/configs/releng/packages.x86_64
+# Unknown additions require review instead of silently shipping an app or
+# silently discarding a new boot dependency. Older package names stay accepted
+# so the installed releng version remains the source of those utility choices.
+RELENG_RECOVERY_PACKAGES = frozenset('''
+alsa-utils amd-ucode arch-install-scripts b43-fwcutter base bcachefs-tools bind bolt
+brltty broadcom-wl btrfs-progs clonezilla cloud-init cryptsetup darkhttpd ddrescue
+dhcpcd diffutils dmidecode dmraid dnsmasq dosfstools e2fsprogs edk2-shell efibootmgr
+efitools erofs-utils espeakup ethtool exfatprogs f2fs-tools fatresize foot-terminfo
+fsarchiver ghostty-terminfo gnu-netcat gpart gpm gptfdisk grml-zsh-config grub hdparm
+hyperv intel-ucode iw iwd jfsutils kitty-terminfo kmscon-terminfo ldns less lftp
+libfido2 libusb-compat linux linux-atm linux-firmware linux-firmware-marvell
+livecd-sounds lsscsi lvm2 man-db man-pages mc mdadm memtest86+ memtest86+-efi
+mkinitcpio mkinitcpio-archiso mkinitcpio-nfs-utils mmc-utils modemmanager mtools mtr
+nano nbd ndisc6 nfs-utils nilfs-utils nmap ntfs-3g ntfsprogs nvme-cli open-iscsi
+open-vm-tools openconnect openpgp-card-tools openssh openvpn partclone parted
+partimage pcsclite ppp pptpclient pv qemu-guest-agent refind reflector reiserfsprogs
+rp-pppoe rsync rxvt-unicode-terminfo screen sdparm sequoia-sq sg3_utils
+smartmontools sof-firmware squashfs-tools sudo syslinux systemd-resolvconf tcpdump
+terminus-font testdisk tmux tpm2-tools tpm2-tss udftools usb_modeswitch usbmuxd
+usbutils vim virtiofsd virtualbox-guest-utils-nox vpnc wireless-regdb wireless_tools
+wpa_supplicant wvdial xdg-utils xfsprogs xl2tpd zsh
+'''.split())
 
 
 def preflight(available=shutil.which, os_id=None):
@@ -69,10 +103,10 @@ def write(base, relative, contents):
 
 
 def live_packages(first_boot=False):
-    """The small boot edition retains the desktop and native graphics drivers."""
+    """Both editions keep the desktop and drivers without optional user apps."""
     if first_boot:
         return LIVE + tuple(package for package in MESA_PACKAGES if not package.startswith('lib32-'))
-    return LIVE + GAME_PACKAGES + MESA_PACKAGES
+    return LIVE + MESA_PACKAGES
 
 
 def remove_overlay_file(root, relative):
@@ -116,6 +150,15 @@ def generate_profile(releng, repo, public_key, output, project, with_installer=F
         raise ValueError('Output may not be nested in build inputs')
     repository_files(repo)
     if not public_key.is_file(): raise ValueError('Public signing key is missing')
+    packages = []
+    approved = RELENG_RECOVERY_PACKAGES | set(live_packages(first_boot)) | {'calamares', 'archinstall'}
+    for line in (releng / 'packages.x86_64').read_text().splitlines():
+        package = line.partition('#')[0].strip()
+        if not package or package in OPTIONAL_APPLICATION_PACKAGES or package in GAME_PACKAGES:
+            continue
+        if package not in approved:
+            raise ValueError('Unreviewed upstream package: ' + package + '. Review its system role before including it.')
+        packages.append(package)
     shutil.copytree(releng, output, symlinks=True)
     profile = safe_path(output, 'profiledef.sh')
     with profile.open('a') as stream:
@@ -133,10 +176,9 @@ file_permissions+=( ["/etc/shadow"]="0:0:400" )
 airootfs_image_type="squashfs"
 airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)
 ''')
-    write(output, 'husk-profile.json', json.dumps({'edition': 'first-boot' if first_boot else 'gaming',
+    write(output, 'husk-profile.json', json.dumps({'edition': 'first-boot' if first_boot else 'desktop',
                                                   'version': VERSION,
                                                   'live_login': 'tty1' if first_boot else 'sddm'}, indent=2) + '\n')
-    packages = safe_path(output, 'packages.x86_64').read_text().splitlines()
     packages += list(live_packages(first_boot))
     if with_installer: packages.append('calamares')
     else: packages = [p for p in packages if p.strip() not in ('calamares','archinstall')]
@@ -220,12 +262,15 @@ def validate_profile(profile):
     try:
         metadata = json.loads(safe_path(profile, 'husk-profile.json').read_text())
         first_boot = metadata.get('edition') == 'first-boot'
-        if metadata.get('edition') not in ('first-boot', 'gaming') or metadata.get('version') != VERSION:
+        if metadata.get('edition') not in ('first-boot', 'desktop') or metadata.get('version') != VERSION:
             problems.append('Invalid Husk OS edition/version metadata.')
     except (OSError, ValueError, AttributeError):
         problems.append('Missing or invalid Husk OS edition/version metadata.')
     for package in live_packages(first_boot):
         if package not in packages: problems.append('Missing live package: ' + package)
+    approved = RELENG_RECOVERY_PACKAGES | set(live_packages(first_boot)) | {'', 'calamares', 'archinstall'}
+    for package in sorted(packages - approved):
+        problems.append('Unexpected optional or unreviewed live package: ' + package)
     if first_boot:
         for package in sorted(packages.intersection(GAME_PACKAGES) | {p for p in packages if p.startswith('lib32-')}):
             problems.append('Unexpected first-boot gaming/multilib addition: ' + package)
