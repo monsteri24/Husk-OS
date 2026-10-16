@@ -1,0 +1,11 @@
+[SddmGreeterTheme]
+Name=Husk OS Experimental
+Description=Husk OS custom dark blue login
+Author=Husk OS contributors
+Type=sddm-theme
+Version=0.1.1
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=ownos
+Theme-API=2.0
+QtVersion=6

@@ -1,0 +1,29 @@
+{
+  "context": "Ubuntu container; not booted Husk OS",
+  "os_release": "PRETTY_NAME=\"Ubuntu 24.04.3 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.3 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+  "kvm_exists": false,
+  "unix_socket_probe": "[Errno 1] Operation not permitted",
+  "unshare": {
+    "returncode": 1,
+    "stderr": "unshare: write failed /proc/self/uid_map: Operation not permitted\n"
+  },
+  "restrictions": {
+    "CapEff": "0000000000000000",
+    "CapPrm": "0000000000000000",
+    "CapBnd": "0000000000000000",
+    "NoNewPrivs": "1",
+    "Seccomp": "2"
+  },
+  "tools": {
+    "pacman": null,
+    "makepkg": null,
+    "repo-add": null,
+    "mkarchiso": null,
+    "qemu-system-x86_64": null,
+    "qemu-img": null,
+    "VBoxManage": null,
+    "xorriso": null,
+    "mksquashfs": null,
+    "gpgv": "/usr/bin/gpgv"
+  }
+}

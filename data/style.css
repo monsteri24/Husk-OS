@@ -1,0 +1,27 @@
+@define-color accent #4d94ff;
+@define-color surface #151e2e;
+@define-color text #eaf1ff;
+* { font-family: "Noto Sans", sans-serif; font-size: 13px; }
+window { background-color: #0b1321; color: @text; }
+button { background-image: none; background-color: #1d2a40; color: @text;
+         border: 1px solid #30415c; border-radius: 10px; padding: 9px 12px;
+         box-shadow: none; text-shadow: none; }
+button:hover { background-color: #293e5c; border-color: @accent; }
+button:checked, button.active { background-color: #254a79; border-color: @accent; }
+entry, combobox { background-color: #111b2c; color: @text; border-radius: 9px; padding: 8px; }
+list, list row { background-color: transparent; color: @text; }
+list row:hover { background-color: #223754; border-radius: 9px; }
+.panel { background-color: rgba(16, 25, 41, 0.97); border-top: 1px solid #345073; padding: 7px 14px; }
+.panel button { padding: 8px; min-width: 25px; }
+.popup { border: 1px solid #375172; border-radius: 16px; background-color: @surface; padding: 20px; }
+.desktop { background-image: linear-gradient(140deg, #0b1426, #143a64 65%, #09111e); }
+.desktop-icon { background-color: transparent; border-color: transparent; }
+.heading { font-size: 17px; font-weight: bold; }
+.title { font-size: 28px; font-weight: bold; }
+.muted { color: #a7b9d5; }
+switch:checked { background-color: @accent; }
+progressbar trough { background-color: #20304a; border-radius: 5px; }
+progressbar progress { background-color: @accent; border-radius: 5px; }
+notebook header { background-color: #121c2b; border: none; }
+notebook tab { padding: 10px; color: #a7b9d5; }
+notebook tab:checked { color: @text; border-bottom: 2px solid @accent; }

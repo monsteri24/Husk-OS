@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+[ -d /run/archiso ] || { echo 'Live setup only runs on Archiso.' >&2; exit 1; }
+if ! id live >/dev/null 2>&1; then useradd --create-home --groups wheel,systemd-journal --shell /bin/bash live; fi
+passwd --delete live
+passwd --lock root

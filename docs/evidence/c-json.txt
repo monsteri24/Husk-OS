@@ -1,0 +1,5 @@
+Command: make test-c
+ASAN_OPTIONS=detect_leaks=0 (LeakSanitizer blocked by sandbox)
+Exit: 0
+cc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined tests/test_json.c -o .build/native/test-json
+.build/native/test-json

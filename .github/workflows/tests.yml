@@ -1,0 +1,10 @@
+name: source-tests
+on: [push, pull_request]
+jobs:
+  models-and-gtk-preview:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y python3-gi python3-yaml gir1.2-gtk-3.0 xvfb dbus-x11 libwayland-dev pkg-config
+      - run: make PYTHON=/usr/bin/python3 check native
+      - run: PATH=/usr/bin:$PATH ./scripts/test-gtk.sh

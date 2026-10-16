@@ -1,0 +1,4 @@
+Prepared isolated Ubuntu GTK runtime; no installation on host
+Exit: 0
+Real GTK module imports and stylesheet parsing: PASS
+Graphical window tests unavailable: GTK-näyttöyhteys puuttuu. Avaa ohjelma graafisessa istunnossa; headless-testissä käytä Xvfb:tä tai labwc:tä.

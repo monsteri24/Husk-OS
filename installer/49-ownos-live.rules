@@ -1,0 +1,6 @@
+// This file belongs only to ownos-live and is removed from installed targets.
+polkit.addRule(function(action, subject) {
+  if (action.id === "org.ownos.install" && subject.user === "live" && subject.local && subject.active) {
+    return polkit.Result.YES;
+  }
+});

@@ -1,0 +1,6 @@
+Window.SetBackgroundTopColor(0.04, 0.08, 0.14);
+Window.SetBackgroundBottomColor(0.07, 0.20, 0.34);
+label = Image.Text("Husk OS · Experimental", 0.91, 0.95, 1.0);
+sprite = Sprite(label);
+sprite.SetX(Window.GetWidth() / 2 - label.GetWidth() / 2);
+sprite.SetY(Window.GetHeight() / 2 - label.GetHeight() / 2);

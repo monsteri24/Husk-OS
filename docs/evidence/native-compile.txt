@@ -1,0 +1,6 @@
+Command: make -B native WAYLAND_SCANNER=/workspace/scratch/57f6973f51b0/test-runtime/root/usr/bin/wayland-scanner WAYLAND_CFLAGS=-I/workspace/scratch/57f6973f51b0/test-runtime/root/usr/include WAYLAND_LIBS=-l:libwayland-client.so.0
+Exit: 0
+mkdir -p .build/native
+/workspace/scratch/57f6973f51b0/test-runtime/root/usr/bin/wayland-scanner client-header native/protocols/wlr-foreign-toplevel-management-unstable-v1.xml .build/native/foreign-toplevel-client-protocol.h
+/workspace/scratch/57f6973f51b0/test-runtime/root/usr/bin/wayland-scanner private-code native/protocols/wlr-foreign-toplevel-management-unstable-v1.xml .build/native/foreign-toplevel-protocol.c
+cc   -std=c11 -Wall -Wextra -Werror -O2 -I/workspace/scratch/57f6973f51b0/test-runtime/root/usr/include -I.build/native native/toplevel.c .build/native/foreign-toplevel-protocol.c  -l:libwayland-client.so.0 -o .build/native/own-toplevel

@@ -1,0 +1,43 @@
+{
+  "discovered": 90,
+  "executed": 82,
+  "passed": 82,
+  "failed": 0,
+  "skipped": 8,
+  "expected_failures": 0,
+  "skip_details": [
+    {
+      "test": "test_control_center_persists_gaming_toggle (test_ui.UISmokeTests.test_control_center_persists_gaming_toggle)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_file_manager_changes_directory (test_ui.UISmokeTests.test_file_manager_changes_directory)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_husk_panel_and_launcher_are_separate_components (test_ui.UISmokeTests.test_husk_panel_and_launcher_are_separate_components)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_invalid_user_css_keeps_base_style (test_ui.UISmokeTests.test_invalid_user_css_keeps_base_style)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_notification_center_shows_plain_text (test_ui.UISmokeTests.test_notification_center_shows_plain_text)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_panel_position_change_preserves_launcher_and_notifications (test_ui.UISmokeTests.test_panel_position_change_preserves_launcher_and_notifications)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_preview_status_cannot_claim_live_wayland_boot (test_ui.UISmokeTests.test_preview_status_cannot_claim_live_wayland_boot)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    },
+    {
+      "test": "test_start_opens_and_search_finds_heroic (test_ui.UISmokeTests.test_start_opens_and_search_finds_heroic)",
+      "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+    }
+  ],
+  "failure_details": []
+}

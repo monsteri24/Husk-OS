@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Husk Desktop (Experimental)
+Comment=Husk OS custom gaming desktop on Wayland
+Exec=/usr/bin/husk-session
+TryExec=/usr/bin/husk-session
+Type=Application
+DesktopNames=Husk;OwnOS

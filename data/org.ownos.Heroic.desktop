@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Heroic · Epic / GOG
+Comment=Install the official Heroic Flatpak for this user
+Exec=foot -e own-install-app heroic
+Icon=com.heroicgameslauncher.hgl
+Type=Application
+Categories=Game;
+NoDisplay=true

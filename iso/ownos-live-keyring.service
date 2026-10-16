@@ -1,0 +1,14 @@
+[Unit]
+Description=Initialize the Husk OS live package keyring
+Requires=etc-pacman.d-gnupg.mount
+After=etc-pacman.d-gnupg.mount
+After=ownos-live-setup.service
+ConditionPathExists=/run/archiso
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/ownos/live-keyring
+
+[Install]
+WantedBy=multi-user.target

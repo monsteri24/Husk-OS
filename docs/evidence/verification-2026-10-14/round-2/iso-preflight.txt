@@ -1,0 +1,9 @@
+ISO construction needs an isolated Arch Linux x86_64 build VM (current ID: ubuntu).
+Missing build tool: mkarchiso
+Missing build tool: pacman
+Missing build tool: pacman-key
+Missing build tool: mksquashfs
+Missing build tool: xorriso
+Missing installed releng profile: /usr/share/archiso/configs/releng
+Missing signed package repository: .build/repo
+Missing public repository key: .build/keys/ownos.gpg

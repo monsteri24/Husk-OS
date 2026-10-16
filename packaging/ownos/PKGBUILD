@@ -1,0 +1,83 @@
+# Generated local source checksum is inserted by scripts/build-packages.sh.
+pkgbase=ownos
+pkgname=(ownos-core ownos-ui ownos-desktop ownos-branding ownos-keyring ownos-live)
+pkgver=0.1.3.dev
+pkgrel=1
+pkgdesc='Husk OS experimental desktop and system tools on an Arch Linux base'
+arch=('x86_64')
+license=('MIT')
+makedepends=('wayland' 'pkgconf' 'python' 'python-yaml')
+source=('ownos-source.tar.gz')
+sha256sums=('__SOURCE_SHA256__')
+
+build() { make -C ownos native; }
+check() { make -C ownos test test-c; }
+
+package_ownos-core() {
+  depends=('python' 'pacman' 'polkit')
+  install -dm755 "$pkgdir/usr/lib/ownos/ownos" "$pkgdir/usr/bin"
+  install -m644 ownos/src/ownos/*.py "$pkgdir/usr/lib/ownos/ownos/"
+  install -m755 ownos/bin/own.py ownos/bin/own-admin "$pkgdir/usr/lib/ownos/"
+  for command in own-game own-install-app husk-game husk-install-app husk-status husk-live-smoke \
+                 own-session-renderer husk-session-renderer own-session-start husk-session-start \
+                 own-desktop-start husk-desktop-start own-lock husk-lock; do
+    ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"
+  done
+  install -Dm644 ownos/data/org.ownos.admin.policy "$pkgdir/usr/share/polkit-1/actions/org.ownos.admin.policy"
+  install -Dm644 ownos/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_ownos-ui() {
+  depends=('ownos-core' 'python-gobject' 'gtk3' 'foot' 'flatpak' 'adwaita-icon-theme')
+  install -dm755 "$pkgdir/usr/lib/ownos/ownos/ui" "$pkgdir/usr/bin" "$pkgdir/usr/share/applications"
+  install -m644 ownos/src/ownos/ui/*.py "$pkgdir/usr/lib/ownos/ownos/ui/"
+  install -Dm644 ownos/data/style.css "$pkgdir/usr/share/ownos/style.css"
+  for command in own-shell own-control own-files husk-desktop husk-shell husk-control husk-files; do ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"; done
+  install -m644 ownos/data/org.ownos.*.desktop "$pkgdir/usr/share/applications/"
+}
+
+package_ownos-desktop() {
+  depends=('ownos-ui' 'labwc' 'gtk-layer-shell' 'wayland' 'xorg-xwayland'
+           'polkit-gnome' 'network-manager-applet' 'swaylock' 'swayidle' 'wdisplays'
+           'pipewire' 'pipewire-pulse' 'pipewire-alsa' 'wireplumber' 'pavucontrol' 'alsa-utils'
+           'bluez' 'bluez-utils' 'blueman' 'upower' 'power-profiles-daemon' 'udisks2' 'gvfs' 'pciutils' 'xdg-utils'
+           'xdg-user-dirs' 'xdg-desktop-portal-gtk')
+  install -Dm755 ownos/bin/own-session "$pkgdir/usr/bin/own-session"
+  ln -s own-session "$pkgdir/usr/bin/husk-session"
+  install -Dm755 ownos/.build/native/own-toplevel "$pkgdir/usr/bin/own-toplevel"
+  install -dm755 "$pkgdir/etc/ownos/labwc"
+  install -m644 ownos/config/labwc/* "$pkgdir/etc/ownos/labwc/"
+  chmod 755 "$pkgdir/etc/ownos/labwc/autostart"
+  install -Dm644 ownos/data/ownos-wayland.desktop "$pkgdir/usr/share/wayland-sessions/ownos-wayland.desktop"
+  install -Dm644 ownos/data/OwnOS/openbox-3/themerc "$pkgdir/usr/share/themes/OwnOS/openbox-3/themerc"
+  for command in own-toggle-start own-toggle-notifications husk-toggle-start husk-toggle-notifications; do ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"; done
+}
+
+package_ownos-branding() {
+  depends=('plymouth')
+  install -Dm644 ownos/branding/os-release "$pkgdir/usr/share/ownos/os-release"
+  install -dm755 "$pkgdir/usr/share/sddm/themes/ownos" "$pkgdir/usr/share/plymouth/themes/ownos"
+  install -m644 ownos/branding/sddm/* "$pkgdir/usr/share/sddm/themes/ownos/"
+  install -m644 ownos/branding/plymouth/* "$pkgdir/usr/share/plymouth/themes/ownos/"
+  install -Dm644 ownos/branding/sddm.conf "$pkgdir/etc/sddm.conf.d/ownos-theme.conf"
+}
+
+package_ownos-keyring() {
+  depends=('pacman' 'gnupg')
+  install -Dm644 ownos/keys/ownos.gpg "$pkgdir/usr/share/pacman/keyrings/ownos.gpg"
+  install -Dm644 ownos/keys/ownos-trusted "$pkgdir/usr/share/pacman/keyrings/ownos-trusted"
+  install -Dm644 ownos/keys/ownos-revoked "$pkgdir/usr/share/pacman/keyrings/ownos-revoked"
+}
+
+package_ownos-live() {
+  depends=('ownos-desktop' 'sddm' 'networkmanager' 'sudo' 'arch-install-scripts')
+  optdepends=('calamares: experimental graphical installer')
+  install -Dm755 ownos/iso/live-setup "$pkgdir/usr/lib/ownos/live-setup"
+  install -Dm755 ownos/iso/live-keyring "$pkgdir/usr/lib/ownos/live-keyring"
+  install -dm755 "$pkgdir/etc/calamares" "$pkgdir/usr/lib/calamares/modules/owninstall"
+  cp -a ownos/installer/calamares/. "$pkgdir/etc/calamares/"
+  install -m644 ownos/installer/owninstall/* "$pkgdir/usr/lib/calamares/modules/owninstall/"
+  install -Dm644 ownos/installer/org.ownos.install.policy "$pkgdir/usr/share/polkit-1/actions/org.ownos.install.policy"
+  install -Dm644 ownos/installer/49-ownos-live.rules "$pkgdir/etc/polkit-1/rules.d/49-ownos-live.rules"
+  install -Dm644 ownos/installer/org.ownos.Install.desktop "$pkgdir/usr/share/applications/org.ownos.Install.desktop"
+}

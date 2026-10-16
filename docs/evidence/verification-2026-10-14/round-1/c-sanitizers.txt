@@ -1,0 +1,2 @@
+cc -std=c11 -Wall -Wextra -Werror -g -fsanitize=address,undefined tests/test_json.c -o .build/native/test-json
+.build/native/test-json

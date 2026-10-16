@@ -1,0 +1,3 @@
+Command: python3 scripts/check-source.py
+Exit: 0
+77 source/configuration syntax checks passed. No graphical or boot test is implied.

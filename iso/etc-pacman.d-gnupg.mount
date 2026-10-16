@@ -1,0 +1,10 @@
+[Unit]
+Description=Disposable live package keyring storage
+ConditionPathExists=/run/archiso
+Before=ownos-live-keyring.service
+
+[Mount]
+What=tmpfs
+Where=/etc/pacman.d/gnupg
+Type=tmpfs
+Options=mode=0755,noswap

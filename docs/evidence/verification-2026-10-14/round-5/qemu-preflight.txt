@@ -1,0 +1,1 @@
+Missing: qemu-system-x86_64, qemu-img, OVMF UEFI firmware (edk2-ovmf)

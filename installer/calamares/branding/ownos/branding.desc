@@ -1,0 +1,22 @@
+---
+componentName: ownos
+strings:
+  productName: Husk OS
+  shortProductName: Husk OS
+  version: system-1
+  shortVersion: system-1
+  versionedName: Husk OS system-1 (Experimental)
+  shortVersionedName: Husk OS Experimental
+  bootloaderEntryName: Husk OS
+  productUrl: https://archlinux.org
+  supportUrl: https://wiki.archlinux.org
+  knownIssuesUrl: https://wiki.archlinux.org/title/Steam
+style:
+  SidebarBackground: "#0b1321"
+  SidebarText: "#eaf1ff"
+  SidebarBackgroundCurrent: "#284e80"
+  SidebarTextCurrent: "#ffffff"
+slideshow: show.qml
+slideshowAPI: 1
+uploadServer:
+  type: none

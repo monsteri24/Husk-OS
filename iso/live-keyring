@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+[ -d /run/archiso ] || { echo 'Live keyring setup only runs on Archiso.' >&2; exit 1; }
+pacman-key --init
+pacman-key --populate archlinux ownos
+touch /run/ownos-live-keyring-ready

@@ -1,0 +1,7 @@
+[Plymouth Theme]
+Name=Husk OS Experimental
+Description=Text-only original Husk OS boot theme
+ModuleName=script
+[script]
+ImageDir=/usr/share/plymouth/themes/ownos
+ScriptFile=/usr/share/plymouth/themes/ownos/ownos.script

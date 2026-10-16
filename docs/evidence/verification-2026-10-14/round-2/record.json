@@ -1,0 +1,151 @@
+{
+  "round": 2,
+  "started_utc": "2026-10-14T17:27:22.199071+00:00",
+  "checks": [
+    {
+      "name": "unit",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-c",
+        "import json, sys, unittest\nfrom pathlib import Path\nsuite = unittest.defaultTestLoader.discover('tests')\nresult = unittest.TextTestRunner(verbosity=2).run(suite)\nsummary = {'discovered':result.testsRun, 'executed':result.testsRun-len(result.skipped),\n 'passed':result.testsRun-len(result.skipped)-len(result.failures)-len(result.errors)-len(result.expectedFailures),\n 'failed':len(result.failures)+len(result.errors), 'skipped':len(result.skipped),\n 'expected_failures':len(result.expectedFailures),\n 'skip_details':[{'test':str(test), 'reason':reason} for test,reason in result.skipped],\n 'failure_details':[{'test':str(test), 'traceback':trace} for test,trace in result.failures+result.errors]}\nPath(sys.argv[1]).write_text(json.dumps(summary,indent=2)+'\\n')\nsys.exit(0 if result.wasSuccessful() else 1)\n",
+        "/workspace/scratch/57f6973f51b0/own-os/.build/verification-2026-10-14/round-2/unit.json"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "log": "round-2/unit.txt"
+    },
+    {
+      "name": "syntax",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "scripts/check-source.py"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "log": "round-2/syntax.txt",
+      "checked_files": 90
+    },
+    {
+      "name": "native",
+      "command": [
+        "make",
+        "-B",
+        "native",
+        "WAYLAND_SCANNER=/workspace/scratch/57f6973f51b0/test-runtime/root/usr/bin/wayland-scanner",
+        "WAYLAND_CFLAGS=-I/workspace/scratch/57f6973f51b0/test-runtime/root/usr/include",
+        "WAYLAND_LIBS=-l:libwayland-client.so.0"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "log": "round-2/native.txt"
+    },
+    {
+      "name": "c-sanitizers",
+      "command": [
+        "make",
+        "test-c"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "log": "round-2/c-sanitizers.txt"
+    },
+    {
+      "name": "gtk-import",
+      "command": [
+        "/usr/bin/python3",
+        "-c",
+        "from ownos.ui import common, control, file_manager, launcher, panel, shell, notification_service; assert common.Gio.DBusNodeInfo.new_for_xml(shell.CONTROL_XML).interfaces[0].name == \"org.ownos.Desktop\"; print(\"Actual GTK imports and status D-Bus XML: PASS (no window/display test)\")"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "log": "round-2/gtk-import.txt"
+    },
+    {
+      "name": "gtk-css",
+      "command": [
+        "/usr/bin/python3",
+        "scripts/test-style.py"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "log": "round-2/gtk-css.txt"
+    },
+    {
+      "name": "packages-preflight",
+      "command": [
+        "bash",
+        "scripts/build-packages.sh",
+        "--check"
+      ],
+      "returncode": 1,
+      "status": "blocked",
+      "log": "round-2/packages-preflight.txt"
+    },
+    {
+      "name": "iso-preflight",
+      "command": [
+        "bash",
+        "scripts/build-iso.sh",
+        "--check"
+      ],
+      "returncode": 1,
+      "status": "blocked",
+      "log": "round-2/iso-preflight.txt"
+    },
+    {
+      "name": "qemu-preflight",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "scripts/test-vm.py",
+        "--check"
+      ],
+      "returncode": 1,
+      "status": "blocked",
+      "log": "round-2/qemu-preflight.txt"
+    }
+  ],
+  "unit": {
+    "discovered": 90,
+    "executed": 82,
+    "passed": 82,
+    "failed": 0,
+    "skipped": 8,
+    "expected_failures": 0,
+    "skip_details": [
+      {
+        "test": "test_control_center_persists_gaming_toggle (test_ui.UISmokeTests.test_control_center_persists_gaming_toggle)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_file_manager_changes_directory (test_ui.UISmokeTests.test_file_manager_changes_directory)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_husk_panel_and_launcher_are_separate_components (test_ui.UISmokeTests.test_husk_panel_and_launcher_are_separate_components)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_invalid_user_css_keeps_base_style (test_ui.UISmokeTests.test_invalid_user_css_keeps_base_style)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_notification_center_shows_plain_text (test_ui.UISmokeTests.test_notification_center_shows_plain_text)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_panel_position_change_preserves_launcher_and_notifications (test_ui.UISmokeTests.test_panel_position_change_preserves_launcher_and_notifications)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_preview_status_cannot_claim_live_wayland_boot (test_ui.UISmokeTests.test_preview_status_cannot_claim_live_wayland_boot)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      },
+      {
+        "test": "test_start_opens_and_search_finds_heroic (test_ui.UISmokeTests.test_start_opens_and_search_finds_heroic)",
+        "reason": "Run with OWNOS_UI_TESTS=1 inside a test display"
+      }
+    ],
+    "failure_details": []
+  },
+  "finished_utc": "2026-10-14T17:27:23.000080+00:00"
+}

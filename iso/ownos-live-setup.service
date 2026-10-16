@@ -1,0 +1,13 @@
+[Unit]
+Description=Prepare the disposable Husk OS live session
+Before=display-manager.service
+After=systemd-sysusers.service
+ConditionPathExists=/run/archiso
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/ownos/live-setup
+
+[Install]
+WantedBy=multi-user.target
