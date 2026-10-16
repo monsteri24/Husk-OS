@@ -1,5 +1,10 @@
 # Husk OS – todelliset testitulokset, 14.10.2026 🦅
 
+**Current development is System 2.** Its source, GTK and actual Labwc test
+results, including intermediate failures and environment limits, are recorded
+separately in [the System 2 report](../HuskOS-system-2-REPORT.md).
+The historical counts below are not current System 2 counts or hardware tests.
+
 **Uudempi System 1 -tulos 16.10.2026:** ISO rakennettu, ladattu GitHub Releaseen
 ja latauksen SHA-256 varmennettu; oikea QEMU/OVMF/Wayland-työpöytäkäynnistys
 ja sammutus läpäisty. Viimeisin GTK/Xvfb-ajo: **124 läpäistyä, 0 epäonnistunutta,

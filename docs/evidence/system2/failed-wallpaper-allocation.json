@@ -1,0 +1,26 @@
+{
+  "passed": false,
+  "tests": [
+    {
+      "test": "wayland-desktop-started",
+      "passed": true,
+      "status": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2-dev",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    }
+  ],
+  "failure": "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 376, in main\n    test.run()\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 277, in run\n    self.wallpaper('01-desktop-wallpaper')\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 208, in wallpaper\n    assert error < 12, f'Wallpaper differs from centered, aspect-preserving cover: MAE={error:.2f}'\n           ^^^^^^^^^^\nAssertionError: Wallpaper differs from centered, aspect-preserving cover: MAE=31.27\n",
+  "environment": "Ubuntu source install; real Labwc on wlroots X11 backend with Xvfb parent",
+  "limitations": "No ISO boot, GPU/KMS, physical monitor, audio, networking or installed Arch session acceptance is implied."
+}

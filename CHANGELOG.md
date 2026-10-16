@@ -1,3 +1,21 @@
+# System 2 development — 2026-10-16
+
+- Recovered the interrupted source work on top of System 1 and backed up the
+  original history. Kept System 1 as a permanent, unchanged historical release.
+- Made Husk UI text English, with gettext extraction/plurals and only English
+  enabled; translated Husk Settings, Start/taskbar, Files, notifications,
+  lock refusal, dialogs, SDDM and Husk installer text.
+- Added missing Labwc Close/Iconify/Maximize pointer actions and idempotent
+  migration that preserves existing custom mouse/key bindings.
+- Included the exact supplied desert image, uniform cover rendering inside
+  Husk Desktop and an output-sized background behind the panel.
+- Added original MIT SVG icons, checked name/GIcon loading and visible fallbacks,
+  including an explicit SVG decoder dependency.
+- Removed optional applications from default live/installer package policy;
+  retained authenticated on-demand installation and strengthened Flathub checks.
+- Added actual Labwc/Wayland pointer/rendering CI and installed-rootfs checks.
+  See [the System 2 report](HuskOS-system-2-REPORT.md) for tested scope/failures.
+
 # Muutosloki – Husk OS 0.1.1-dev, 14.10.2026
 
 Vertailukohta on edellisen toimituksen commit `0742805` (0.1.0-dev).

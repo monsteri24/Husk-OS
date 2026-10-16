@@ -1,0 +1,7 @@
+{
+  "passed": false,
+  "tests": [],
+  "failure": "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 352, in main\n    test.run()\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 245, in run\n    self.output = self.wait('nested Labwc X11 output', output_window)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 101, in wait\n    raise AssertionError('Timed out: ' + description)\nAssertionError: Timed out: nested Labwc X11 output\n",
+  "environment": "Ubuntu source install; real Labwc on wlroots X11 backend with Xvfb parent",
+  "limitations": "No ISO boot, GPU/KMS, physical monitor, audio, networking or installed Arch session acceptance is implied."
+}

@@ -1,0 +1,16 @@
+{
+  "source_commit": "993d80bf8a9d94a7f4f43e0a74b65fdafbde62cd",
+  "source_ci_run": 38896881466,
+  "labwc_ci_run": 38896881547,
+  "artifact_id": 12044078330,
+  "artifact_size_bytes": 11145530,
+  "artifact_sha256": "6a3a43c11e5f4db3cda03bd825503fbe9ec8c067ae5fb6a6fbb28df2af5f83ba",
+  "screenshots": {
+    "desktop-start.png": "3961fd04649f00d5959ca0efadcbf96a6545eb9605e8601fdcb3b372d502ae96",
+    "settings-window.png": "1905059a0e91ed5872b254bebecc81363d231faa8a6cf70d487ed38da760de98"
+  },
+  "image_edits": false,
+  "iso_built": false,
+  "system2_vm_boot_tested": false,
+  "system2_physical_hardware_tested": false
+}

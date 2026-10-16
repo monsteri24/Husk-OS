@@ -1,5 +1,28 @@
 # UEFI-virtuaalikoneen hyväksymistestit
 
+## System 2 source testing versus ISO boot
+
+The System 2 development task tests current source in the separate
+`System2 real Wayland desktop` Actions workflow. It stages the actual package
+functions on a disposable Ubuntu runner, starts real Labwc with its wlroots
+X11 backend inside an isolated Xvfb parent, and runs Husk Desktop with
+`GDK_BACKEND=wayland`. This is a real compositor/client integration test,
+distinct from the GTK `--preview` tests. It is **not** an ISO/UEFI boot,
+GPU/KMS test or physical laptop test.
+
+The harness `scripts/test-labwc.py` uses actual XTest pointer/keyboard input,
+captures compositor output with grim and records passive client telemetry.
+It reproduces the legacy broken X action, applies the real session migration,
+then exercises decoration controls, taskbar restoration and wallpaper redraw.
+It saves screenshots, logs and a machine-readable summary even on failure.
+Run it only in the prepared disposable test environment described by
+`.github/workflows/system2-desktop.yml`.
+
+The next System 2 ISO still needs the complete QEMU/OVMF acceptance checklist
+below, including automatic login, shutdown/reboot, input and offline usability.
+Do not substitute source/compositor tests for boot acceptance. Preserve the
+historical System 1 release and publish a separately verified System 2 asset.
+
 System 1:n Live-käynnistys on **oikeasti testattu 16.10.2026** GitHubin
 testikoneella QEMU TCG/OVMF:llä: UEFI-valikko, Linux, automaattinen live-istunto,
 Labwc/Husk Desktop, Start/taskbar, Foot ja ACPI-sammutus läpäisivät rajatun

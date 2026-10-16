@@ -1,8 +1,18 @@
 # Husk OS / OwnOS-MVP
 
+Current development: **System 2 (`system-2-dev`)**. English Husk interfaces,
+Labwc window-control repair, the original desert wallpaper, bundled icon
+fallbacks and a clean default application policy are in the current source.
+See the [System 2 development report](HuskOS-system-2-REPORT.md),
+[localization](docs/LOCALIZATION.md) and
+[optional application policy](docs/APP-INSTALLATION.md).
+System 2 has no released ISO yet. **System 1 remains permanently available**
+as the historical first Live release; its download and evidence below are
+unchanged.
+
 **Husk OS** on omaa käyttökokemusta ja järjestelmäsovelluksia kehittävä
 gaming-käyttöjärjestelmä, jonka tekninen perusta on **Arch Linux**.
-Tämä julkaisu on **Husk OS System 1 — Experimental Live**.
+Ensimmäinen julkaistu ISO on **Husk OS System 1 — Experimental Live**.
 Sisäiset `ownos`-paketti-, asetus- ja D-Bus-tunnisteet säilyvät yhteensopivuuden
 vuoksi. Pysyvä lähdekoodi ja jatkokehitys ovat tämän repositorion `main`-haarassa.
 

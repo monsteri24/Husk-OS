@@ -1,0 +1,45 @@
+{
+  "passed": false,
+  "tests": [
+    {
+      "test": "wayland-desktop-started",
+      "passed": true,
+      "status": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2-dev",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    },
+    {
+      "test": "01-desktop-wallpaper",
+      "passed": true,
+      "output": [
+        1280,
+        800
+      ],
+      "pixel_mean_absolute_error": 0.312,
+      "source_sha256": "e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac",
+      "telemetry": [
+        {
+          "source": "/usr/share/ownos/wallpapers/husk-desert.jpg",
+          "size": [
+            1280,
+            800
+          ]
+        }
+      ]
+    }
+  ],
+  "failure": "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 376, in main\n    test.run()\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 288, in run\n    terminal = self.wait('Foot launched from Start', lambda: next((entry for entry in self.entries()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/test-labwc.py\", line 114, in wait\n    raise AssertionError('Timed out: ' + description)\nAssertionError: Timed out: Foot launched from Start\n",
+  "environment": "Ubuntu source install; real Labwc on wlroots X11 backend with Xvfb parent",
+  "limitations": "No ISO boot, GPU/KMS, physical monitor, audio, networking or installed Arch session acceptance is implied."
+}

@@ -1,5 +1,29 @@
 # Pakettien ja ISO:n rakentaminen
 
+## System 2 development
+
+The current `main` branch is System 2 development source. Both generated live
+editions now omit optional applications; the standard edition retains 32-bit
+graphics libraries and SDDM, while `--first-boot` retains its proven TTY1 live
+login path. The signed package/rootfs build mechanism is preserved.
+
+Use GNU gettext, Python Cairo and librsvg in the build/test environment; the
+UI package now declares Cairo/SVG dependencies and includes the official
+wallpaper and bundled icons. `bash scripts/update-translations.sh` regenerates
+the English gettext template. Catalogs are compiled with `msgfmt` when added.
+
+`scripts/check-rootfs.py` now also requires System 2 modules/wallpaper/icons and
+a valid installed pacman inventory without known optional applications. Its
+fixture tests do not replace checking the actual Archiso rootfs.
+
+No System 2 ISO has been built by this development task. See
+[the System 2 report](../HuskOS-system-2-REPORT.md) for acceptance evidence.
+The existing System 1 release is permanent history and must not be modified.
+Do not use the System 1 publication workflow for System 2: its existing-asset
+guard is intentional. A future verified System 2 build must publish separately
+under tag `system-2`, asset `HuskOS-system-2.iso`, with its own checksum/report.
+The historical System 1 instructions below remain for reference.
+
 ## System 1: GitHub-rakennus ja pysyvä julkaisu
 
 16.10.2026: oikea System 1 ISO on rakennettu, julkaistu ja käynnistetty
