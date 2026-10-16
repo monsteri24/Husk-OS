@@ -23,5 +23,6 @@ switch:checked { background-color: @accent; }
 progressbar trough { background-color: #20304a; border-radius: 5px; }
 progressbar progress { background-color: @accent; border-radius: 5px; }
 notebook header { background-color: #121c2b; border: none; }
+notebook stack, viewport { background-color: @surface; color: @text; }
 notebook tab { padding: 10px; color: #a7b9d5; }
 notebook tab:checked { color: @text; border-bottom: 2px solid @accent; }

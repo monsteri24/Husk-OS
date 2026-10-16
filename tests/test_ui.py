@@ -42,6 +42,23 @@ class UISmokeTests(unittest.TestCase):
         control.gaming_switch.set_active(False); self.drain()
         self.assertFalse(self.store.load()['gaming_mode'])
 
+    def test_settings_content_keeps_readable_dark_background(self):
+        control = self.control.ControlWindow(store=self.store)
+        self.addCleanup(control.destroy)
+        control.show_all(); self.drain()
+        def viewports(widget):
+            if isinstance(widget, self.Gtk.Viewport): yield widget
+            if isinstance(widget, self.Gtk.Container):
+                for child in widget.get_children(): yield from viewports(child)
+        widgets = list(viewports(control))
+        self.assertTrue(widgets)
+        for widget in widgets:
+            style = widget.get_style_context()
+            background = style.get_background_color(self.Gtk.StateFlags.NORMAL)
+            foreground = style.get_color(self.Gtk.StateFlags.NORMAL)
+            self.assertLess(max(background.red, background.green, background.blue), 0.25)
+            self.assertGreater(min(foreground.red, foreground.green, foreground.blue), 0.7)
+
     def test_file_manager_changes_directory(self):
         (self.root / 'folder').mkdir()
         window = self.file_manager.FileWindow(self.root)
