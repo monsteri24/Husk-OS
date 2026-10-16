@@ -17,7 +17,9 @@ runuser -u builder -- env GNUPGHOME=/husk-gnupg bash -eu -o pipefail -c '
   OWNOS_SIGNING_KEY=$(gpg --batch --with-colons --list-secret-keys | awk -F: '\''$1 == "fpr" {print $10; exit}'\'')
   export OWNOS_SIGNING_KEY
   make check native
-  bash scripts/test-gtk.sh
+  # GTK preview regression runs in tests.yml on the supported Ubuntu host.
+  # Arch container glycin/bwrap image sandbox cannot run on this runner;
+  # do not disable its sandbox to turn a blocked GUI check into a pass.
   bash scripts/build-packages.sh
 '
 bash scripts/build-iso.sh --first-boot
