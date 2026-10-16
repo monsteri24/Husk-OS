@@ -233,7 +233,7 @@ class DesktopTest:
         self.screenshot(name + '-minimized')
         title = self.entry(identifier)['title']
         task = self.wait(name + ' taskbar button', lambda: next((button for button in
-            self.state().get('panel_buttons', []) if button.get('tooltip') == title), None))
+            self.state().get('task_buttons', []) if button.get('tooltip') == title), None))
         self.click(task['rect'])
         self.wait(name + ' restored by taskbar click', lambda: self.entry(identifier)
                   and not self.entry(identifier)['minimized'] and self.entry(identifier)['active'])

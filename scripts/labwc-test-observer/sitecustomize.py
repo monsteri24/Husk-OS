@@ -25,7 +25,7 @@ if kind and directory:
     latest = {'pid': os.getpid(), 'kind': kind, 'exited': False}
 
     def save(value):
-        temporary = destination.with_suffix('.tmp')
+        temporary = destination.with_suffix('.' + str(os.getpid()) + '.tmp')
         temporary.write_text(json.dumps(value), encoding='utf-8')
         temporary.replace(destination)
 
@@ -90,6 +90,9 @@ if kind and directory:
                 latest['panel_buttons'] = [dict(label=w.get_label(), tooltip=w.get_tooltip_text(),
                                                 rect=rectangle(w, shell.panel, panel))
                                            for w in descendants(shell.panel) if isinstance(w, Gtk.Button)]
+                latest['task_buttons'] = [dict(label=w.get_label(), tooltip=w.get_tooltip_text(),
+                                               rect=rectangle(w, shell.panel, panel))
+                                          for w in shell.tasks.get_children() if isinstance(w, Gtk.Button)]
                 latest['search'] = rectangle(shell.search, shell.start_window, start)
                 latest['search_text'] = shell.search.get_text()
                 latest['rows'] = [dict(name=row.app_name,
