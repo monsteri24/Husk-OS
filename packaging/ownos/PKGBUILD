@@ -36,7 +36,7 @@ package_ownos-core() {
 }
 
 package_ownos-ui() {
-  depends=('ownos-core' 'python-gobject' 'python-cairo' 'gtk3' 'foot' 'flatpak' 'adwaita-icon-theme')
+  depends=('ownos-core' 'python-gobject' 'python-cairo' 'gtk3' 'librsvg' 'foot' 'flatpak' 'adwaita-icon-theme')
   install -dm755 "$pkgdir/usr/lib/ownos/ownos/ui" "$pkgdir/usr/bin" "$pkgdir/usr/share/applications"
   install -m644 ownos/src/ownos/ui/*.py "$pkgdir/usr/lib/ownos/ownos/ui/"
   install -Dm644 ownos/data/style.css "$pkgdir/usr/share/ownos/style.css"

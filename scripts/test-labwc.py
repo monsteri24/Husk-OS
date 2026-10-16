@@ -240,8 +240,19 @@ class DesktopTest:
                     return path.name
         self.environment['WAYLAND_DISPLAY'] = self.wait('real Labwc Wayland socket', wayland_socket)
         def output_window():
-            output = self.command(['xdotool', 'search', '--onlyvisible', '--name', 'wlroots - X11'], check=False)
-            return output.splitlines()[0] if output.strip() else None
+            # Labwc versions override wlroots' default title differently and
+            # the nested output need not set WM_CLASS. At this point it is the
+            # only visible named client on our isolated parent X server.
+            output = self.command(['xdotool', 'search', '--onlyvisible', '--name', '.'], check=False)
+            for identifier in output.splitlines():
+                geometry = self.command(['xdotool', 'getwindowgeometry', '--shell', identifier], check=False)
+                values = dict(line.split('=', 1) for line in geometry.splitlines() if '=' in line)
+                if int(values.get('WIDTH', 0)) >= 320 and int(values.get('HEIGHT', 0)) >= 200:
+                    title = self.command(['xdotool', 'getwindowname', identifier], check=False).strip()
+                    (self.artifacts / 'parent-output-window.json').write_text(
+                        json.dumps(dict(id=identifier, title=title, geometry=values), indent=2))
+                    return identifier
+            return None
         self.output = self.wait('nested Labwc X11 output', output_window)
         self.command(['xdotool', 'windowsize', '--sync', self.output, '1280', '800'])
         time.sleep(0.5)
