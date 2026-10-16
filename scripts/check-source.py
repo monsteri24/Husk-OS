@@ -11,7 +11,7 @@ checked = 0
 for directory in ('src', 'scripts', 'installer/owninstall', 'tests'):
     for path in (root / directory).rglob('*.py'):
         ast.parse(path.read_text(), filename=str(path)); checked += 1
-for pattern in ('packaging/*/PKGBUILD', 'scripts/*.sh'):
+for pattern in ('packaging/*/PKGBUILD', 'scripts/*.sh', 'iso/*.sh'):
     for path in root.glob(pattern):
         subprocess.run(['bash', '-n', str(path)], check=True); checked += 1
 for path in [root / 'bin/own-session', root / 'iso/live-setup', root / 'iso/live-keyring', root / 'config/labwc/autostart']:

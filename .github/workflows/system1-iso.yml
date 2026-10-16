@@ -1,0 +1,72 @@
+name: Husk OS System 1 ISO
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/system1-build-request]
+permissions:
+  contents: write
+concurrency:
+  group: husk-system-1-release
+  cancel-in-progress: false
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify committed source and existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          gh api "repos/$GITHUB_REPOSITORY/releases" --jq '.[] | {tag_name,name,assets:[.assets[]|{name,size}]}'
+      - name: Build signed Husk packages and the real Archiso image
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/husk-gnupg"
+          docker run --rm --privileged \
+            -v "$GITHUB_WORKSPACE:/src" \
+            -v "$RUNNER_TEMP/husk-gnupg:/husk-gnupg" \
+            -e SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)" \
+            archlinux:base-devel bash /src/scripts/ci-build-system1.sh
+      - name: Publish immediately and verify the downloaded asset
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -s out/HuskOS-system-1.iso
+          iso_sha=$(cut -d ' ' -f1 out/HuskOS-system-1-SHA256.txt)
+          iso_size=$(cat out/HuskOS-system-1-SIZE.txt)
+          if gh release view system-1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # Never delete a previous good asset before its replacement exists.
+            echo 'An existing System 1 release requires review; keeping it intact.' >&2
+            exit 1
+          fi
+          notes="Experimental Husk OS System 1 Live image. Arch Linux base with Husk Desktop and Labwc. Source: $GITHUB_SHA. Built and structurally checked; boot acceptance is reported separately. SHA-256: $iso_sha. Size: $iso_size bytes. No installer included."
+          gh release create system-1 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title 'Husk OS System 1' --prerelease --notes "$notes" \
+            out/HuskOS-system-1.iso out/HuskOS-system-1-SHA256.txt out/rootfs-check.json
+          asset=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/system-1" \
+            --jq '.assets[] | select(.name=="HuskOS-system-1.iso")')
+          test "$(jq -r .state <<< "$asset")" = uploaded
+          test "$(jq -r .size <<< "$asset")" = "$iso_size"
+          test "$(jq -r .digest <<< "$asset")" = "sha256:$iso_sha"
+          download_url=$(jq -r .browser_download_url <<< "$asset")
+          curl --fail --location --retry 3 "$download_url" -o "$RUNNER_TEMP/HuskOS-system-1.iso"
+          test "$(sha256sum "$RUNNER_TEMP/HuskOS-system-1.iso" | cut -d ' ' -f1)" = "$iso_sha"
+          printf 'ISO: %s\nSize: %s bytes\nSHA-256: %s\nSource: %s\nBoot test: NOT TESTED\n' \
+            "$download_url" "$iso_size" "$iso_sha" "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Keep completed ISO if release publication failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HuskOS-system-1-recovery
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 7

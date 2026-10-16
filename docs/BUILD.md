@@ -1,5 +1,30 @@
 # Pakettien ja ISO:n rakentaminen
 
+## System 1: GitHub-rakennus ja pysyvä julkaisu
+
+GitHubin `Husk OS System 1 ISO` -työnkulku rakentaa kevyen Live-version
+virallisessa Arch Linux -kontissa. Se käyttää oikeaa Archisoa ja säilyttää
+Husk Desktopin; Calamares ja suuret pelipaketit jätetään tästä ISOsta pois.
+`--first-boot` käyttää tavallista TTY1 login/PAM -autokirjautumista ja käynnistää
+Labwc/Husk-istunnon. Ctrl+Alt+F2 avaa erillisen varapäätteen.
+
+Tallenna ja varmista lähteet GitHubissa ensin. Käynnistä sitten Actionsissa
+`Husk OS System 1 ISO` → `Run workflow`, tai päivitä
+`.github/system1-build-request` main-haarassa. Työnkulku julkaisee valmistuneen
+`HuskOS-system-1.iso`-levykuvan ja SHA-256:n Releaseen `system-1` ennen
+valinnaista käynnistystestausta. Se tarkistaa myös ladatun assetin koon ja
+SHA-256:n. Julkaisuvirheen yhteydessä valmistunut ISO tallennetaan Actionsin
+palautusartifaktiksi seitsemäksi päiväksi. Olemassa olevaa release-ISOa ei
+poisteta automaattisesti. Työnkulun onnistuminen ei ole graafinen käynnistystesti.
+
+Rakennusavain on vain tämän ajon paikallinen pakettiallekirjoitusavain;
+salainen avain sijaitsee lähdepuun ja ISO-rootfs:n ulkopuolella.
+
+Paikallisessa Arch-rakennus-VM:ssä käytä alla kuvattuja allekirjoitettuja
+pakettivaiheita ja lopuksi `sudo bash scripts/build-iso.sh --first-boot`.
+Pelkkä `mkarchiso ... iso` ei riitä: `iso/` on overlay ja profiilin generaattorin
+syöte, ei valmis releng-profiili.
+
 ## Rakennusympäristö
 
 Käytä erillistä, asennettua **Arch Linux x86_64 -virtuaalikonetta**. Esimerkiksi

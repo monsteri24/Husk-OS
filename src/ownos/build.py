@@ -134,7 +134,8 @@ airootfs_image_type="squashfs"
 airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)
 ''')
     write(output, 'husk-profile.json', json.dumps({'edition': 'first-boot' if first_boot else 'gaming',
-                                                  'version': VERSION}, indent=2) + '\n')
+                                                  'version': VERSION,
+                                                  'live_login': 'tty1' if first_boot else 'sddm'}, indent=2) + '\n')
     packages = safe_path(output, 'packages.x86_64').read_text().splitlines()
     packages += list(live_packages(first_boot))
     if with_installer: packages.append('calamares')
@@ -192,6 +193,15 @@ Relogin=false
     for name, destination in [('display-manager.service', '/usr/lib/systemd/system/sddm.service'),
                               ('default.target', '/usr/lib/systemd/system/graphical.target')]:
         overlay_link(root, 'etc/systemd/system/' + name, destination)
+    if first_boot:
+        # Use the normal login/PAM path, retaining logind and XDG_RUNTIME_DIR.
+        remove_overlay_file(root, 'etc/systemd/system/display-manager.service')
+        overlay_link(root, 'etc/systemd/system/default.target', '/usr/lib/systemd/system/multi-user.target')
+        write(root, 'etc/systemd/system/getty@tty1.service.d/husk-live.conf',
+              (project / 'iso/getty-live.conf').read_text())
+        overlay_link(root, 'etc/systemd/system/getty.target.wants/getty@tty1.service',
+                     '/usr/lib/systemd/system/getty@.service')
+        write(root, 'etc/profile.d/husk-live-session.sh', (project / 'iso/husk-live-session.sh').read_text())
     for name in ('NetworkManager.service', 'ownos-live-setup.service', 'ownos-live-keyring.service', 'bluetooth.service', 'power-profiles-daemon.service'):
         overlay_link(root, 'etc/systemd/system/multi-user.target.wants/' + name,
                      '/etc/systemd/system/' + name if name.startswith('ownos') else '/usr/lib/systemd/system/' + name)
@@ -238,7 +248,19 @@ def validate_profile(profile):
         for value in values:
             if value not in text: problems.append('Missing ' + value + ' in ' + relative)
     manager = profile / 'airootfs/etc/systemd/system/display-manager.service'
-    if not manager.is_symlink() or manager.readlink() != Path('/usr/lib/systemd/system/sddm.service'):
+    if first_boot:
+        if manager.is_symlink() or manager.exists():
+            problems.append('First-boot login must not start SDDM.')
+        hook = profile / 'airootfs/etc/profile.d/husk-live-session.sh'
+        if not hook.is_file() or 'exec /usr/bin/husk-session' not in hook.read_text():
+            problems.append('Missing first-boot husk-live-session hook.')
+        tty1 = profile / 'airootfs/etc/systemd/system/getty@tty1.service.d/husk-live.conf'
+        if not tty1.is_file() or '--autologin live' not in tty1.read_text():
+            problems.append('Missing first-boot tty1 live login.')
+        target = profile / 'airootfs/etc/systemd/system/default.target'
+        if not target.is_symlink() or target.readlink() != Path('/usr/lib/systemd/system/multi-user.target'):
+            problems.append('First-boot default target must start console login.')
+    elif not manager.is_symlink() or manager.readlink() != Path('/usr/lib/systemd/system/sddm.service'):
         problems.append('Live display manager must be SDDM.')
     for name in ('NetworkManager.service','ownos-live-setup.service','ownos-live-keyring.service',
                  'bluetooth.service','power-profiles-daemon.service'):

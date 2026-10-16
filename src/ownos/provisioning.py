@@ -4,6 +4,9 @@ from ownos.installer import installation_plan, validate_target
 from ownos.build import safe_path, write
 
 CLEANUP = ('etc/sddm.conf.d/ownos-live.conf',
+           'etc/profile.d/husk-live-session.sh',
+           'etc/systemd/system/getty@tty1.service.d/husk-live.conf',
+           'etc/systemd/system/getty.target.wants/getty@tty1.service',
            'etc/systemd/system/sddm.service.d/husk-live.conf',
            'etc/polkit-1/rules.d/49-ownos-live.rules',
            'etc/systemd/system/ownos-live-setup.service',

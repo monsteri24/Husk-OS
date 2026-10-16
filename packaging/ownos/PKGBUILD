@@ -2,7 +2,7 @@
 pkgbase=ownos
 pkgname=(ownos-core ownos-ui ownos-desktop ownos-branding ownos-keyring ownos-live)
 pkgver=0.1.3.dev
-pkgrel=1
+pkgrel=2
 pkgdesc='Husk OS experimental desktop and system tools on an Arch Linux base'
 arch=('x86_64')
 license=('MIT')

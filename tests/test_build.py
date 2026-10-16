@@ -55,6 +55,27 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(json.loads((out / 'husk-profile.json').read_text())['edition'], 'gaming')
         self.assertNotIn('-processors 2', (out / 'profiledef.sh').read_text())
 
+    def test_first_boot_uses_tty_login_and_keeps_rescue_console(self):
+        out = self.generate(first_boot=True)
+        units = out / 'airootfs/etc/systemd/system'
+        hook = out / 'airootfs/etc/profile.d/husk-live-session.sh'
+        self.assertTrue(hook.is_file())
+        self.assertIn('exec /usr/bin/husk-session', hook.read_text())
+        self.assertEqual(json.loads((out / 'husk-profile.json').read_text())['live_login'], 'tty1')
+        self.assertFalse((units / 'display-manager.service').is_symlink())
+        self.assertEqual((units / 'default.target').readlink(), Path('/usr/lib/systemd/system/multi-user.target'))
+        for tty in ('tty1', 'tty2'):
+            self.assertIn('--autologin live', (units / ('getty@' + tty + '.service.d/husk-live.conf')).read_text())
+            self.assertTrue((units / ('getty.target.wants/getty@' + tty + '.service')).is_symlink())
+        self.assertEqual(self.build.validate_profile(out), [])
+
+    def test_first_boot_validator_rejects_missing_login_hook(self):
+        out = self.generate(first_boot=True)
+        hook = out / 'airootfs/etc/profile.d/husk-live-session.sh'
+        self.assertTrue(hook.is_file())
+        hook.unlink()
+        self.assertTrue(any('husk-live-session' in p for p in self.build.validate_profile(out)))
+
     def test_first_boot_validation_still_requires_mesa_and_rejects_gaming_additions(self):
         out = self.generate(first_boot=True)
         packages = out / 'packages.x86_64'
