@@ -1,4 +1,5 @@
 name: Husk OS System 1 published ISO boot
+run-name: System 1 boot with active compositor VT preserved
 on:
   workflow_dispatch:
   push:
