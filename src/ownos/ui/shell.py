@@ -69,7 +69,11 @@ class HuskDesktop:
             ls.set_namespace(window, 'ownos-' + title.lower().replace(' ', '-'))
             ls.set_layer(window, getattr(ls.Layer, layer_name)); ls.set_monitor(window, monitor or self.primary)
             for edge in anchors: ls.set_anchor(window, getattr(ls.Edge, edge), True)
-            if layer_name == 'BACKGROUND': ls.set_keyboard_mode(window, ls.KeyboardMode.NONE)
+            if layer_name == 'BACKGROUND':
+                ls.set_keyboard_mode(window, ls.KeyboardMode.NONE)
+                # Cover the output behind the panel, rather than shrinking the
+                # wallpaper into the work area reserved by its exclusive zone.
+                ls.set_exclusive_zone(window, -1)
             else: ls.set_keyboard_mode(window, ls.KeyboardMode.ON_DEMAND)
         self.windows.append(window)
         window.connect('delete-event', lambda *_: (window.hide(), True)[1])
