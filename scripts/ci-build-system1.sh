@@ -22,6 +22,9 @@ runuser -u builder -- env GNUPGHOME=/husk-gnupg bash -eu -o pipefail -c '
   # do not disable its sandbox to turn a blocked GUI check into a pass.
   bash scripts/build-packages.sh
 '
+# Official container images have verification keys but no local signing key.
+# lsign-key in the ISO builder needs this normal, disposable pacman keyring.
+pacman-key --init
 bash scripts/build-iso.sh --first-boot
 
 # Only a completed mkarchiso image is eligible for publication.
