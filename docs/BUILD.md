@@ -1,28 +1,63 @@
-# Pakettien ja ISO:n rakentaminen
+# Building packages and ISO images
 
-## System 2 development
+## System 2 development and pending release gates
 
-The current `main` branch is System 2 development source. Both generated live
-editions now omit optional applications; the standard edition retains 32-bit
-graphics libraries and SDDM, while `--first-boot` retains its proven TTY1 live
-login path. The signed package/rootfs build mechanism is preserved.
+The current candidate retains Arch Linux, the modular GTK Husk Desktop and the
+existing signed Archiso build mechanism. **As of 2026-10-16, no System 2 ISO or
+release exists.** The latest recorded headless source baseline discovered 240
+tests: 203 passed and 37 display-dependent tests were skipped. The new GTK,
+Labwc, ISO and QEMU/OVMF acceptance runs are pending. See the dated
+[System 2 report](../HuskOS-system-2-REPORT.md); older successful compositor
+runs apply to their recorded source commits.
 
-Use GNU gettext, Python Cairo and librsvg in the build/test environment; the
-UI package now declares Cairo/SVG dependencies and includes the official
-wallpaper and bundled icons. `bash scripts/update-translations.sh` regenerates
-the English gettext template. Catalogs are compiled with `msgfmt` when added.
+English remains the default; Finnish is explicitly selectable and saved in
+Settings. GNU gettext compiles the shipped Finnish catalog into the core package.
+The UI package declares Python Cairo/librsvg dependencies and includes bundled
+icons and the exact official wallpaper. The base excludes optional user applications. The System 2
+release candidate uses `--first-boot`: the retained TTY1/PAM Live startup and
+64-bit Mesa, without Calamares or optional 32-bit gaming tools. The standard
+profile additionally retains 32-bit graphics libraries. Neither profile is a
+completed permanent-installer release.
 
-`scripts/check-rootfs.py` now also requires System 2 modules/wallpaper/icons and
-a valid installed pacman inventory without known optional applications. Its
-fixture tests do not replace checking the actual Archiso rootfs.
+The separate **Husk OS System 2 ISO** workflow is
+[system2-iso.yml](../.github/workflows/system2-iso.yml). It is configured to:
 
-No System 2 ISO has been built by this development task. See
-[the System 2 report](../HuskOS-system-2-REPORT.md) for acceptance evidence.
-The existing System 1 release is permanent history and must not be modified.
-Do not use the System 1 publication workflow for System 2: its existing-asset
-guard is intentional. A future verified System 2 build must publish separately
-under tag `system-2`, asset `HuskOS-system-2.iso`, with its own checksum/report.
-The historical System 1 instructions below remain for reference.
+1. Require the source/native/GTK job and the real nested Labwc interaction job
+   on the exact candidate source. These include new Finnish-selection,
+   file-navigation and deliberate dialog-input checks.
+2. Build signed Husk packages and the first-boot Archiso image inside a disposable
+   privileged Arch build container. This environment is isolated from user disks;
+   the signing secret stays outside the source tree and ISO payload.
+3. Extract the actual completed ISO's SquashFS and verify kernel/initramfs,
+   installed modules, the wallpaper's exact hash, a usable compiled Finnish
+   catalog and pacman's package inventory, including the absence of known
+   optional applications. Fixture/profile checks are separate from this gate.
+4. Install signed Firefox packages and launch Firefox headlessly in the separate
+   build container. This runs after image creation and does not add Firefox to
+   the ISO or test Live GUI/polkit authentication.
+5. Boot the exact checksummed image through QEMU/OVMF, reach the live Wayland
+   desktop, open Foot and verify orderly shutdown. The reference uses 4 GiB RAM
+   and 2 virtual CPUs; this is not a proven physical minimum or hardware result.
+6. Only after those gates pass, publish a separate experimental `system-2`
+   pre-release with `HuskOS-system-2.iso`, its own checksum and evidence. Verify
+   the remote asset's size/digest and a complete fresh download.
+
+These are configured gates, **not claims that the current runs have passed**.
+A real Live GUI administrator-authentication and public-network application
+installation remains a separate unaccepted path. Native app installation in Live
+asks the user to set a temporary password with `passwd`, then uses mandatory
+polkit administrator authentication and normal package confirmation. There are
+no passwordless grants in the Live rule. See [APP-INSTALLATION.md](APP-INSTALLATION.md).
+
+Do not use the System 1 publication workflow to publish System 2, and never
+replace or delete System 1 assets. If a later gate or upload fails, the workflow
+is configured to retain an already-built ISO as a short-lived recovery artifact;
+that artifact is not a released or accepted download. Consult
+[Releases](https://github.com/monsteri24/Husk-OS/releases) for assets that actually
+exist and [INSTALL.md](INSTALL.md) for checksum/USB/Live guidance.
+
+The remaining sections preserve historical System 1 build instructions and
+results. They are not new System 2 acceptance evidence.
 
 ## System 1: GitHub-rakennus ja pysyvä julkaisu
 

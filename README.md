@@ -1,91 +1,102 @@
-# Husk OS / OwnOS-MVP
+# Husk OS
 
-Current development: **System 2 (`system-2-dev`)**. English Husk interfaces,
-Labwc window-control repair, the original desert wallpaper, bundled icon
-fallbacks and a clean default application policy are in the current source.
-See the [System 2 development report](HuskOS-system-2-REPORT.md),
-[localization](docs/LOCALIZATION.md) and
-[optional application policy](docs/APP-INSTALLATION.md).
-System 2 has no released ISO yet. **System 1 remains permanently available**
-as the historical first Live release; its download and evidence below are
-unchanged.
+Husk OS is an experimental gaming operating system built on **Arch Linux**, with
+its own GTK **Husk Desktop** on Labwc/Wayland. The desktop, Settings, Files,
+launcher and taskbar are developed here. Existing `ownos` package, configuration
+and D-Bus names remain for compatibility.
 
-**Husk OS** on omaa käyttökokemusta ja järjestelmäsovelluksia kehittävä
-gaming-käyttöjärjestelmä, jonka tekninen perusta on **Arch Linux**.
-Ensimmäinen julkaistu ISO on **Husk OS System 1 — Experimental Live**.
-Sisäiset `ownos`-paketti-, asetus- ja D-Bus-tunnisteet säilyvät yhteensopivuuden
-vuoksi. Pysyvä lähdekoodi ja jatkokehitys ovat tämän repositorion `main`-haarassa.
+**System 2 is current development source. As of 2026-10-16, no System 2 ISO or
+release is available.** New GTK/Labwc acceptance checks and the signed ISO build
+are pending. Check the [Releases page](https://github.com/monsteri24/Husk-OS/releases)
+and the dated [System 2 report](HuskOS-system-2-REPORT.md) for publication and
+verification status. Results for an older source commit do not validate the
+current candidate.
 
-**[Lataa HuskOS-system-1.iso](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1.iso)**
-— 2 103 050 240 tavua.
-[SHA-256](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1-SHA256.txt)
-ja [todellinen rakennus-/käynnistysraportti](HuskOS-system-1-REPORT.md).
+## Current System 2 source
 
-ISO on rakennettu Archisolla, tallennettu GitHub Releaseen ja ladattu takaisin
-tarkistussummaa vasten. **QEMU/OVMF-käynnistys oikeaan Labwc/Wayland-istuntoon,
-Husk Desktopiin, Start-valikkoon ja taskbariin sekä terminaalin avaaminen ja
-hallittu sammutus on testattu.** Tämä on kevyt Live-versio ilman Calamaresia;
-asennusta, pelejä tai fyysistä laitteistoa ei ole testattu.
+- English is the default interface language. **Settings → Appearance → Interface
+  language → Suomi (fi-FI)** saves Finnish for subsequent application starts;
+  the desktop reloads its translated controls. See [localization](docs/LOCALIZATION.md).
+- The original black-and-gold desert wallpaper, Start/search, taskbar,
+  notifications, window controls, Husk Settings, Husk Files and Foot terminal
+  are retained.
+- The base includes essential desktop, firmware, graphics, networking, audio,
+  storage and recovery components. Optional applications such as Steam, Proton,
+  Wine, Lutris, Heroic, Discord and Firefox are installed only on request.
+  Local desktop, terminal, Settings and file use do not require an Internet connection.
+- Missing curated applications open a deliberate Cancel/OK installation dialog.
+  The application helper keeps its terminal open and verifies installed state
+  before reporting success. Native application installation in Live requires a temporary password,
+  administrator authentication and normal package-manager confirmation.
+  [Application installation](docs/APP-INSTALLATION.md) explains the sequence and
+  its current acceptance limits.
 
-Oma GTK3-käyttöliittymä tekee työpöydän, keskitetyn alapalkin, Start-valikon,
-ilmoituskeskuksen, Gaming Control Centerin ja yksinkertaisen tiedostonhallinnan.
-Labwc hoitaa Waylandin, ikkunoiden siirtämisen, koon muuttamisen ja snapin.
-Tämä ei ole KDE-teema. KDE ja GNOME ovat erillisiä asennusvaihtoehtoja.
+The latest recorded headless source baseline has **240 discovered tests: 203
+passed and 37 display-dependent tests skipped**. New graphical acceptance and
+System 2 ISO/QEMU checks are pending. Source tests, a nested Wayland desktop,
+a booted ISO and physical hardware are separate evidence categories.
 
-## Aloita tästä
+## Try or build Husk OS
 
-1. Lue [kattava väliraportti](docs/VERIFICATION-REPORT.md),
-   [todelliset testitulokset](docs/TEST-RESULTS.md) ja
-   [laitetuen rajat](docs/HARDWARE-COMPATIBILITY.md).
-2. Rakenna paketit ja ISO **erillisessä Arch-virtuaalikoneessa**:
-   [BUILD.md](docs/BUILD.md).
-3. Testaa käynnistys ja asennus vain uudella virtuaalilevyllä:
-   [VM-TESTING.md](docs/VM-TESTING.md).
-4. Käyttö ja pelien käynnistys: [INSTALL.md](docs/INSTALL.md) ja
-   [GAMING.md](docs/GAMING.md).
+Read the [download, checksum, USB and Live guide](docs/INSTALL.md) first.
+There is **no completed graphical operating-system installer**; the Calamares
+integration remains experimental source. Use a disposable VM for development.
+The [build guide](docs/BUILD.md) describes the new System 2 gates and preserves
+historical System 1 instructions. [VM testing](docs/VM-TESTING.md) documents
+isolated virtual-disk checks.
 
-Viimeisimmän GTK/Xvfb-regression kaikki 124 testiä läpäisivät. Tämä on erillinen
-tulos oikean Wayland-live-käynnistyksen hyväksynnästä. Tunnetut monitorinvaihdon,
-kuvakkeiden, taustan ja sr0-palvelun puutteet ovat julkaisuraportissa.
-Testien läpäisy ei todista pelien FPS:ää tai fyysisiä laitteistoajureita.
+The release candidate uses the first-boot Live profile, with 64-bit Mesa and
+TTY1/PAM session startup. The standard development profile also retains 32-bit
+graphics libraries. GameMode and MangoHud are optional tools: their Settings
+switches configure `husk-game` and do not install them. Install the tools or
+disable the corresponding switch before using that wrapper. CPU policy controls,
+automatic NVIDIA/Optimus switching and accepted VRR behavior are not provided.
+No FPS improvement or universal game/anti-cheat compatibility is claimed.
 
-## Projektin osat
+Husk Store, the native **`.hpk`** format and a maintained signed Husk update
+repository/key lifecycle remain planned. The current Arch/Flatpak installation
+paths do not implement that future store or native package ecosystem.
 
-| Polku | Sisältö |
+## Historical System 1 release
+
+System 1 remains preserved as **Husk OS System 1 — Experimental Live**:
+
+- [Download HuskOS-system-1.iso](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1.iso)
+  — **2,103,050,240 bytes**.
+- [SHA-256 file](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1-SHA256.txt)
+  — `8f14dc313556db9e56fb37a0ce3ef33f2d46cf35200238fb61a3b6240c856363`.
+- Source: `8b0ac0b32dc60fc00bbef261acddc3414ce02a52`.
+- [Release](https://github.com/monsteri24/Husk-OS/releases/tag/system-1) and
+  [original build/boot report](HuskOS-system-1-REPORT.md).
+
+The recorded System 1 QEMU/OVMF run reached the real Labwc/Wayland desktop,
+opened Start and Foot, and shut down normally. Its report retains the earlier
+failed run and known limitations. This lightweight Live release omits Calamares;
+its VM result does not establish permanent installation, game performance,
+physical hardware support or System 2 acceptance. System 1 assets and history
+must not be overwritten by System 2.
+
+## Development
+
+| Path | Purpose |
 |---|---|
-| `src/ownos/` | Asetukset, pelikäynnistys, päivityspolitiikka, pelilista, järjestelmämittarit |
-| `src/ownos/ui/` | Oma GTK-työpöytä, Start, asetukset, tiedostot, ilmoitukset |
-| `native/` | C/Wayland-apuohjelma ikkunalistaa ja ikkunatoimintoja varten |
-| `config/labwc/` | Ikkunat, pikanäppäimet, hiiren flat-profiili, istunnon käynnistys |
-| `packaging/` | Allekirjoitettavien Arch-pakettien reseptit ja Calamares 3.3.14 |
-| `installer/` | Valinnainen Calamares: Husk Desktop / KDE / GNOME / Minimal ja ajurivalinta |
-| `iso/` | Vain live-ISOlle tarkoitettu käyttäjä- ja kirjautumisasetus |
-| `branding/` | Oma tekstipohjainen SDDM-kirjautuminen ja Plymouth-teeman lähteet |
-| `scripts/` | Pakettien/ISO:n rakentaminen, allekirjoitustarkistus ja QEMU-käynnistys |
-| `tests/` | Ydintoiminnot, asennuspolitiikka, paketointi, VM-rajaukset, GTK- ja C-testit |
+| `src/ownos/` | Configuration, installation policy, gaming wrapper, metrics and session code |
+| `src/ownos/ui/` | GTK desktop, launcher, taskbar, Settings, Files and notifications |
+| `native/` | Wayland toplevel helper and window actions |
+| `config/labwc/` | Window controls, shortcuts and session/input configuration |
+| `locale/` | Gettext template and Finnish catalog |
+| `packaging/` | Signed Arch package recipes and optional Calamares integration |
+| `installer/` | Experimental installation policy and configuration |
+| `iso/` | Live profile inputs and session setup |
+| `scripts/` | Source, desktop, package, ISO and VM verification |
+| `tests/` | Source contracts, regressions, native helpers and prepared-display tests |
 
-Yksikkötestit (Python + PyYAML): `make test`. C-testit: `make test-c`. Lähteiden ja asetusten
-syntaksi: `python3 scripts/check-source.py` (vaatii PyYAMLin).
-Todellinen GTK-testiajo: `./scripts/test-gtk.sh` Archin tai CI:n
-testiympäristössä, jossa Xvfb ja GTK ovat käytettävissä.
+Run `make test` for Python tests, `make test-c` for the native JSON helper,
+and `python3 scripts/check-source.py` for source/configuration syntax checks.
+Python checks require PyYAML; catalog checks require GNU gettext. Run
+`./scripts/test-gtk.sh` in the prepared GTK/Xvfb environment, and
+`python3 scripts/test-labwc.py` in the prepared nested Wayland environment.
+Neither substitutes for booting the exact ISO.
 
-Ensimmäinen ISO rakennetaan oletuksena **live-käyttöön ilman Calamaresia**.
-Asentajan lähteet ja vaihtoehdot säilyvät; `--with-installer` ottaa sen mukaan
-molemmissa rakennusvaiheissa. Aktiivinen Archiso-profiili tuotetaan asennetun
-relengin pohjalta: [iso/PROFILE.md](iso/PROFILE.md).
-
-Husk Desktop on modulaarinen: `panel.py` vastaa taskbarista ja `launcher.py`
-Start-valikosta, `desktop_layout.py` sijoittelusta ja `themes.py` käyttäjän CSS:stä.
-Paneelin sijaintia, korostusväriä ja CSS:ää voi muuttaa lähdekoodin mukaan ilman
-ISO:n uudelleenrakentamista. Perustyöpöytä on käynnistetty VM:ssä; kaikkien
-asetusten vuorovaikutusta ei ole vielä hyväksymistestattu.
-Windows-henkinen MVP on välivaihe kohti omaa Husk Desktopia; Linux-ydin,
-labwc, GTK ja Calamares ovat avoimesti dokumentoituja upstream-komponentteja.
-
-Turvallisuusominaisuuksia ei poisteta suorituskyvyn vuoksi. Päivitykset ovat
-täysiä `pacman -Syu` -transaktioita. Heroic asennetaan käyttäjäkohtaiseen
-Flatpakiin käyttäjän vahvistuksella. Steam/Proton eivät takaa kaikkien
-Windows-pelien toimivuutta. Fortnitea ei luvata paikallisesti toimivaksi.
-
-Lisenssi: [MIT](LICENSE); riippuvuudet ja mukana oleva Wayland-protokolla
-säilyttävät omat lisenssinsä.
+License: [MIT](LICENSE). Linux, Arch Linux, Labwc, GTK and other upstream
+components retain their own licenses and are documented openly.

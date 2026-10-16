@@ -13,6 +13,9 @@ class FreshActivation:
         self._pointer = None
         self._key = None
 
+    def is_opening_key(self, key):
+        return self._opening_key is not None and key == self._opening_key
+
     def pointer_press(self, button, inside):
         self.cancel()
         if button == 1 and inside:

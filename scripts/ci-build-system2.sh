@@ -3,13 +3,16 @@
 set -euo pipefail
 cd /src
 [[ $(. /etc/os-release; printf '%s' "$ID") == arch && $EUID == 0 ]]
+[[ ${HUSK_HOST_UID:?} =~ ^[0-9]+$ && $HUSK_HOST_UID -ne 0 ]]
+[[ ${HUSK_HOST_GID:?} =~ ^[0-9]+$ ]]
+# The host boot harness and release step must be able to create files in out/.
+trap 'if [[ -d /src/out && ! -L /src/out ]]; then chown "$HUSK_HOST_UID:$HUSK_HOST_GID" /src/out; fi' EXIT
 pacman -Sy --noconfirm archlinux-keyring
 pacman -Syu --noconfirm --needed base-devel archiso git gnupg python python-yaml \
   wayland pkgconf gtk3 python-gobject python-cairo librsvg gettext gtk-layer-shell \
   xorg-server-xvfb xorg-xauth dbus
-useradd --create-home builder
+useradd --create-home --user-group --uid "$HUSK_HOST_UID" builder
 install -d -m700 -o builder -g builder /husk-gnupg
-chown -R builder:builder /src
 runuser -u builder -- env GNUPGHOME=/husk-gnupg bash -eu -o pipefail -c '
   cd /src
   gpg --batch --pinentry-mode loopback --passphrase "" \
@@ -59,6 +62,8 @@ pacman -U --noconfirm .build/repo/ownos-core-*.pkg.tar.zst
 printf 'y\n' | /usr/lib/ownos/own-admin install firefox 2>&1 | tee out/firefox-install.log
 pacman -Q firefox | tee out/firefox-package.txt
 runuser -u builder -- /usr/bin/firefox --version 2>&1 | tee out/firefox-version.txt
+install -d -m755 -o builder -g builder /firefox-smoke
 runuser -u builder -- timeout 60 /usr/bin/firefox --headless \
-  --screenshot /src/out/firefox-headless.png about:blank > out/firefox-headless.log 2>&1
+  --screenshot /firefox-smoke/firefox-headless.png about:blank > out/firefox-headless.log 2>&1
+install -m644 /firefox-smoke/firefox-headless.png out/firefox-headless.png
 test -s out/firefox-headless.png

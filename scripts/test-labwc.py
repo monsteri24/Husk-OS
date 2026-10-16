@@ -177,7 +177,9 @@ class DesktopTest:
             stream.write(json.dumps(dict(event='pointer-click', button=1,
                                          x=x + width // 2, y=y + height // 2,
                                          time=time.monotonic())) + '\n')
-        self.command(['xdotool', 'mousemove', '--sync', '--window', self.output,
+        # XTest preserves move/click order. --sync can wait forever when two
+        # successive targets have the same center (for example nested rows).
+        self.command(['xdotool', 'mousemove', '--window', self.output,
                       str(x + width // 2), str(y + height // 2), 'click', '1'])
         time.sleep(0.25)
 
@@ -204,7 +206,7 @@ class DesktopTest:
         if rect is not None:
             x, y, width, height = rect
             evidence.update(x=x + width // 2, y=y + height // 2)
-            argv += ['mousemove', '--sync', '--window', self.output,
+            argv += ['mousemove', '--window', self.output,
                      str(evidence['x']), str(evidence['y'])]
         if action != 'move':
             argv += [action, '1']
@@ -228,7 +230,7 @@ class DesktopTest:
     def titlebar(self, name):
         # Exact project theme colors identify actual rendered decorations. Glyph
         # centers identify buttons without depending on version-specific sizes.
-        self.command(['xdotool', 'mousemove', '--sync', '--window', self.output, '1200', '500'])
+        self.command(['xdotool', 'mousemove', '--window', self.output, '1200', '500'])
         image = self.screenshot(name)
         pixels = image.load()
         x0, y0, width, height = active_decoration_bounds(image)
@@ -382,10 +384,12 @@ class DesktopTest:
         assert not unexpected, description + ': unexpected Foot window ' + repr(unexpected)
         assert not self.installer_terminals(), description + ': installer terminal started'
 
-    def held_pointer_confirmation(self):
+    def held_pointer_confirmation(self, release_over='confirm'):
         """A separate real GTK client maps the production dialog during a hold."""
+        assert release_over in ('cancel', 'confirm'), release_over
+        label = 'Cancel' if release_over == 'cancel' else 'OK'
         script = self.runtime / 'husk-labwc-confirm-client.py'
-        result = self.runtime / 'held-pointer-result.json'
+        result = self.runtime / ('held-pointer-' + label + '-result.json')
         script.write_text('''import json
 from pathlib import Path
 import sys
@@ -399,7 +403,7 @@ parent.add(button)
 opened = False
 def open_dialog():
     dialog = ConfirmationDialog(parent, 'Held pointer input regression',
-                                'Only a fresh deliberate OK may accept this test dialog.')
+                                'Only fresh deliberate button input may answer this test dialog.')
     dialog.show_all()
     response = dialog.run()
     Path(sys.argv[1]).write_text(json.dumps(dict(response=int(response),
@@ -417,18 +421,22 @@ button.connect('button-press-event', pressed)
 parent.show_all()
 Gtk.main()
 ''')
-        process = self.launch(['/usr/bin/python3', str(script), str(result)], 'held-pointer-client')
-        window = self.wait('separate real held-pointer GTK client', lambda: self.native_window(
-            'confirmation', lambda candidate: any(button['label'] == 'Hold pointer to open confirmation'
-                                                 for button in candidate['buttons'])))
+        process = self.launch(['/usr/bin/python3', str(script), str(result)], 'held-pointer-' + label + '-client')
+        def client_window():
+            state = self.state('confirmation')
+            if state.get('pid') != process.pid or state.get('exited'):
+                return None
+            return self.native_window('confirmation', lambda candidate: any(
+                button['label'] == 'Hold pointer to open confirmation' for button in candidate['buttons']))
+        window = self.wait('separate real held-pointer GTK client for ' + label, client_window)
         button = next(button for button in window['buttons']
                       if button['label'] == 'Hold pointer to open confirmation')
-        rectangle = self.window_rectangle(window, button['rect'], 'held-pointer-open-button')
+        rectangle = self.window_rectangle(window, button['rect'], 'held-pointer-' + label + '-open-button')
         self.pointer_event('mousedown', rectangle)
         try:
             dialog = self.wait('production confirmation maps while pointer remains held', lambda:
                                self.confirmation('confirmation'))
-            target = self.window_rectangle(dialog, dialog['confirmation']['confirm'], 'held-pointer-OK')
+            target = self.window_rectangle(dialog, dialog['confirmation'][release_over], 'held-pointer-over-' + label)
             self.pointer_event('move', target)
         finally:
             self.pointer_event('mouseup')
@@ -436,12 +444,13 @@ Gtk.main()
         assert not result.exists(), 'A release inherited from another widget accepted or dismissed the dialog'
         dialog = self.confirmation('confirmation')
         assert dialog, 'Held-pointer dialog disappeared without a fresh press'
-        self.screenshot('held-pointer-release-rejected')
-        self.click(self.window_rectangle(dialog, dialog['confirmation']['cancel'], 'held-pointer-fresh-Cancel'))
+        self.screenshot('held-pointer-over-' + label + '-release-rejected')
+        self.click(self.window_rectangle(dialog, dialog['confirmation']['cancel'],
+                                         'held-pointer-over-' + label + '-fresh-Cancel'))
         self.wait('fresh Cancel closes held-pointer dialog', lambda: result.exists() and process.poll() is not None)
         response = json.loads(result.read_text())
         assert response == dict(response=-6, accepted=False), response
-        self.record('confirmation-inherited-pointer-release-rejected', result=response,
+        self.record('confirmation-inherited-pointer-release-over-' + label + '-rejected', result=response,
                     client='separate real GTK client using unchanged production ConfirmationDialog')
 
     def deliberate_installer_confirmation(self, keyboard=False):
@@ -508,7 +517,8 @@ Gtk.main()
         self.assert_no_installer(before, 'fresh Cancel')
         self.record('missing-app-cross-button-drag-and-fresh-Cancel', installer_started=False,
                     sequence=['Cancel press', 'move to OK', 'OK release', 'fresh Cancel click'])
-        self.held_pointer_confirmation()
+        self.held_pointer_confirmation('confirm')
+        self.held_pointer_confirmation('cancel')
         self.deliberate_installer_confirmation()
         self.deliberate_installer_confirmation(keyboard=True)
 

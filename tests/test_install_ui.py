@@ -65,6 +65,17 @@ class ConfirmationInputTests(unittest.TestCase):
                 activation.key_press(key)
                 self.assertTrue(activation.key_release(key))
 
+    def test_dialog_can_identify_the_held_opening_key_until_its_release(self):
+        activation = FreshActivation(opening_key=65293)
+        pending = getattr(activation, 'is_opening_key', None)
+        self.assertIsNotNone(pending, 'Dialogs need to guard the held opening key before default activation')
+        self.assertTrue(pending(65293))
+        self.assertFalse(pending(32))
+        activation.key_press(65293)  # Repeat does not clear the opening hold.
+        self.assertTrue(pending(65293))
+        self.assertFalse(activation.key_release(65293))
+        self.assertFalse(pending(65293))
+
     def test_modifiers_or_mismatched_keys_do_not_confirm(self):
         self.activation.key_press(32, modified=True)
         self.assertFalse(self.activation.key_release(32))
@@ -96,6 +107,15 @@ class InstallationGTKTests(unittest.TestCase):
                 break
             self.Gtk.main_iteration_do(False)
 
+    def settle_activation(self):
+        # GtkButton's default keyboard activation may finish on an animation
+        # timer. Process the actual GLib loop long enough to observe it; a
+        # drain-only assertion can miss an inherited Return activation.
+        loop = self.common.GLib.MainLoop()
+        self.common.GLib.timeout_add(500, lambda: (loop.quit(), False)[1])
+        loop.run()
+        self.drain()
+
     def pointer(self, widget, event_type, inside=True):
         event = self.Gdk.Event.new(event_type)
         event.window = widget.get_event_window()
@@ -122,8 +142,45 @@ class InstallationGTKTests(unittest.TestCase):
     def test_default_return_cancels_without_starting_confirmation(self):
         self.key(self.dialog.cancel_button, self.Gdk.EventType.KEY_PRESS, self.Gdk.KEY_Return)
         self.key(self.dialog.cancel_button, self.Gdk.EventType.KEY_RELEASE, self.Gdk.KEY_Return)
+        self.settle_activation()
         self.assertNotIn(self.Gtk.ResponseType.OK, self.responses)
         self.assertIn(self.Gtk.ResponseType.CANCEL, self.responses)
+
+    def test_held_opening_return_autorepeat_cannot_activate_default_cancel(self):
+        opening = self.Gdk.Event.new(self.Gdk.EventType.KEY_PRESS)
+        opening.keyval = self.Gdk.KEY_Return
+        with patch.object(self.Gtk, 'get_current_event', return_value=opening):
+            dialog = self.common.ConfirmationDialog(None, 'Install Firefox?', 'Review first.')
+        self.addCleanup(dialog.destroy)
+        responses = []
+        dialog.connect('response', lambda _, response: responses.append(response))
+        dialog.show_all()
+        self.drain()
+        self.assertEqual(dialog.get_focus(), dialog.cancel_button)
+        # Real keyboard autorepeat emits another KEY_PRESS before the held
+        # opening Return is released. Neither response is a fresh activation.
+        self.key(dialog.cancel_button, self.Gdk.EventType.KEY_PRESS, self.Gdk.KEY_Return)
+        self.settle_activation()
+        self.assertEqual(responses, [], 'The opening Return repeat dismissed the dialog before release')
+        self.key(dialog.cancel_button, self.Gdk.EventType.KEY_RELEASE, self.Gdk.KEY_Return)
+        self.settle_activation()
+        self.assertEqual(responses, [], 'The inherited opening Return release dismissed the dialog')
+        self.key(dialog.cancel_button, self.Gdk.EventType.KEY_PRESS, self.Gdk.KEY_Return)
+        self.key(dialog.cancel_button, self.Gdk.EventType.KEY_RELEASE, self.Gdk.KEY_Return)
+        self.settle_activation()
+        self.assertEqual(responses, [self.Gtk.ResponseType.CANCEL])
+
+    def test_unpaired_inherited_keyboard_release_over_cancel_does_not_dismiss(self):
+        for key in (self.Gdk.KEY_Return, self.Gdk.KEY_space):
+            with self.subTest(key=key):
+                self.key(self.dialog.cancel_button, self.Gdk.EventType.KEY_RELEASE, key)
+                self.settle_activation()
+                self.assertEqual(self.responses, [])
+
+    def test_unpaired_inherited_pointer_release_over_cancel_does_not_dismiss(self):
+        self.pointer(self.dialog.cancel_button, self.Gdk.EventType.BUTTON_RELEASE)
+        self.settle_activation()
+        self.assertEqual(self.responses, [])
 
     def test_cancel_is_focused_default_and_buttons_have_separate_rectangles(self):
         cancel, ok = self.dialog.cancel_button, self.dialog.confirm_button

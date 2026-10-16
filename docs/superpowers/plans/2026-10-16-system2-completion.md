@@ -28,20 +28,20 @@ No destructive host disk operations; bounded tests; preserve failure evidence.
 
 - [x] Compare local source and remote main, recent workflows and release inventory.
 - [x] Run existing source baseline: 164 tests, 16 display-dependent skips, no failures.
-- [ ] Commit and remotely verify this recovery brief before lengthy work.
+- [x] Commit and remotely verify this recovery brief before lengthy work.
 
 ## Task 2: Localization and application installation
 
-- [ ] Add failing behavioral tests for Finnish selection/default/fallback and packaging.
-- [ ] Add catalog, selection and startup loading without changing desktop architecture.
-- [ ] Reproduce dialog geometry/input and install failure feedback; add regression tests.
+- [x] Add failing behavioral tests for Finnish selection/default/fallback and packaging.
+- [x] Add catalog, selection and startup loading without changing desktop architecture.
+- [x] Reproduce dialog geometry/input and install failure feedback; add regression tests.
 - [ ] Fix confirmation/input/transaction reporting and run complete source/GTK checks.
 - [ ] Save and remotely verify the source milestone.
 
 ## Task 3: Real desktop and ISO acceptance
 
 - [ ] Extend reproducible compositor checks for file navigation, shortcuts and dialog input.
-- [ ] Add separate System 2 build workflow and integrity gates; preserve System 1 workflows.
+- [x] Add separate System 2 build workflow and integrity gates; preserve System 1 workflows.
 - [ ] Run full source, native and GTK/Wayland Actions on the exact candidate commit.
 - [ ] Build signed packages and real Archiso image; check installed rootfs/package inventory.
 - [ ] Boot exact image through OVMF; verify desktop, terminal and clean shutdown.
@@ -59,3 +59,15 @@ No destructive host disk operations; bounded tests; preserve failure evidence.
 2026-10-16: GitHub main verified at e6595ea; System 1 release 414611526 unchanged.
 Latest recovered executable source CI 993d80b passed source and 10 real Wayland
 scenarios. Those are prior evidence, not newly boot-tested System 2 acceptance.
+
+V3 recovery continued at 6b254a2, checkpointed as 03a5948. First implementation
+milestone 2778f2e is saved and remotely tree-verified. Its complete GTK run executed
+235 tests with one early-animation assertion failure; all seven Finnish GUI
+cases passed. Real Labwc accepted startup/wallpaper/search/window migration and
+Foot typed-command roundtrip/controls, then exposed xdotool's same-position
+mousemove --sync wait in new Files navigation. No unchanged retry was requested.
+Targeted fixes and a held-opening-key Cancel guard are prepared; fresh local
+baseline is 240 tests, 203 passed, 37 GUI skips, 119 source checks. New real
+GTK/Wayland acceptance, ISO build, boot and release remain pending. Review also
+fixed host/container output ownership and the browser-smoke screenshot path.
+System 1 remains unchanged. See docs/evidence/system2-v3/candidate-2778f2e.json.

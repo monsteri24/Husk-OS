@@ -92,6 +92,7 @@ class ConfirmationDialog(Gtk.MessageDialog):
         self.confirm_button.connect('key-release-event', self._key_release)
         for signal in ('leave-notify-event', 'focus-out-event', 'grab-broken-event'):
             self.confirm_button.connect(signal, self._cancel_activation)
+        self.connect('key-press-event', self._opening_key_press)
         self.connect('key-release-event', self._opening_key_release)
         self.connect('unmap', lambda _: self.activation.cancel())
 
@@ -135,7 +136,14 @@ class ConfirmationDialog(Gtk.MessageDialog):
             self.response(Gtk.ResponseType.OK)
         return True
 
+    def _opening_key_press(self, _, event):
+        # A repeated Return must not reach GtkWindow's default Cancel action.
+        return self.activation.is_opening_key(event.keyval)
+
     def _opening_key_release(self, _, event):
+        if self.activation.is_opening_key(event.keyval):
+            self.activation.key_release(event.keyval)
+            return True
         # GtkWindow emits this before its default handler forwards the event
         # to the focused button. Do not consume that button's armed key pair.
         if self.get_focus() != self.confirm_button:

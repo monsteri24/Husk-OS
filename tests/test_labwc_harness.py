@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
 
 class LabwcHarnessTests(unittest.TestCase):
@@ -66,3 +68,23 @@ class LabwcHarnessTests(unittest.TestCase):
                            [10, 290, 112, 36], [10, 10, 0, 36]):
             with self.subTest(allocation=allocation), self.assertRaises(AssertionError):
                 self.harness.client_widget_rectangle([10, 10, 460, 30], [460, 300], allocation)
+
+    def test_same_position_row_clicks_and_pointer_moves_do_not_wait_for_motion(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        test.output = '0x200004'
+        commands = []
+        test.command = lambda argv: commands.append(argv)
+        with tempfile.TemporaryDirectory() as directory, patch.object(self.harness.time, 'sleep'):
+            test.artifacts = Path(directory)
+            row = [240, 188, 800, 40]
+            test.click(row)
+            test.click(row)
+            test.pointer_event('move', row)
+            test.pointer_event('move', row)
+        self.assertEqual(len(commands), 4)
+        for command in commands:
+            self.assertEqual(command[:2], ['xdotool', 'mousemove'])
+            self.assertNotIn('--sync', command)
+            self.assertEqual(command[command.index('--window') + 1:][:3], ['0x200004', '640', '208'])
+        self.assertEqual(commands[0][-2:], ['click', '1'])
+        self.assertEqual(commands[1][-2:], ['click', '1'])

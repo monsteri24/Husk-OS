@@ -53,6 +53,7 @@ jobs:
             -v "$RUNNER_TEMP/husk-gnupg:/husk-gnupg" \
             -e SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)" \
             -e HUSK_SOURCE_SHA="$GITHUB_SHA" \
+            -e HUSK_HOST_UID="$(id -u)" -e HUSK_HOST_GID="$(id -g)" \
             archlinux:base-devel bash /src/scripts/ci-build-system2.sh
       - name: Boot the exact candidate through QEMU and OVMF
         run: |

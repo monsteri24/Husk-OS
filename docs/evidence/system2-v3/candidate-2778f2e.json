@@ -1,0 +1,27 @@
+{
+  "source_commit": "2778f2e98672e26cd258d1a8f151a1339cae30e4",
+  "source_workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/38935513387",
+  "source_job": 117089890827,
+  "gtk_tests": 235,
+  "gtk_failures": 1,
+  "gtk_failure": "test_default_return_cancels_without_starting_confirmation: checked before GtkButton's animated activation emitted Cancel",
+  "localization_ui": "All seven real GTK localization cases passed",
+  "desktop_workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/38935513537",
+  "desktop_job": 117089891451,
+  "desktop_artifact": 12060547145,
+  "desktop_artifact_bytes": 7787792,
+  "desktop_artifact_sha256": "2f38aebaba6539d9fa856f8114767b6d6f90a250608751964134164a6658fd65",
+  "completed_scenarios": [
+    "wayland-desktop-started",
+    "01-desktop-wallpaper",
+    "start-pointer-search-launch",
+    "legacy-regression-reproduced",
+    "saved-config-migration-X-fixed",
+    "foot-keyboard-command-roundtrip",
+    "06-foot-close-minimize-maximize"
+  ],
+  "desktop_failure": "xdotool mousemove --sync at repeated folder-row center (640,208) waited for nonexistent motion and hit the 15-second subprocess timeout",
+  "hypothesis_change": "Remove motion-event waits for same-position move/click commands; retain ordered XTest events and actual application-state acceptance waits",
+  "iso": "NOT BUILT",
+  "note": "Failed candidate is preserved, not reported as accepted. No identical unmodified rerun was requested."
+}
