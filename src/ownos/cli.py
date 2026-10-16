@@ -6,8 +6,9 @@ import sys
 from pathlib import Path
 from ownos.config import ConfigStore
 from ownos.catalog import app_by_id, install_commands, FLATHUB_URLS
+from ownos.app_install import app_installed, prepare_live_authentication
 from ownos.gaming import game_command
-from ownos.i18n import _
+from ownos.i18n import _, configure_saved
 
 
 def normalize_command(name):
@@ -24,24 +25,53 @@ def normalize_command(name):
 
 def install_app(appid):
     app = app_by_id(appid)
-    if not app.flatpak_id:
-        return subprocess.call(['/usr/bin/pkexec', '/usr/lib/ownos/own-admin', 'install', appid])
-    # Flatpak's documented options column reports `no-gpg-verify`. Include
-    # disabled remotes too: --if-not-exists must never reuse an unchecked one.
-    remotes = subprocess.run(['/usr/bin/flatpak', 'remotes', '--user', '--show-disabled', '--columns=name,url,options'],
-                             capture_output=True, text=True, check=True).stdout
-    for line in remotes.splitlines():
-        values = line.split(maxsplit=2)
-        if not values or values[0] != 'flathub':
-            continue
-        if len(values) < 2 or values[1] not in FLATHUB_URLS:
-            raise ValueError(_('Existing flathub remote points to an unexpected URL; review it before installation'))
-        options = values[2].replace(',', ' ').split() if len(values) > 2 else ()
-        if 'no-gpg-verify' in options:
-            raise ValueError(_('Existing flathub remote has GPG verification disabled; review it before installation'))
+
+    def failed(status, detail=None):
+        if detail:
+            print(detail, file=sys.stderr, flush=True)
+        print(_('Installation was cancelled or failed (exit status {status}).').format(
+            status=status), file=sys.stderr, flush=True)
+        return status
+
+    print(_('Installing {application}. Review the transaction and confirm in this terminal.').format(
+        application=app.name), flush=True)
+    if app.flatpak_id:
+        # Flatpak's documented options column reports `no-gpg-verify`. Include
+        # disabled remotes too: --if-not-exists must never reuse an unchecked one.
+        try:
+            remotes = subprocess.run(['/usr/bin/flatpak', 'remotes', '--user', '--show-disabled', '--columns=name,url,options'],
+                                     capture_output=True, text=True, check=True, timeout=8).stdout
+        except (OSError, subprocess.SubprocessError) as exc:
+            return failed(getattr(exc, 'returncode', 1) or 1,
+                          getattr(exc, 'stderr', None) or getattr(exc, 'stdout', None) or str(exc))
+        for line in remotes.splitlines():
+            values = line.split(maxsplit=2)
+            if not values or values[0] != 'flathub':
+                continue
+            if len(values) < 2 or values[1] not in FLATHUB_URLS:
+                raise ValueError(_('Existing flathub remote points to an unexpected URL; review it before installation'))
+            options = values[2].replace(',', ' ').split() if len(values) > 2 else ()
+            if 'no-gpg-verify' in options:
+                raise ValueError(_('Existing flathub remote has GPG verification disabled; review it before installation'))
+    else:
+        result = prepare_live_authentication()
+        if result:
+            return failed(result)
     for command in install_commands(appid):
-        result = subprocess.call(command)
-        if result: return result
+        try:
+            result = subprocess.call(command)
+        except OSError as exc:
+            return failed(1, str(exc))
+        if result:
+            return failed(result)
+    # Pacman can return zero when the user declines its final prompt. Only
+    # the resulting package/app record establishes that the app is installed.
+    if not app_installed(app):
+        print(_('Installation was not verified for {application}. The transaction may have been declined or the installed-state check failed.').format(
+            application=app.name), file=sys.stderr, flush=True)
+        return 1
+    print(_('{application} is installed (verified). Select it again in Husk Desktop to launch it.').format(
+        application=app.name), flush=True)
     return 0
 
 
@@ -53,6 +83,7 @@ def toggle(method):
 
 
 def main():
+    configure_saved()
     public_name = Path(sys.argv[0]).name
     name = normalize_command(public_name)
     parser = argparse.ArgumentParser(prog=public_name)

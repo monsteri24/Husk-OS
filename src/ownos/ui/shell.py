@@ -11,7 +11,7 @@ from ownos.desktop_layout import layout
 from ownos.ui.panel import Panel
 from ownos.ui.launcher import Launcher
 from ownos.ui.wallpaper import Wallpaper
-from ownos.i18n import _
+from ownos.i18n import _, configure_saved
 from ownos.notifications import NotificationStore
 from ownos.toplevel import ToplevelStore
 from ownos.bridge import PipeLineReader
@@ -26,8 +26,10 @@ CONTROL_XML = '''<node><interface name="org.ownos.Desktop">
 
 class HuskDesktop:
     def __init__(self, preview=False, store=None):
+        store = store if store is not None else ConfigStore()
+        configure_saved(store)
         require_display()
-        self.preview = preview; self.store = store or ConfigStore(); self.settings = self.store.load()
+        self.preview = preview; self.store = store; self.settings = self.store.load()
         self.stopped = False; self.bridge = None; self.bridge_watch = None; self.bridge_reader = None
         self.bridge_connected = False
         self.window_store = ToplevelStore(); self.toplevels = self.window_store.entries
@@ -162,7 +164,7 @@ class HuskDesktop:
     def toggle_start(self): self.launcher.toggle()
 
     def build_notifications(self):
-        self.notification_window, box = self.popup('Husk Notifications', 370, 480, True)
+        self.notification_window, box = self.popup(_('Husk Notifications'), 370, 480, True)
         label = Gtk.Label(label=_('Notification Center'), xalign=0); label.get_style_context().add_class('heading')
         box.pack_start(label, False, False, 0)
         self.notification_list = Gtk.ListBox(); self.notification_list.set_selection_mode(Gtk.SelectionMode.NONE)
@@ -234,10 +236,11 @@ class HuskDesktop:
     def reload_settings(self):
         previous = self.settings
         self.settings = self.store.load()
+        configure_saved(self.store)
         remove_style(self.provider)
         self.provider = load_style(self.settings, self.store.path.parent / 'desktop.css')
         self.build_desktop()
-        if self.settings['taskbar_position'] != previous['taskbar_position']:
+        if any(self.settings[key] != previous[key] for key in ('taskbar_position', 'language')):
             for window in (self.panel, self.start_window, self.notification_window):
                 self.windows.remove(window); window.destroy()
             self.build_panel(); self.build_start(); self.build_notifications()

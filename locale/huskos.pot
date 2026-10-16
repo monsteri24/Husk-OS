@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Husk OS system-2-dev\n"
 "Report-Msgid-Bugs-To: https://github.com/monsteri24/Husk-OS/issues\n"
-"POT-Creation-Date: 2026-10-16 07:40-0400\n"
+"POT-Creation-Date: 2026-10-16 19:46+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,7 +37,7 @@ msgstr ""
 msgid "Husk OS: verified full-system transaction: {command}"
 msgstr ""
 
-#: data/org.ownos.Control.desktop:3 src/ownos/ui/control.py:26
+#: data/org.ownos.Control.desktop:3 src/ownos/ui/control.py:28
 msgid "Husk Settings"
 msgstr ""
 
@@ -53,7 +53,7 @@ msgstr ""
 msgid "Husk;Settings;Gaming;GameMode;MangoHud;Control Center;"
 msgstr ""
 
-#: data/org.ownos.Files.desktop:3 src/ownos/ui/file_manager.py:10
+#: data/org.ownos.Files.desktop:3 src/ownos/ui/file_manager.py:13
 #: src/ownos/ui/panel.py:23
 msgid "Husk Files"
 msgstr ""
@@ -86,34 +86,78 @@ msgstr ""
 msgid "Husk OS installation stopped"
 msgstr ""
 
+#: src/ownos/app_install.py:41 src/ownos/app_install.py:51
+#, python-brace-format
+msgid "Could not check the Live administrator password status: {error}"
+msgstr ""
+
+#: src/ownos/app_install.py:58
+msgid ""
+"A temporary Live administrator password is required to install system "
+"applications. Set a password now, then enter it again in the authorization "
+"dialog. It lasts only for this Live session."
+msgstr ""
+
+#: src/ownos/app_install.py:66
+msgid ""
+"The Live account does not have a usable administrator password. Installation "
+"was stopped."
+msgstr ""
+
 #: src/ownos/catalog.py:32
 msgid "Unknown application"
 msgstr ""
 
-#: src/ownos/cli.py:38
+#: src/ownos/cli.py:32
+#, python-brace-format
+msgid "Installation was cancelled or failed (exit status {status})."
+msgstr ""
+
+#: src/ownos/cli.py:36
+#, python-brace-format
+msgid ""
+"Installing {application}. Review the transaction and confirm in this "
+"terminal."
+msgstr ""
+
+#: src/ownos/cli.py:52
 msgid ""
 "Existing flathub remote points to an unexpected URL; review it before "
 "installation"
 msgstr ""
 
-#: src/ownos/cli.py:41
+#: src/ownos/cli.py:55
 msgid ""
 "Existing flathub remote has GPG verification disabled; review it before "
 "installation"
 msgstr ""
 
-#: src/ownos/cli.py:83
+#: src/ownos/cli.py:70
+#, python-brace-format
+msgid ""
+"Installation was not verified for {application}. The transaction may have "
+"been declined or the installed-state check failed."
+msgstr ""
+
+#: src/ownos/cli.py:73
+#, python-brace-format
+msgid ""
+"{application} is installed (verified). Select it again in Husk Desktop to "
+"launch it."
+msgstr ""
+
+#: src/ownos/cli.py:114
 #, python-brace-format
 msgid "Husk Desktop status unavailable: {error}"
 msgstr ""
 
-#: src/ownos/cli.py:88
+#: src/ownos/cli.py:119
 msgid ""
 "Live desktop status accepted. Input, audio, networking, games and "
 "installation require separate tests."
 msgstr ""
 
-#: src/ownos/cli.py:107
+#: src/ownos/cli.py:138
 msgid "Use one of the husk-* entrypoints"
 msgstr ""
 
@@ -154,6 +198,10 @@ msgstr ""
 msgid "Target does not contain a Husk OS image"
 msgstr ""
 
+#: src/ownos/rootfs.py:116 src/ownos/ui/launcher.py:24
+msgid "Settings"
+msgstr ""
+
 #: src/ownos/session.py:193
 msgid ""
 "The live session cannot be locked because the live user has no password."
@@ -163,338 +211,352 @@ msgstr ""
 msgid "Custom CSS must be no larger than 64 KiB."
 msgstr ""
 
-#: src/ownos/ui/common.py:16
+#: src/ownos/ui/common.py:18
 msgid ""
 "No GTK display connection. Open this application in a graphical session; use "
 "Xvfb or labwc for headless testing."
 msgstr ""
 
-#: src/ownos/ui/common.py:50
+#: src/ownos/ui/common.py:52
 msgid "The operation could not be completed"
 msgstr ""
 
-#: src/ownos/ui/common.py:51 src/ownos/ui/panel.py:45 src/ownos/ui/shell.py:207
+#: src/ownos/ui/common.py:53 src/ownos/ui/panel.py:45 src/ownos/ui/shell.py:221
 msgid "Close"
 msgstr ""
 
-#: src/ownos/ui/common.py:59 src/ownos/ui/control.py:185
-#: src/ownos/ui/file_manager.py:61
+#: src/ownos/ui/common.py:75 src/ownos/ui/control.py:202
+#: src/ownos/ui/file_manager.py:64
 msgid "Cancel"
 msgstr ""
 
-#: src/ownos/ui/common.py:59
+#: src/ownos/ui/common.py:76
 msgid "OK"
 msgstr ""
 
-#: src/ownos/ui/common.py:76
+#: src/ownos/ui/common.py:170
 msgid "The foot terminal is not installed. Install foot to use this action."
 msgstr ""
 
-#: src/ownos/ui/common.py:159
+#: src/ownos/ui/common.py:246
 msgid ""
 "Install from Flathub as a Flatpak for this user. The installer will show "
 "dependencies and ask for confirmation."
 msgstr ""
 
-#: src/ownos/ui/common.py:160
+#: src/ownos/ui/common.py:247
 msgid ""
 "Install signed Arch packages with a full system upgrade. Pacman will show "
 "the changes and ask for confirmation."
 msgstr ""
 
-#: src/ownos/ui/common.py:161
+#: src/ownos/ui/common.py:248
 #, python-brace-format
 msgid "Install {application}?"
 msgstr ""
 
-#: src/ownos/ui/common.py:168
+#: src/ownos/ui/common.py:255
 msgid "Run this shortcut?"
 msgstr ""
 
-#: src/ownos/ui/common.py:168
+#: src/ownos/ui/common.py:255
 #, python-brace-format
 msgid ""
 "{path}\n"
 "Make sure you trust the source of this file."
 msgstr ""
 
-#: src/ownos/ui/common.py:170
+#: src/ownos/ui/common.py:257
 msgid "Invalid .desktop file"
 msgstr ""
 
-#: src/ownos/ui/control.py:18
+#: src/ownos/ui/control.py:20
 msgid "Husk Settings · Gaming Control Center · Experimental"
 msgstr ""
 
-#: src/ownos/ui/control.py:28
+#: src/ownos/ui/control.py:30
 #, python-brace-format
 msgid "{os} · {version} · Gaming Control Center · Experimental"
 msgstr ""
 
-#: src/ownos/ui/control.py:30
+#: src/ownos/ui/control.py:32
 msgid "Gaming"
 msgstr ""
 
-#: src/ownos/ui/control.py:30
+#: src/ownos/ui/control.py:32
 msgid "System"
 msgstr ""
 
-#: src/ownos/ui/control.py:31
+#: src/ownos/ui/control.py:33
 msgid "Appearance"
 msgstr ""
 
-#: src/ownos/ui/control.py:31
+#: src/ownos/ui/control.py:33
 msgid "Input"
 msgstr ""
 
-#: src/ownos/ui/control.py:31
+#: src/ownos/ui/control.py:33
 msgid "Updates"
 msgstr ""
 
-#: src/ownos/ui/control.py:48
+#: src/ownos/ui/control.py:50
 msgid "Setting saved."
 msgstr ""
 
-#: src/ownos/ui/control.py:59
+#: src/ownos/ui/control.py:61
 msgid "GameMode launcher"
 msgstr ""
 
-#: src/ownos/ui/control.py:60
+#: src/ownos/ui/control.py:62
 msgid ""
 "Applies to games launched with husk-game. In Steam, use the launch option "
 "husk-game -- %command%. Changes apply the next time a game starts."
 msgstr ""
 
-#: src/ownos/ui/control.py:61
+#: src/ownos/ui/control.py:63
 msgid "FPS / frame time overlay"
 msgstr ""
 
-#: src/ownos/ui/control.py:61
+#: src/ownos/ui/control.py:63
 msgid ""
 "husk-game enables MangoHud. Some games and graphics APIs do not support the "
 "overlay."
 msgstr ""
 
-#: src/ownos/ui/control.py:62
+#: src/ownos/ui/control.py:64
 msgid ""
 "Games are read from local Steam libraries. Manage Heroic and Lutris games in "
 "their own applications."
 msgstr ""
 
-#: src/ownos/ui/control.py:62
+#: src/ownos/ui/control.py:64
 msgid "Steam games"
 msgstr ""
 
-#: src/ownos/ui/control.py:66
+#: src/ownos/ui/control.py:68
 msgid "Refresh game list"
 msgstr ""
 
-#: src/ownos/ui/control.py:72
+#: src/ownos/ui/control.py:74
 msgid "No local Steam games found."
 msgstr ""
 
-#: src/ownos/ui/control.py:76
+#: src/ownos/ui/control.py:78
 msgid "Launch"
 msgstr ""
 
-#: src/ownos/ui/control.py:84
+#: src/ownos/ui/control.py:86
 msgid "GPU usage: not measured yet"
 msgstr ""
 
-#: src/ownos/ui/control.py:87
+#: src/ownos/ui/control.py:89
 msgid "Reading driver information…"
 msgstr ""
 
-#: src/ownos/ui/control.py:90
+#: src/ownos/ui/control.py:92
 msgid "Displays and refresh rate · wdisplays"
 msgstr ""
 
-#: src/ownos/ui/control.py:101
+#: src/ownos/ui/control.py:103
 msgid "No graphics card information found."
 msgstr ""
 
-#: src/ownos/ui/control.py:102
+#: src/ownos/ui/control.py:104
 msgid "lspci is not available."
 msgstr ""
 
-#: src/ownos/ui/control.py:120
+#: src/ownos/ui/control.py:122
 #, python-brace-format
 msgid "{percent:.1f} %"
 msgstr ""
 
-#: src/ownos/ui/control.py:123
+#: src/ownos/ui/control.py:125
 #, python-brace-format
 msgid "{used:.2f} / {total:.2f} GiB"
 msgstr ""
 
-#: src/ownos/ui/control.py:125
+#: src/ownos/ui/control.py:127
 #, python-brace-format
 msgid "GPU usage: {percent} %"
 msgstr ""
 
-#: src/ownos/ui/control.py:126
+#: src/ownos/ui/control.py:128
 msgid "GPU usage: the driver does not provide a sysfs metric."
 msgstr ""
 
-#: src/ownos/ui/control.py:133
+#: src/ownos/ui/control.py:135
 msgid "Husk Desktop input settings"
 msgstr ""
 
-#: src/ownos/ui/control.py:133
+#: src/ownos/ui/control.py:135
 msgid ""
 "These settings apply to the Husk labwc session. KDE and GNOME use their own "
 "input settings."
 msgstr ""
 
-#: src/ownos/ui/control.py:139
+#: src/ownos/ui/control.py:141
 msgid ""
 "Libinput speed from −1 to 1. Husk Desktop uses the flat pointer acceleration "
 "profile."
 msgstr ""
 
-#: src/ownos/ui/control.py:139
+#: src/ownos/ui/control.py:141
 msgid "Pointer speed"
 msgstr ""
 
-#: src/ownos/ui/control.py:141
+#: src/ownos/ui/control.py:143
 msgid "Save and apply Husk Desktop settings"
 msgstr ""
 
-#: src/ownos/ui/control.py:156
+#: src/ownos/ui/control.py:158
 msgid "Husk Desktop settings applied."
 msgstr ""
 
-#: src/ownos/ui/control.py:157
+#: src/ownos/ui/control.py:159
 msgid "Saved for the next Husk Desktop session."
 msgstr ""
 
-#: src/ownos/ui/control.py:161
+#: src/ownos/ui/control.py:163
+msgid ""
+"Choose the language for Husk applications. Reopen applications to apply a "
+"change. Keyboard layout is set separately under Input."
+msgstr ""
+
+#: src/ownos/ui/control.py:163
+msgid "Interface language"
+msgstr ""
+
+#: src/ownos/ui/control.py:169
 msgid "Husk Desktop taskbar"
 msgstr ""
 
-#: src/ownos/ui/control.py:161
+#: src/ownos/ui/control.py:169
 msgid ""
 "This experimental desktop is under development. The taskbar and launcher are "
 "separate components."
 msgstr ""
 
-#: src/ownos/ui/control.py:163
+#: src/ownos/ui/control.py:171
 msgid "Bottom"
 msgstr ""
 
-#: src/ownos/ui/control.py:163
+#: src/ownos/ui/control.py:171
 msgid "Top"
 msgstr ""
 
-#: src/ownos/ui/control.py:167
+#: src/ownos/ui/control.py:175
 msgid "Custom CSS"
 msgstr ""
 
-#: src/ownos/ui/control.py:167
+#: src/ownos/ui/control.py:175
 #, python-brace-format
 msgid ""
 "{path} · Changes load into Husk Desktop without rebuilding the operating "
 "system."
 msgstr ""
 
-#: src/ownos/ui/control.py:168
+#: src/ownos/ui/control.py:176
 msgid "Animations"
 msgstr ""
 
-#: src/ownos/ui/control.py:168
+#: src/ownos/ui/control.py:176
 msgid "Short interface transitions."
 msgstr ""
 
-#: src/ownos/ui/control.py:169
+#: src/ownos/ui/control.py:177
 msgid "Accent color"
 msgstr ""
 
-#: src/ownos/ui/control.py:175 src/ownos/ui/control.py:180
+#: src/ownos/ui/control.py:183 src/ownos/ui/control.py:188
 msgid "Husk OS Desert (default)"
 msgstr ""
 
-#: src/ownos/ui/control.py:177 src/ownos/ui/control.py:184
+#: src/ownos/ui/control.py:185 src/ownos/ui/control.py:201
 msgid "Choose wallpaper"
 msgstr ""
 
-#: src/ownos/ui/control.py:179
+#: src/ownos/ui/control.py:187
 msgid "Restore default wallpaper"
 msgstr ""
 
-#: src/ownos/ui/control.py:185
+#: src/ownos/ui/control.py:193
+msgid "Language saved. Reopen Husk applications to apply it."
+msgstr ""
+
+#: src/ownos/ui/control.py:202
 msgid "Select"
 msgstr ""
 
-#: src/ownos/ui/control.py:186
+#: src/ownos/ui/control.py:203
 msgid "Images"
 msgstr ""
 
-#: src/ownos/ui/control.py:192
+#: src/ownos/ui/control.py:209
 msgid ""
 "Run a full pacman -Syu upgrade. Pacman will show package changes in the "
 "terminal and ask for confirmation. Automatic rollback is not available in "
 "this experimental release."
 msgstr ""
 
-#: src/ownos/ui/control.py:192
+#: src/ownos/ui/control.py:209
 msgid "System updates"
 msgstr ""
 
-#: src/ownos/ui/control.py:193
+#: src/ownos/ui/control.py:210
 msgid "Open system update"
 msgstr ""
 
-#: src/ownos/ui/control.py:196
+#: src/ownos/ui/control.py:213
 msgid "Husk Desktop"
 msgstr ""
 
-#: src/ownos/ui/control.py:197
+#: src/ownos/ui/control.py:214
 #, python-brace-format
 msgid "Install {desktop}"
 msgstr ""
 
-#: src/ownos/ui/control.py:200
+#: src/ownos/ui/control.py:217
 msgid "Install the NVIDIA Turing+ / RTX driver"
 msgstr ""
 
-#: src/ownos/ui/control.py:202
+#: src/ownos/ui/control.py:219
 msgid "Is your GPU Turing or newer?"
 msgstr ""
 
-#: src/ownos/ui/control.py:202
+#: src/ownos/ui/control.py:219
 msgid ""
 "Supports cards such as the RTX 20/30/40/50 series and GTX 1650. Pascal and "
 "older cards are not supported. Read the driver documentation before "
 "continuing."
 msgstr ""
 
-#: src/ownos/ui/file_manager.py:17
+#: src/ownos/ui/file_manager.py:20
 msgid "Up"
 msgstr ""
 
-#: src/ownos/ui/file_manager.py:19 src/ownos/ui/shell.py:104
+#: src/ownos/ui/file_manager.py:22 src/ownos/ui/shell.py:110
 msgid "Home"
 msgstr ""
 
-#: src/ownos/ui/file_manager.py:23 src/ownos/ui/file_manager.py:60
+#: src/ownos/ui/file_manager.py:26 src/ownos/ui/file_manager.py:63
 msgid "New folder"
 msgstr ""
 
-#: src/ownos/ui/file_manager.py:48
+#: src/ownos/ui/file_manager.py:51
 #, python-brace-format
 msgid "{count} item · Showing the first {limit}"
 msgid_plural "{count} items · Showing the first {limit}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ownos/ui/file_manager.py:51
+#: src/ownos/ui/file_manager.py:54
 #, python-brace-format
 msgid "{count} item"
 msgid_plural "{count} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ownos/ui/file_manager.py:61
+#: src/ownos/ui/file_manager.py:64
 msgid "Create"
 msgstr ""
 
@@ -512,10 +574,6 @@ msgstr ""
 
 #: src/ownos/ui/launcher.py:24
 msgid "Lock"
-msgstr ""
-
-#: src/ownos/ui/launcher.py:24
-msgid "Settings"
 msgstr ""
 
 #: src/ownos/ui/launcher.py:25
@@ -551,7 +609,7 @@ msgstr ""
 msgid "Network connection settings"
 msgstr ""
 
-#: src/ownos/ui/panel.py:30 src/ownos/ui/shell.py:206
+#: src/ownos/ui/panel.py:30 src/ownos/ui/shell.py:220
 msgid "Volume"
 msgstr ""
 
@@ -567,51 +625,55 @@ msgstr ""
 msgid "Minimize"
 msgstr ""
 
-#: src/ownos/ui/shell.py:154
+#: src/ownos/ui/shell.py:167
+msgid "Husk Notifications"
+msgstr ""
+
+#: src/ownos/ui/shell.py:168
 msgid "Notification Center"
 msgstr ""
 
-#: src/ownos/ui/shell.py:158
+#: src/ownos/ui/shell.py:172
 msgid "Clear Notifications"
 msgstr ""
 
-#: src/ownos/ui/shell.py:192
+#: src/ownos/ui/shell.py:206
 msgid "Network: Unknown"
 msgstr ""
 
-#: src/ownos/ui/shell.py:195
+#: src/ownos/ui/shell.py:209
 msgid "Connected ✓"
 msgstr ""
 
-#: src/ownos/ui/shell.py:195
+#: src/ownos/ui/shell.py:209
 msgid "Disconnected"
 msgstr ""
 
-#: src/ownos/ui/shell.py:213
+#: src/ownos/ui/shell.py:227
 msgid "No default PipeWire audio device was found."
 msgstr ""
 
-#: src/ownos/ui/shell.py:238
+#: src/ownos/ui/shell.py:253
 msgid "Custom CSS was skipped"
 msgstr ""
 
-#: src/ownos/ui/shell.py:271
+#: src/ownos/ui/shell.py:286
 msgid "The own-toplevel helper is missing."
 msgstr ""
 
-#: src/ownos/ui/shell.py:271
+#: src/ownos/ui/shell.py:286
 msgid "Window list unavailable"
 msgstr ""
 
-#: src/ownos/ui/shell.py:276
+#: src/ownos/ui/shell.py:291
 msgid "Window list could not start"
 msgstr ""
 
-#: src/ownos/ui/shell.py:296
+#: src/ownos/ui/shell.py:311
 msgid "The compositor foreign-toplevel protocol or helper is unavailable."
 msgstr ""
 
-#: src/ownos/ui/shell.py:296
+#: src/ownos/ui/shell.py:311
 msgid "Window list disconnected"
 msgstr ""
 

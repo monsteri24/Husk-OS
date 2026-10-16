@@ -1,0 +1,617 @@
+# Finnish translations for Husk OS.
+# Copyright (C) 2026 Husk OS contributors
+# This file is distributed under the same license as the Husk OS package.
+# Translation review: preserve product/command names, named fields and Finnish plurals.
+msgid ""
+msgstr ""
+"Project-Id-Version: Husk OS system-2-dev\n"
+"Report-Msgid-Bugs-To: https://github.com/monsteri24/Husk-OS/issues\n"
+"PO-Revision-Date: 2026-10-16 00:00+0000\n"
+"Last-Translator: Husk OS contributors\n"
+"Language-Team: Finnish\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: bin/own-admin:14
+msgid "Run through pkexec"
+msgstr "Suorita pkexec-ohjelmalla"
+
+#: bin/own-admin:15
+msgid "Invalid arguments"
+msgstr "Virheelliset argumentit"
+
+#: bin/own-admin:18
+msgid "Another pacman transaction is active. The lock will not be removed automatically."
+msgstr "Toinen pacman-tapahtuma on käynnissä. Lukitusta ei poisteta automaattisesti."
+
+#: bin/own-admin:22
+#, python-brace-format
+msgid "Husk OS: verified full-system transaction: {command}"
+msgstr "Husk OS: varmennettu koko järjestelmän pakettitapahtuma: {command}"
+
+#: data/org.ownos.Control.desktop:3 src/ownos/ui/control.py:26
+msgid "Husk Settings"
+msgstr "Husk-asetukset"
+
+#: data/org.ownos.Control.desktop:4
+msgid "Gaming Control Center"
+msgstr "Pelaamisen hallintakeskus"
+
+#: data/org.ownos.Control.desktop:5
+msgid "Husk OS gaming, hardware and appearance settings"
+msgstr "Husk OS:n peli-, laitteisto- ja ulkoasuasetukset"
+
+#: data/org.ownos.Control.desktop:10
+msgid "Husk;Settings;Gaming;GameMode;MangoHud;Control Center;"
+msgstr "Husk;Asetukset;Pelaaminen;GameMode;MangoHud;Hallintakeskus;"
+
+#: data/org.ownos.Files.desktop:3 src/ownos/ui/file_manager.py:10
+#: src/ownos/ui/panel.py:23
+msgid "Husk Files"
+msgstr "Husk-tiedostot"
+
+#: data/org.ownos.Heroic.desktop:3
+msgid "Heroic · Epic / GOG"
+msgstr "Heroic · Epic / GOG"
+
+#: data/org.ownos.Heroic.desktop:4
+msgid "Install the official Heroic Flatpak for this user"
+msgstr "Asenna virallinen Heroic Flatpak tälle käyttäjälle"
+
+#: data/ownos-wayland.desktop:3
+msgid "Husk Desktop (Experimental)"
+msgstr "Husk Desktop (kokeellinen)"
+
+#: data/ownos-wayland.desktop:4
+msgid "Husk OS custom gaming desktop on Wayland"
+msgstr "Husk OS:n oma Wayland-pelityöpöytä"
+
+#: installer/org.ownos.Install.desktop:4
+msgid "Install Husk OS (Experimental)"
+msgstr "Asenna Husk OS (kokeellinen)"
+
+#: installer/owninstall/main.py:11
+msgid "Husk OS: install the selected desktop and drivers"
+msgstr "Husk OS: asenna valittu työpöytä ja ajurit"
+
+#: installer/owninstall/main.py:24
+msgid "Husk OS installation stopped"
+msgstr "Husk OS:n asennus keskeytettiin"
+
+#: src/ownos/catalog.py:32
+msgid "Unknown application"
+msgstr "Tuntematon sovellus"
+
+#: src/ownos/cli.py:38
+msgid "Existing flathub remote points to an unexpected URL; review it before installation"
+msgstr "Nykyisen flathub-etävaraston osoite on odottamaton. Tarkista se ennen asennusta."
+
+#: src/ownos/cli.py:41
+msgid "Existing flathub remote has GPG verification disabled; review it before installation"
+msgstr "Nykyisen flathub-etävaraston GPG-varmennus ei ole käytössä. Tarkista se ennen asennusta."
+
+#: src/ownos/cli.py:83
+#, python-brace-format
+msgid "Husk Desktop status unavailable: {error}"
+msgstr "Husk Desktopin tilaa ei voi lukea: {error}"
+
+#: src/ownos/cli.py:88
+msgid "Live desktop status accepted. Input, audio, networking, games and installation require separate tests."
+msgstr "Live-työpöydän tila hyväksyttiin. Syöttölaitteet, ääni, verkkoyhteydet, pelit ja asennus on testattava erikseen."
+
+#: src/ownos/cli.py:107
+msgid "Use one of the husk-* entrypoints"
+msgstr "Käytä jotakin husk-*-käynnistyskomentoa"
+
+#: src/ownos/files.py:13
+msgid "Give the folder a single valid name"
+msgstr "Anna kansiolle yksi kelvollinen nimi"
+
+#: src/ownos/gaming.py:9
+msgid "A non-empty game command is required"
+msgstr "Pelin käynnistyskomento ei saa olla tyhjä"
+
+#: src/ownos/gaming.py:16
+#, python-brace-format
+msgid "{tool} is not installed; install it or disable this setting"
+msgstr "{tool} ei ole asennettu. Asenna se tai poista tämä asetus käytöstä."
+
+#: src/ownos/installer.py:39
+msgid "A supported desktop and graphics option must be selected"
+msgstr "Valitse tuettu työpöytä ja näytönohjainvaihtoehto"
+
+#: src/ownos/installer.py:62
+msgid "Installer root must be an absolute non-symlink path"
+msgstr "Asennuskohteen juuripolun on oltava absoluuttinen, eikä se saa olla symbolinen linkki"
+
+#: src/ownos/installer.py:64
+msgid "Refusing an unexpected installer mount point"
+msgstr "Odottamatonta asennuksen liitospistettä ei hyväksytä"
+
+#: src/ownos/installer.py:66
+msgid "Installer target is not a mounted filesystem"
+msgstr "Asennuskohde ei ole liitetty tiedostojärjestelmä"
+
+#: src/ownos/installer.py:69
+msgid "Target release metadata escapes the installer root"
+msgstr "Kohteen julkaisutiedot sijaitsevat asennuskohteen juuren ulkopuolella"
+
+#: src/ownos/installer.py:73
+msgid "Target does not contain a Husk OS image"
+msgstr "Kohde ei sisällä Husk OS -levykuvaa"
+
+#: src/ownos/session.py:193
+msgid "The live session cannot be locked because the live user has no password."
+msgstr "Live-istuntoa ei voi lukita, koska live-käyttäjällä ei ole salasanaa."
+
+#: src/ownos/themes.py:10
+msgid "Custom CSS must be no larger than 64 KiB."
+msgstr "Oman CSS-tiedoston koko saa olla enintään 64 KiB."
+
+#: src/ownos/ui/common.py:16
+msgid "No GTK display connection. Open this application in a graphical session; use Xvfb or labwc for headless testing."
+msgstr "GTK-näyttöyhteyttä ei ole. Avaa sovellus graafisessa istunnossa. Käytä näytöttömään testaukseen Xvfb:tä tai labwc:tä."
+
+#: src/ownos/ui/common.py:50
+msgid "The operation could not be completed"
+msgstr "Toimintoa ei voitu suorittaa loppuun"
+
+#: src/ownos/ui/common.py:51 src/ownos/ui/panel.py:45 src/ownos/ui/shell.py:207
+msgid "Close"
+msgstr "Sulje"
+
+#: src/ownos/ui/common.py:59 src/ownos/ui/control.py:185
+#: src/ownos/ui/file_manager.py:61
+msgid "Cancel"
+msgstr "Peruuta"
+
+#: src/ownos/ui/common.py:59
+msgid "OK"
+msgstr "OK"
+
+#: src/ownos/ui/common.py:76
+msgid "The foot terminal is not installed. Install foot to use this action."
+msgstr "foot-päätettä ei ole asennettu. Asenna foot käyttääksesi tätä toimintoa."
+
+#: src/ownos/ui/common.py:159
+msgid "Install from Flathub as a Flatpak for this user. The installer will show dependencies and ask for confirmation."
+msgstr "Asenna Flathubista Flatpak-sovelluksena tälle käyttäjälle. Asennusohjelma näyttää riippuvuudet ja pyytää vahvistuksen."
+
+#: src/ownos/ui/common.py:160
+msgid "Install signed Arch packages with a full system upgrade. Pacman will show the changes and ask for confirmation."
+msgstr "Asenna allekirjoitetut Arch-paketit ja päivitä koko järjestelmä. Pacman näyttää muutokset ja pyytää vahvistuksen."
+
+#: src/ownos/ui/common.py:161
+#, python-brace-format
+msgid "Install {application}?"
+msgstr "Asennetaanko {application}?"
+
+#: src/ownos/ui/common.py:168
+msgid "Run this shortcut?"
+msgstr "Suoritetaanko tämä pikakuvake?"
+
+#: src/ownos/ui/common.py:168
+#, python-brace-format
+msgid "{path}\nMake sure you trust the source of this file."
+msgstr "{path}\nVarmista, että luotat tämän tiedoston lähteeseen."
+
+#: src/ownos/ui/common.py:170
+msgid "Invalid .desktop file"
+msgstr "Virheellinen .desktop-tiedosto"
+
+#: src/ownos/ui/control.py:18
+msgid "Husk Settings · Gaming Control Center · Experimental"
+msgstr "Husk-asetukset · Pelaamisen hallintakeskus · Kokeellinen"
+
+#: src/ownos/ui/control.py:28
+#, python-brace-format
+msgid "{os} · {version} · Gaming Control Center · Experimental"
+msgstr "{os} · {version} · Pelaamisen hallintakeskus · Kokeellinen"
+
+#: src/ownos/ui/control.py:30
+msgid "Gaming"
+msgstr "Pelaaminen"
+
+#: src/ownos/ui/control.py:30
+msgid "System"
+msgstr "Järjestelmä"
+
+#: src/ownos/ui/control.py:31
+msgid "Appearance"
+msgstr "Ulkoasu"
+
+#: src/ownos/ui/control.py:31
+msgid "Input"
+msgstr "Syöttölaitteet"
+
+#: src/ownos/ui/control.py:31
+msgid "Updates"
+msgstr "Päivitykset"
+
+#: src/ownos/ui/control.py:48
+msgid "Setting saved."
+msgstr "Asetus tallennettiin."
+
+#: src/ownos/ui/control.py:59
+msgid "GameMode launcher"
+msgstr "GameMode-käynnistys"
+
+#: src/ownos/ui/control.py:60
+msgid "Applies to games launched with husk-game. In Steam, use the launch option husk-game -- %command%. Changes apply the next time a game starts."
+msgstr "Koskee husk-game-komennolla käynnistettyjä pelejä. Käytä Steamissa käynnistysvalintaa husk-game -- %command%. Muutokset tulevat voimaan pelin seuraavalla käynnistyskerralla."
+
+#: src/ownos/ui/control.py:61
+msgid "FPS / frame time overlay"
+msgstr "FPS- ja ruutuaikapeite"
+
+#: src/ownos/ui/control.py:61
+msgid "husk-game enables MangoHud. Some games and graphics APIs do not support the overlay."
+msgstr "husk-game ottaa MangoHudin käyttöön. Kaikki pelit ja grafiikkarajapinnat eivät tue peitettä."
+
+#: src/ownos/ui/control.py:62
+msgid "Games are read from local Steam libraries. Manage Heroic and Lutris games in their own applications."
+msgstr "Pelit luetaan paikallisista Steam-kirjastoista. Hallitse Heroic- ja Lutris-pelejä niiden omissa sovelluksissa."
+
+#: src/ownos/ui/control.py:62
+msgid "Steam games"
+msgstr "Steam-pelit"
+
+#: src/ownos/ui/control.py:66
+msgid "Refresh game list"
+msgstr "Päivitä peliluettelo"
+
+#: src/ownos/ui/control.py:72
+msgid "No local Steam games found."
+msgstr "Paikallisia Steam-pelejä ei löytynyt."
+
+#: src/ownos/ui/control.py:76
+msgid "Launch"
+msgstr "Käynnistä"
+
+#: src/ownos/ui/control.py:84
+msgid "GPU usage: not measured yet"
+msgstr "Näytönohjaimen käyttöaste: ei vielä mitattu"
+
+#: src/ownos/ui/control.py:87
+msgid "Reading driver information…"
+msgstr "Luetaan ajuritietoja…"
+
+#: src/ownos/ui/control.py:90
+msgid "Displays and refresh rate · wdisplays"
+msgstr "Näytöt ja virkistystaajuus · wdisplays"
+
+#: src/ownos/ui/control.py:101
+msgid "No graphics card information found."
+msgstr "Näytönohjaimen tietoja ei löytynyt."
+
+#: src/ownos/ui/control.py:102
+msgid "lspci is not available."
+msgstr "lspci ei ole käytettävissä."
+
+#: src/ownos/ui/control.py:120
+#, python-brace-format
+msgid "{percent:.1f} %"
+msgstr "{percent:.1f} %"
+
+#: src/ownos/ui/control.py:123
+#, python-brace-format
+msgid "{used:.2f} / {total:.2f} GiB"
+msgstr "{used:.2f} / {total:.2f} GiB"
+
+#: src/ownos/ui/control.py:125
+#, python-brace-format
+msgid "GPU usage: {percent} %"
+msgstr "Näytönohjaimen käyttöaste: {percent} %"
+
+#: src/ownos/ui/control.py:126
+msgid "GPU usage: the driver does not provide a sysfs metric."
+msgstr "Näytönohjaimen käyttöaste: ajuri ei tarjoa sysfs-mittaustietoa."
+
+#: src/ownos/ui/control.py:133
+msgid "Husk Desktop input settings"
+msgstr "Husk Desktopin syöttölaiteasetukset"
+
+#: src/ownos/ui/control.py:133
+msgid "These settings apply to the Husk labwc session. KDE and GNOME use their own input settings."
+msgstr "Nämä asetukset koskevat Huskin labwc-istuntoa. KDE ja GNOME käyttävät omia syöttölaiteasetuksiaan."
+
+#: src/ownos/ui/control.py:139
+msgid "Libinput speed from −1 to 1. Husk Desktop uses the flat pointer acceleration profile."
+msgstr "Libinput-nopeus välillä −1–1. Husk Desktop käyttää osoittimen vakiokiihtyvyysprofiilia."
+
+#: src/ownos/ui/control.py:139
+msgid "Pointer speed"
+msgstr "Osoittimen nopeus"
+
+#: src/ownos/ui/control.py:141
+msgid "Save and apply Husk Desktop settings"
+msgstr "Tallenna ja ota Husk Desktopin asetukset käyttöön"
+
+#: src/ownos/ui/control.py:156
+msgid "Husk Desktop settings applied."
+msgstr "Husk Desktopin asetukset otettiin käyttöön."
+
+#: src/ownos/ui/control.py:157
+msgid "Saved for the next Husk Desktop session."
+msgstr "Tallennettiin seuraavaa Husk Desktop -istuntoa varten."
+
+#: src/ownos/ui/control.py:161
+msgid "Husk Desktop taskbar"
+msgstr "Husk Desktopin tehtäväpalkki"
+
+#: src/ownos/ui/control.py:161
+msgid "This experimental desktop is under development. The taskbar and launcher are separate components."
+msgstr "Tämä kokeellinen työpöytä on kehitteillä. Tehtäväpalkki ja käynnistysvalikko ovat erillisiä osia."
+
+#: src/ownos/ui/control.py:163
+msgid "Bottom"
+msgstr "Alhaalla"
+
+#: src/ownos/ui/control.py:163
+msgid "Top"
+msgstr "Ylhäällä"
+
+#: src/ownos/ui/control.py:167
+msgid "Custom CSS"
+msgstr "Oma CSS"
+
+#: src/ownos/ui/control.py:167
+#, python-brace-format
+msgid "{path} · Changes load into Husk Desktop without rebuilding the operating system."
+msgstr "{path} · Muutokset ladataan Husk Desktopiin ilman käyttöjärjestelmän uudelleenkoontia."
+
+#: src/ownos/ui/control.py:168
+msgid "Animations"
+msgstr "Animaatiot"
+
+#: src/ownos/ui/control.py:168
+msgid "Short interface transitions."
+msgstr "Lyhyet käyttöliittymän siirtymäanimaatiot."
+
+#: src/ownos/ui/control.py:169
+msgid "Accent color"
+msgstr "Korostusväri"
+
+#: src/ownos/ui/control.py:175 src/ownos/ui/control.py:180
+msgid "Husk OS Desert (default)"
+msgstr "Husk OS:n aavikko (oletus)"
+
+#: src/ownos/ui/control.py:177 src/ownos/ui/control.py:184
+msgid "Choose wallpaper"
+msgstr "Valitse taustakuva"
+
+#: src/ownos/ui/control.py:179
+msgid "Restore default wallpaper"
+msgstr "Palauta oletustaustakuva"
+
+#: src/ownos/ui/control.py:185
+msgid "Select"
+msgstr "Valitse"
+
+#: src/ownos/ui/control.py:186
+msgid "Images"
+msgstr "Kuvat"
+
+#: src/ownos/ui/control.py:192
+msgid "Run a full pacman -Syu upgrade. Pacman will show package changes in the terminal and ask for confirmation. Automatic rollback is not available in this experimental release."
+msgstr "Suorita koko järjestelmän päivitys komennolla pacman -Syu. Pacman näyttää pakettimuutokset päätteessä ja pyytää vahvistuksen. Automaattinen palautus ei ole käytettävissä tässä kokeellisessa julkaisussa."
+
+#: src/ownos/ui/control.py:192
+msgid "System updates"
+msgstr "Järjestelmäpäivitykset"
+
+#: src/ownos/ui/control.py:193
+msgid "Open system update"
+msgstr "Avaa järjestelmäpäivitys"
+
+#: src/ownos/ui/control.py:196
+msgid "Husk Desktop"
+msgstr "Husk Desktop"
+
+#: src/ownos/ui/control.py:197
+#, python-brace-format
+msgid "Install {desktop}"
+msgstr "Asenna {desktop}"
+
+#: src/ownos/ui/control.py:200
+msgid "Install the NVIDIA Turing+ / RTX driver"
+msgstr "Asenna NVIDIA Turing+ / RTX -ajuri"
+
+#: src/ownos/ui/control.py:202
+msgid "Is your GPU Turing or newer?"
+msgstr "Onko näytönohjaimesi Turing tai uudempi?"
+
+#: src/ownos/ui/control.py:202
+msgid "Supports cards such as the RTX 20/30/40/50 series and GTX 1650. Pascal and older cards are not supported. Read the driver documentation before continuing."
+msgstr "Tukee esimerkiksi RTX 20/30/40/50 -sarjoja ja GTX 1650 -korttia. Pascal-kortteja ja vanhempia ei tueta. Lue ajurin ohjeet ennen jatkamista."
+
+#: src/ownos/ui/file_manager.py:17
+msgid "Up"
+msgstr "Ylös"
+
+#: src/ownos/ui/file_manager.py:19 src/ownos/ui/shell.py:104
+msgid "Home"
+msgstr "Koti"
+
+#: src/ownos/ui/file_manager.py:23 src/ownos/ui/file_manager.py:60
+msgid "New folder"
+msgstr "Uusi kansio"
+
+#: src/ownos/ui/file_manager.py:48
+#, python-brace-format
+msgid "{count} item · Showing the first {limit}"
+msgid_plural "{count} items · Showing the first {limit}"
+msgstr[0] "{count} kohde · Näytetään ensimmäiset {limit}"
+msgstr[1] "{count} kohdetta · Näytetään ensimmäiset {limit}"
+
+#: src/ownos/ui/file_manager.py:51
+#, python-brace-format
+msgid "{count} item"
+msgid_plural "{count} items"
+msgstr[0] "{count} kohde"
+msgstr[1] "{count} kohdetta"
+
+#: src/ownos/ui/file_manager.py:61
+msgid "Create"
+msgstr "Luo"
+
+#: src/ownos/ui/launcher.py:11
+msgid "Husk Start"
+msgstr "Husk-käynnistysvalikko"
+
+#: src/ownos/ui/launcher.py:12
+msgid "Start · Husk OS"
+msgstr "Käynnistä · Husk OS"
+
+#: src/ownos/ui/launcher.py:14
+msgid "Search applications…"
+msgstr "Etsi sovelluksia…"
+
+#: src/ownos/ui/launcher.py:24
+msgid "Lock"
+msgstr "Lukitse"
+
+#: src/ownos/ui/launcher.py:24
+msgid "Settings"
+msgstr "Asetukset"
+
+#: src/ownos/ui/launcher.py:25
+msgid "Log out"
+msgstr "Kirjaudu ulos"
+
+#: src/ownos/ui/launcher.py:29
+msgid "The live session has no password. Locking is available after installation."
+msgstr "Live-istunnossa ei ole salasanaa. Lukitus on käytettävissä asennuksen jälkeen."
+
+#: src/ownos/ui/panel.py:11
+msgid "Husk Taskbar"
+msgstr "Husk-tehtäväpalkki"
+
+#: src/ownos/ui/panel.py:17
+msgid "Husk OS · Experimental"
+msgstr "Husk OS · Kokeellinen"
+
+#: src/ownos/ui/panel.py:20
+msgid "Start · Super+Space"
+msgstr "Käynnistä · Super+välilyönti"
+
+#: src/ownos/ui/panel.py:24
+msgid "Husk Settings · Gaming Control Center"
+msgstr "Husk-asetukset · Pelaamisen hallintakeskus"
+
+#: src/ownos/ui/panel.py:27
+msgid "Network"
+msgstr "Verkko"
+
+#: src/ownos/ui/panel.py:27
+msgid "Network connection settings"
+msgstr "Verkkoyhteyden asetukset"
+
+#: src/ownos/ui/panel.py:30 src/ownos/ui/shell.py:206
+msgid "Volume"
+msgstr "Äänenvoimakkuus"
+
+#: src/ownos/ui/panel.py:38 src/ownos/ui/panel.py:39
+msgid "Window"
+msgstr "Ikkuna"
+
+#: src/ownos/ui/panel.py:45
+msgid "Activate"
+msgstr "Aktivoi"
+
+#: src/ownos/ui/panel.py:45
+msgid "Minimize"
+msgstr "Pienennä"
+
+#: src/ownos/ui/shell.py:154
+msgid "Notification Center"
+msgstr "Ilmoituskeskus"
+
+#: src/ownos/ui/shell.py:158
+msgid "Clear Notifications"
+msgstr "Tyhjennä ilmoitukset"
+
+#: src/ownos/ui/shell.py:192
+msgid "Network: Unknown"
+msgstr "Verkko: tuntematon"
+
+#: src/ownos/ui/shell.py:195
+msgid "Connected ✓"
+msgstr "Yhdistetty ✓"
+
+#: src/ownos/ui/shell.py:195
+msgid "Disconnected"
+msgstr "Ei yhteyttä"
+
+#: src/ownos/ui/shell.py:213
+msgid "No default PipeWire audio device was found."
+msgstr "PipeWiren oletusäänilaitetta ei löytynyt."
+
+#: src/ownos/ui/shell.py:238
+msgid "Custom CSS was skipped"
+msgstr "Oma CSS ohitettiin"
+
+#: src/ownos/ui/shell.py:271
+msgid "The own-toplevel helper is missing."
+msgstr "own-toplevel-apuohjelma puuttuu."
+
+#: src/ownos/ui/shell.py:271
+msgid "Window list unavailable"
+msgstr "Ikkunaluettelo ei ole käytettävissä"
+
+#: src/ownos/ui/shell.py:276
+msgid "Window list could not start"
+msgstr "Ikkunaluetteloa ei voitu käynnistää"
+
+#: src/ownos/ui/shell.py:296
+msgid "The compositor foreign-toplevel protocol or helper is unavailable."
+msgstr "Koostajan foreign-toplevel-protokolla tai apuohjelma ei ole käytettävissä."
+
+#: src/ownos/ui/shell.py:296
+msgid "Window list disconnected"
+msgstr "Ikkunaluettelon yhteys katkesi"
+
+#: src/ownos/updates.py:18
+msgid "Operation is not permitted"
+msgstr "Toimintoa ei sallita"
+
+msgid "Interface language"
+msgstr "Käyttöliittymän kieli"
+
+msgid "Choose the language for Husk applications. Reopen applications to apply a change. Keyboard layout is set separately under Input."
+msgstr "Valitse Husk-sovellusten kieli. Ota muutos käyttöön avaamalla sovellukset uudelleen. Näppäimistöasettelu valitaan erikseen Syöttölaitteet-välilehdellä."
+
+msgid "Language saved. Reopen Husk applications to apply it."
+msgstr "Kieli tallennettiin. Ota se käyttöön avaamalla Husk-sovellukset uudelleen."
+
+msgid "Husk Notifications"
+msgstr "Husk-ilmoitukset"
+
+#, python-brace-format
+msgid "Installing {application}. Review the transaction and confirm in this terminal."
+msgstr "Asennetaan {application}. Tarkista pakettitapahtuma ja vahvista se tässä päätteessä."
+
+#, python-brace-format
+msgid "Installation was cancelled or failed (exit status {status})."
+msgstr "Asennus peruutettiin tai epäonnistui (paluukoodi {status})."
+
+#, python-brace-format
+msgid "Installation was not verified for {application}. The transaction may have been declined or the installed-state check failed."
+msgstr "Sovelluksen {application} asennusta ei voitu varmentaa. Pakettitapahtuma on ehkä hylätty tai asennustilan tarkistus epäonnistui."
+
+#, python-brace-format
+msgid "{application} is installed (verified). Select it again in Husk Desktop to launch it."
+msgstr "{application} on asennettu (varmennettu). Käynnistä se valitsemalla se uudelleen Husk Desktopissa."
+
+msgid "A temporary Live administrator password is required to install system applications. Set a password now, then enter it again in the authorization dialog. It lasts only for this Live session."
+msgstr "Järjestelmäsovellusten asennus vaatii väliaikaisen live-istunnon ylläpitosalasanan. Aseta salasana nyt ja anna se uudelleen valtuutusikkunassa. Salasana on voimassa vain tämän live-istunnon ajan."
+
+msgid "The Live account does not have a usable administrator password. Installation was stopped."
+msgstr "Live-käyttäjätilillä ei ole käyttökelpoista ylläpitosalasanaa. Asennus keskeytettiin."
+
+#, python-brace-format
+msgid "Could not check the Live administrator password status: {error}"
+msgstr "Live-istunnon ylläpitosalasanan tilaa ei voitu tarkistaa: {error}"

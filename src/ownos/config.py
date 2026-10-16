@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from ownos.i18n import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES
 
 KEYMAPS = ('fi', 'us', 'gb', 'se', 'de', 'fr')
 
@@ -11,7 +12,7 @@ KEYMAPS = ('fi', 'us', 'gb', 'se', 'de', 'fr')
 def defaults():
     return dict(gaming_mode=True, overlay=False, animations=True,
                 accent='#4d94ff', wallpaper='', keymap='fi', pointer_speed=0.0,
-                taskbar_position='bottom')
+                taskbar_position='bottom', language=DEFAULT_LANGUAGE)
 
 
 def validate(settings):
@@ -30,6 +31,8 @@ def validate(settings):
         raise ValueError('Unsupported keyboard layout')
     if values['taskbar_position'] not in ('bottom', 'top'):
         raise ValueError('Taskbar position must be bottom or top')
+    if values['language'] not in SUPPORTED_LANGUAGES:
+        raise ValueError('Unsupported interface language')
     speed = values['pointer_speed']
     if type(speed) not in (int, float) or not -1 <= speed <= 1:
         raise ValueError('Pointer speed must be between -1 and 1')

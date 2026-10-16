@@ -1,8 +1,8 @@
 # Generated local source checksum is inserted by scripts/build-packages.sh.
 pkgbase=ownos
 pkgname=(ownos-core ownos-ui ownos-desktop ownos-branding ownos-keyring ownos-live)
-pkgver=0.1.3.dev
-pkgrel=3
+pkgver=0.2.0
+pkgrel=1
 pkgdesc='Husk OS experimental desktop and system tools on an Arch Linux base'
 arch=('x86_64')
 license=('MIT')
@@ -24,8 +24,7 @@ package_ownos-core() {
     ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"
   done
   install -Dm644 ownos/data/org.ownos.admin.policy "$pkgdir/usr/share/polkit-1/actions/org.ownos.admin.policy"
-  # English source strings need no catalog. Install only supported catalogs
-  # added deliberately in a later localization milestone.
+  # English source strings need no catalog. Compile reviewed translations.
   for catalog in ownos/locale/*/LC_MESSAGES/huskos.po; do
     [ -f "$catalog" ] || continue
     language=${catalog#ownos/locale/}; language=${language%%/*}

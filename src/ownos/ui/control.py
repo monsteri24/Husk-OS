@@ -4,7 +4,7 @@ import threading
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from ownos.identity import OS_NAME, VERSION
-from ownos.i18n import _
+from ownos.i18n import _, configure_saved
 from ownos.config import ConfigStore, KEYMAPS
 from ownos.metrics import SystemSampler
 from ownos.library import discover_steam_games
@@ -14,10 +14,12 @@ from ownos.ui.common import Gtk, GLib, load_style, remove_style, row_box, spawn,
 
 class ControlWindow(Gtk.Window):
     def __init__(self, store=None):
+        store = store if store is not None else ConfigStore()
+        configure_saved(store)
         require_display()
         super().__init__(title=_('Husk Settings · Gaming Control Center · Experimental'))
         self.set_default_size(900, 650)
-        self.store = store or ConfigStore(); self.settings = self.store.load()
+        self.store = store; self.settings = self.store.load()
         self.provider = load_style(self.settings, self.store.path.parent / "desktop.css"); self.sampler = SystemSampler()
         self.closed = False; self.monitor_busy = False
         self.connect('destroy', self.cleanup)
@@ -158,6 +160,12 @@ class ControlWindow(Gtk.Window):
         except (OSError, ET.ParseError, subprocess.TimeoutExpired) as exc: error(self, exc)
 
     def appearance_page(self, box):
+        box.pack_start(row_box(_('Interface language'), _('Choose the language for Husk applications. Reopen applications to apply a change. Keyboard layout is set separately under Input.')), False, False, 0)
+        self.language = Gtk.ComboBoxText()
+        self.language.append('en', 'English'); self.language.append('fi', 'Suomi (fi-FI)')
+        self.language.set_active_id(self.settings['language'])
+        self.language_handler = self.language.connect('changed', self.change_language)
+        box.pack_start(self.language, False, False, 0)
         box.pack_start(row_box(_('Husk Desktop taskbar'), _('This experimental desktop is under development. The taskbar and launcher are separate components.')), False, False, 0)
         position = Gtk.ComboBoxText()
         position.append('bottom', _('Bottom')); position.append('top', _('Top'))
@@ -179,6 +187,15 @@ class ControlWindow(Gtk.Window):
         reset = Gtk.Button(label=_('Restore default wallpaper'))
         reset.connect('clicked', lambda _button: (self.save('wallpaper', ''), self.wallpaper.set_text(_('Husk OS Desert (default)'))))
         box.pack_start(reset, False, False, 0)
+
+    def change_language(self, widget):
+        if self.save('language', widget.get_active_id()):
+            self.status.set_text(_('Language saved. Reopen Husk applications to apply it.'))
+        else:
+            # A failed write must not leave the selector claiming a saved choice.
+            widget.handler_block(self.language_handler)
+            try: widget.set_active_id(self.settings['language'])
+            finally: widget.handler_unblock(self.language_handler)
 
     def choose_wallpaper(self, _button):
         dialog = Gtk.FileChooserDialog(title=_('Choose wallpaper'), transient_for=self, action=Gtk.FileChooserAction.OPEN)

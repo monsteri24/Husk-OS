@@ -8,10 +8,13 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
+import weakref
 
 name = Path(sys.argv[0]).name
 kind = {'husk-desktop': 'desktop', 'husk-files': 'files',
-        'husk-control': 'control'}.get(name)
+        'husk-control': 'control',
+        'husk-labwc-confirm-client.py': 'confirmation'}.get(name)
 directory = os.environ.get('HUSK_LABWC_TELEMETRY')
 
 if kind and directory:
@@ -23,6 +26,23 @@ if kind and directory:
     destination = Path(directory) / (kind + '.json')
     shell = None
     latest = {'pid': os.getpid(), 'kind': kind, 'exited': False}
+    observed = weakref.WeakSet()
+
+    def observe_input(widget, event, window_id):
+        """Record delivered GTK events without consuming or synthesizing them."""
+        value = dict(window=window_id, widget=type(widget).__name__,
+                     event=event.type.value_nick, time=time.monotonic())
+        if isinstance(widget, Gtk.Button):
+            value['label'] = widget.get_label()
+        if event.type in (Gdk.EventType.BUTTON_PRESS, Gdk.EventType.BUTTON_RELEASE):
+            value['button'] = event.button
+        elif event.type in (Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE):
+            value['key'] = Gdk.keyval_name(event.keyval)
+        else:
+            return False
+        with (Path(directory) / (kind + '-input.jsonl')).open('a') as stream:
+            stream.write(json.dumps(value) + '\n')
+        return False
 
     def save(value):
         temporary = destination.with_suffix('.' + str(os.getpid()) + '.tmp')
@@ -75,10 +95,46 @@ if kind and directory:
             for window in Gtk.Window.list_toplevels():
                 native = window.get_window()
                 state = native.get_state() if native else Gdk.WindowState(0)
-                windows.append(dict(title=window.get_title(), mapped=window.get_mapped(),
-                                    visible=window.get_visible(),
-                                    maximized=bool(state & Gdk.WindowState.MAXIMIZED),
-                                    size=[window.get_allocated_width(), window.get_allocated_height()]))
+                identifier = str(id(window))
+                widgets = list(descendants(window))
+                for widget in widgets:
+                    if widget not in observed and isinstance(widget, (
+                            Gtk.Window, Gtk.Button, Gtk.Entry, Gtk.ListBoxRow, Gtk.ComboBox)):
+                        widget.connect('event', observe_input, identifier)
+                        observed.add(widget)
+                value = dict(id=identifier, type=type(window).__name__, title=window.get_title(),
+                             mapped=window.get_mapped(), visible=window.get_visible(),
+                             maximized=bool(state & Gdk.WindowState.MAXIMIZED),
+                             size=[window.get_allocated_width(), window.get_allocated_height()])
+                value['buttons'] = [dict(label=w.get_label(), focused=w.has_focus(),
+                                         default=w.has_default(), sensitive=w.get_sensitive(),
+                                         rect=rectangle(w, window, (0, 0)))
+                                    for w in widgets if isinstance(w, Gtk.Button) and w.get_mapped()]
+                if hasattr(window, 'cancel_button') and hasattr(window, 'confirm_button'):
+                    value['confirmation'] = dict(
+                        primary_text=window.get_property('text'),
+                        cancel=rectangle(window.cancel_button, window, (0, 0)),
+                        confirm=rectangle(window.confirm_button, window, (0, 0)),
+                        cancel_focused=window.cancel_button.has_focus(),
+                        cancel_default=window.cancel_button.has_default(),
+                        confirm_focused=window.confirm_button.has_focus())
+                if hasattr(window, 'current') and hasattr(window, 'location') and hasattr(window, 'list'):
+                    value['files'] = dict(
+                        current=str(window.current), location=window.location.get_text(),
+                        location_rect=rectangle(window.location, window, (0, 0)),
+                        status=window.status.get_text(),
+                        rows=[dict(name=row.path.name, path=str(row.path),
+                                   rect=rectangle(row, window, (0, 0)))
+                              for row in window.list.get_children()])
+                if hasattr(window, 'language'):
+                    value['language'] = dict(active_id=window.language.get_active_id(),
+                                             rect=rectangle(window.language, window, (0, 0)))
+                    value['tabs'] = [dict(label=notebook.get_tab_label_text(notebook.get_nth_page(i)),
+                                          rect=rectangle(notebook.get_tab_label(notebook.get_nth_page(i)),
+                                                         window, (0, 0)))
+                                     for notebook in widgets if isinstance(notebook, Gtk.Notebook)
+                                     for i in range(notebook.get_n_pages())]
+                windows.append(value)
             latest = dict(pid=os.getpid(), kind=kind, exited=False, windows=windows,
                           display=type(Gdk.Display.get_default()).__name__)
             if shell is not None and not shell.stopped:
@@ -96,6 +152,7 @@ if kind and directory:
                 latest['search'] = rectangle(shell.search, shell.start_window, start)
                 latest['search_text'] = shell.search.get_text()
                 latest['rows'] = [dict(name=row.app_name,
+                                       focused=any(w.has_focus() for w in descendants(row)),
                                        rect=rectangle(row, shell.start_window, start))
                                   for row in shell.app_list.get_children()]
                 latest['wallpapers'] = []

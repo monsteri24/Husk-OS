@@ -1,6 +1,6 @@
 NAME="Husk OS"
-PRETTY_NAME="Husk OS System 2 Development (Experimental)"
+PRETTY_NAME="Husk OS System 2 (Experimental Live)"
 ID=huskos
 ID_LIKE=arch
-VERSION_ID=system-2-dev
-BUILD_ID=experimental-mvp
+VERSION_ID=system-2
+BUILD_ID=system-2

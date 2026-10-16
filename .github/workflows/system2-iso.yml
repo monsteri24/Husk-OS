@@ -1,0 +1,130 @@
+name: Husk OS System 2 ISO
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/system2-build-request]
+permissions:
+  contents: read
+concurrency:
+  group: husk-system-2-release
+  cancel-in-progress: false
+jobs:
+  source:
+    uses: ./.github/workflows/tests.yml
+  desktop:
+    uses: ./.github/workflows/system2-desktop.yml
+  build-boot-publish:
+    needs: [source, desktop]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify committed source and preserve existing releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" = "$GITHUB_SHA"
+          test -z "$(git status --porcelain)"
+          gh release view system-1 --repo "$GITHUB_REPOSITORY" --json tagName,assets
+          if gh release view system-2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'System 2 already exists; preserving every existing asset.' >&2
+            exit 1
+          fi
+      - name: Prepare disposable runner disk and VM dependencies
+        run: |
+          set -euo pipefail
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h .
+          test "$(df -B1 --output=avail . | tail -1 | tr -d ' ')" -ge 26843545600
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 ovmf python3-pil
+      - name: Build signed packages and verify the actual ISO filesystem
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/husk-gnupg"
+          timeout 1800 docker run --rm --privileged \
+            -v "$GITHUB_WORKSPACE:/src" \
+            -v "$RUNNER_TEMP/husk-gnupg:/husk-gnupg" \
+            -e SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)" \
+            -e HUSK_SOURCE_SHA="$GITHUB_SHA" \
+            archlinux:base-devel bash /src/scripts/ci-build-system2.sh
+      - name: Boot the exact candidate through QEMU and OVMF
+        run: |
+          cd out
+          sha256sum -c HuskOS-system-2-SHA256.txt
+          cd ..
+          timeout 780 /usr/bin/python3 scripts/ci-test-system1.py \
+            --iso out/HuskOS-system-2.iso --artifacts out/boot-system2 --expected-version system-2
+      - name: Publish the verified System 2 and verify its download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          iso_sha=$(cut -d ' ' -f1 out/HuskOS-system-2-SHA256.txt)
+          iso_size=$(cat out/HuskOS-system-2-SIZE.txt)
+          cat > out/RELEASE-NOTES.md <<EOF
+          Husk OS System 2 is an experimental Arch-based gaming operating system with its own GTK Husk Desktop and Labwc/Wayland.
+
+          This release is a Live USB/VM environment. It has no completed graphical operating-system installer. The historical System 1 release is preserved unchanged.
+
+          Includes the original black-and-gold desert wallpaper, English default UI, selectable Finnish, Start/search/taskbar, window controls, Husk Settings, Husk Files, Foot terminal and user-confirmed optional application installation. Steam, Firefox, Heroic and other optional user apps are not preinstalled.
+
+          Source/GTK/native and real nested Labwc interaction checks passed before building. The resulting ISO filesystem and exact wallpaper/catalog were checked, then the exact ISO booted through QEMU/OVMF to the live Wayland desktop and shut down. A real signed Firefox installation and headless launch were tested separately in the disposable Arch build container; this is not a physical hardware or GUI authentication test.
+
+          Known limits: no System 2 physical hardware acceptance; no game/FPS, NVIDIA/Optimus, VRR, suspend, multi-monitor or long-duration certification. CPU policy and Optimus controls are planned. GameMode/MangoHud and 32-bit gaming libraries are optional and must be installed when needed; first-boot edition ships 64-bit Mesa. Unsupported anti-cheat games are not promised. Native .hpk packaging and a maintained Husk update repository remain planned. GUI/polkit authentication for a real network application installation on Live hardware still needs acceptance testing.
+
+          Source commit: $GITHUB_SHA
+          Filename: HuskOS-system-2.iso
+          Size: $iso_size bytes
+          SHA-256: $iso_sha
+
+          Download/checksum/USB guide: https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/docs/INSTALL.md
+          Automated evidence is attached. Physical USB testing is separate.
+          EOF
+          gh release create system-2 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title 'Husk OS System 2 — Experimental Live' --prerelease --notes-file out/RELEASE-NOTES.md \
+            out/HuskOS-system-2.iso out/HuskOS-system-2-SHA256.txt out/system2-build.json \
+            out/iso-rootfs-check.json out/boot-system2/result.json out/boot-system2/guest.json \
+            out/boot-system2/desktop-start.png out/boot-system2/desktop-terminal.png \
+            out/firefox-package.txt out/firefox-version.txt out/firefox-headless.png
+          asset=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/system-2" \
+            --jq '.assets[] | select(.name=="HuskOS-system-2.iso")')
+          test "$(jq -r .state <<< "$asset")" = uploaded
+          test "$(jq -r .size <<< "$asset")" = "$iso_size"
+          test "$(jq -r .digest <<< "$asset")" = "sha256:$iso_sha"
+          download_url=$(jq -r .browser_download_url <<< "$asset")
+          curl --fail --location --retry 2 --max-time 600 "$download_url" -o "$RUNNER_TEMP/HuskOS-system-2.iso"
+          test "$(sha256sum "$RUNNER_TEMP/HuskOS-system-2.iso" | cut -d ' ' -f1)" = "$iso_sha"
+          printf 'ISO: %s\nSize: %s bytes\nSHA-256: %s\nSource: %s\nQEMU/OVMF: PASSED\nPhysical hardware: NOT TESTED\n' \
+            "$download_url" "$iso_size" "$iso_sha" "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Preserve bounded test and build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system2-release-evidence-${{ github.run_id }}
+          path: |
+            out/*.json
+            out/*.txt
+            out/*.log
+            out/*.png
+            out/boot-system2/*.json
+            out/boot-system2/*.log
+            out/boot-system2/*.png
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Secure a completed ISO if a later gate or release upload failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HuskOS-system-2-recovery-${{ github.run_id }}
+          path: |
+            out/HuskOS-system-2.iso
+            out/HuskOS-system-2-SHA256.txt
+          if-no-files-found: ignore
+          retention-days: 7

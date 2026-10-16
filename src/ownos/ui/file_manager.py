@@ -1,15 +1,18 @@
 from pathlib import Path
 from ownos.files import list_folder, create_folder
-from ownos.i18n import _, ngettext
+from ownos.config import ConfigStore
+from ownos.i18n import _, ngettext, configure_saved
 from ownos.ui.common import Gtk, Gio, GLib, icon, load_style, remove_style, open_path, error, require_display
 
 
 class FileWindow(Gtk.Window):
-    def __init__(self, path=None):
+    def __init__(self, path=None, store=None):
+        store = store if store is not None else ConfigStore()
+        configure_saved(store)
         require_display()
         super().__init__(title=_('Husk Files'))
         self.set_default_size(850, 560)
-        self.provider = load_style(); self.connect('destroy', self.cleanup)
+        self.provider = load_style(store.load(), store.path.parent / 'desktop.css'); self.connect('destroy', self.cleanup)
         self.current = Path(path or Path.home()).absolute()
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12); outer.set_border_width(16)
         self.add(outer)

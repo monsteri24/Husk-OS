@@ -1,8 +1,14 @@
 name: source-tests
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
 jobs:
   models-and-gtk-preview:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y python3-gi python3-gi-cairo python3-yaml gir1.2-gtk-3.0 librsvg2-common xvfb dbus-x11 libwayland-dev pkg-config gettext

@@ -1,6 +1,9 @@
 """Read-only checks of mkarchiso's installed live filesystem before delivery."""
 from collections import deque
+import gettext
+import hashlib
 from pathlib import Path, PurePosixPath
+import struct
 from ownos.installer import OPTIONAL_APPLICATION_PACKAGES
 
 
@@ -93,6 +96,27 @@ def validate_rootfs(root, boot=None):
         required(relative)
     for name in ('husk-start', 'husk-settings', 'husk-files', 'husk-games', 'husk-app'):
         required('usr/share/icons/hicolor/scalable/apps/' + name + '.svg')
+
+    # Test the installed bytes, not just the presence of a promising filename.
+    wallpaper = 'usr/share/ownos/wallpapers/husk-desert.jpg'
+    if required(wallpaper):
+        digest = hashlib.sha256(guest_path(root, wallpaper).read_bytes()).hexdigest()
+        if digest != 'e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac':
+            problems.append('Official wallpaper checksum mismatch: ' + wallpaper)
+    catalog = 'usr/share/locale/fi/LC_MESSAGES/huskos.mo'
+    if required(catalog):
+        try:
+            path = guest_path(root, catalog)
+            if path.stat().st_size > 4 * 1024 * 1024:
+                raise ValueError('Catalog exceeds the supported size')
+            with path.open('rb') as stream:
+                translation = gettext.GNUTranslations(stream)
+            if translation.info().get('language') != 'fi':
+                raise ValueError('Expected the Finnish catalog')
+            if translation.gettext('Settings') == 'Settings':
+                raise ValueError('Finnish UI messages are missing')
+        except (OSError, ValueError, UnicodeError, EOFError, struct.error) as exc:
+            problems.append('Invalid Finnish catalog ' + catalog + ': ' + str(exc))
 
     # Inspect the installed package database, including transitive dependencies,
     # without executing any guest program. Directory names are not authoritative

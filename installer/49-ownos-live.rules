@@ -1,6 +1,13 @@
 // This file belongs only to ownos-live and is removed from installed targets.
-polkit.addRule(function(action, subject) {
-  if (action.id === "org.ownos.install" && subject.user === "live" && subject.local && subject.active) {
-    return polkit.Result.YES;
+// Root is locked in Live. Authenticate the active local wheel user's temporary
+// password for the allowlisted package helper. This chooses an identity only:
+// org.ownos.admin still requires auth_admin and grants no passwordless access.
+polkit.addAdminRule(function(action, subject) {
+  if (action.id === "org.ownos.admin" && subject.user === "live" &&
+      subject.local && subject.active && subject.isInGroup("wheel")) {
+    return ["unix-user:live"];
   }
 });
+
+// The optional graphical installer uses its declared auth_admin policy too.
+// There is deliberately no passwordless authorization override for Live.

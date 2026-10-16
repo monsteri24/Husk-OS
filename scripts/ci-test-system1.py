@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Boot the already published ISO via OVMF; collect real guest/VM evidence."""
+import argparse
+import hashlib
 import http.server
 import json
 import os
@@ -17,8 +19,14 @@ from ownos.live import validate_live_status
 
 OUT = ROOT / 'out/boot-system1'
 PROBE = r'''import json, os, pathlib, subprocess, urllib.request
-info = {'uid': os.getuid(), 'live': pathlib.Path('/run/archiso').is_dir()}
+info = {'uid': os.getuid(), 'live': pathlib.Path('/run/archiso').is_dir(), 'terminals': []}
 env = os.environ.copy()
+for directory in pathlib.Path('/proc').iterdir():
+    if not directory.name.isdigit(): continue
+    try:
+        executable = (directory / 'exe').readlink()
+        if executable.name == 'foot': info['terminals'].append(int(directory.name))
+    except OSError: pass
 for directory in pathlib.Path('/proc').iterdir():
     if not directory.name.isdigit(): continue
     try:
@@ -126,9 +134,12 @@ def request_guest_evidence(monitor):
         monitor.key('ctrl-alt-f1')
 
 
-def main():
+def main(iso=None, artifacts=None, expected_version=None):
+    global OUT
+    if artifacts is not None:
+        OUT = Path(artifacts).resolve()
     OUT.mkdir(parents=True, exist_ok=False)
-    iso = ROOT / 'out/HuskOS-system-1.iso'
+    iso = Path(iso).resolve() if iso is not None else ROOT / 'out/HuskOS-system-1.iso'
     code = Path('/usr/share/OVMF/OVMF_CODE_4M.fd')
     template = Path('/usr/share/OVMF/OVMF_VARS_4M.fd')
     if not iso.is_file() or not code.is_file() or not template.is_file():
@@ -150,6 +161,9 @@ def main():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     result = {'iso': iso.name, 'accelerator': 'kvm' if kvm else 'tcg',
               'boot': 'FAILED', 'shutdown': 'NOT TESTED', 'problems': []}
+    with iso.open('rb') as stream:
+        result['iso_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
+    result['iso_bytes'] = iso.stat().st_size
     with (OUT / 'qemu.log').open('wb') as log:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
         try:
@@ -169,6 +183,8 @@ def main():
                 if guest.is_file():
                     data = json.loads(guest.read_text())
                     problems = validate_live_status(data.get('status'))
+                    if expected_version and data.get('status', {}).get('version') != expected_version:
+                        problems.append('Guest version differs from expected source: ' + expected_version)
                     if data.get('uid') == 1000 and data.get('live') is True and not problems and data.get('husk-live-smoke', {}).get('exit') == 0:
                         result.update(boot='PASSED', desktop_status=data['status'], problems=[])
                         break
@@ -187,6 +203,22 @@ def main():
                 monitor.capture('desktop-start')
                 monitor.key('meta_l-ret')
                 time.sleep(5)
+                if expected_version:
+                    previous_count = result['desktop_status'].get('window_count', 0)
+                    guest.unlink(missing_ok=True)
+                    request_guest_evidence(monitor)
+                    deadline = time.monotonic() + 40
+                    result['terminal'] = 'FAILED'
+                    while time.monotonic() < deadline:
+                        if guest.is_file():
+                            after = json.loads(guest.read_text())
+                            if after.get('terminals') and after.get('status', {}).get('window_count', 0) > previous_count:
+                                result['terminal'] = 'PASSED'
+                                result['terminal_pids'] = after['terminals']
+                                break
+                        time.sleep(1)
+                    if result['terminal'] != 'PASSED':
+                        result['problems'].append('Terminal shortcut did not produce an observed Foot window/process.')
                 monitor.capture('desktop-terminal')
                 result['terminal_shortcut_sent'] = True
                 monitor.command('system_powerdown')
@@ -204,8 +236,14 @@ def main():
             server.shutdown()
             (OUT / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
             print(json.dumps(result, indent=2))
-    return 0 if result['boot'] == 'PASSED' and result['shutdown'] == 'PASSED' else 1
+    return 0 if (result['boot'] == 'PASSED' and result['shutdown'] == 'PASSED'
+                 and (not expected_version or result.get('terminal') == 'PASSED')) else 1
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--iso', type=Path)
+    parser.add_argument('--artifacts', type=Path)
+    parser.add_argument('--expected-version')
+    args = parser.parse_args()
+    raise SystemExit(main(args.iso, args.artifacts, args.expected_version))

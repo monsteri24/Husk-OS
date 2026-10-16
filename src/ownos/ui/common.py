@@ -6,7 +6,9 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 from gi.repository import Gtk, Gdk, Gio, GLib, GdkPixbuf
 from ownos.catalog import app_by_id
+from ownos.app_install import app_installed
 from ownos.config import ConfigStore
+from ownos.dialog_input import FreshActivation
 from ownos.i18n import _
 from ownos.themes import read_user_css
 
@@ -52,14 +54,106 @@ def error(parent, message):
     dialog.format_secondary_text(str(message)[:2000]); dialog.run(); dialog.destroy()
 
 
+class ConfirmationDialog(Gtk.MessageDialog):
+    """Cancel is safe by default; OK requires its own fresh input pair.
+
+    The OK button deliberately has no automatic Gtk.Dialog response mapping.
+    An inherited release/click from the launcher or another button therefore
+    cannot confirm the transaction. A focused keyboard press must also receive
+    its matching release, including releasing a held opening key first.
+    """
+    def __init__(self, parent, title, detail):
+        super().__init__(transient_for=parent, modal=True,
+                         message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
+                         text=title)
+        opening = Gtk.get_current_event()
+        opening_key = (opening.keyval if opening is not None and
+                       opening.type == Gdk.EventType.KEY_PRESS else None)
+        self.activation = FreshActivation(opening_key)
+        self.format_secondary_text(detail)
+        self.set_default_size(460, -1)
+        self.cancel_button = self.add_button(_('Cancel'), Gtk.ResponseType.CANCEL)
+        self.confirm_button = Gtk.Button(label=_('OK'))
+        area = self.get_action_area()
+        area.set_spacing(12)
+        area.set_border_width(12)
+        area.pack_end(self.confirm_button, False, False, 0)
+        self.confirm_button.show()
+        for button in (self.cancel_button, self.confirm_button):
+            button.set_size_request(112, -1)
+        self.set_default_response(Gtk.ResponseType.CANCEL)
+        self.cancel_button.grab_focus()
+        self.confirm_button.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK |
+                                       Gdk.EventMask.KEY_PRESS_MASK | Gdk.EventMask.KEY_RELEASE_MASK |
+                                       Gdk.EventMask.LEAVE_NOTIFY_MASK | Gdk.EventMask.FOCUS_CHANGE_MASK)
+        self.confirm_button.connect('button-press-event', self._pointer_press)
+        self.confirm_button.connect('button-release-event', self._pointer_release)
+        self.confirm_button.connect('key-press-event', self._key_press)
+        self.confirm_button.connect('key-release-event', self._key_release)
+        for signal in ('leave-notify-event', 'focus-out-event', 'grab-broken-event'):
+            self.confirm_button.connect(signal, self._cancel_activation)
+        self.connect('key-release-event', self._opening_key_release)
+        self.connect('unmap', lambda _: self.activation.cancel())
+
+    @staticmethod
+    def _inside(button, event):
+        # GtkButton's input window gives widget-local coordinates even when
+        # the containing dialog is moved or running under Wayland.
+        return 0 <= event.x < button.get_allocated_width() and 0 <= event.y < button.get_allocated_height()
+
+    def _pointer_press(self, button, event):
+        if event.type != Gdk.EventType.BUTTON_PRESS:
+            self.activation.cancel()
+            return True
+        self.activation.pointer_press(event.button, self._inside(button, event))
+        if event.button == 1:
+            button.grab_focus()
+            button.set_state_flags(Gtk.StateFlags.ACTIVE, False)
+        return True
+
+    def _pointer_release(self, button, event):
+        button.unset_state_flags(Gtk.StateFlags.ACTIVE)
+        if self.activation.pointer_release(event.button, self._inside(button, event)):
+            self.response(Gtk.ResponseType.OK)
+        return True
+
+    def _key_press(self, button, event):
+        if event.keyval not in FreshActivation.KEYS:
+            return False
+        modified = bool(event.state & Gtk.accelerator_get_default_mod_mask())
+        self.activation.key_press(event.keyval, modified)
+        if not modified:
+            button.set_state_flags(Gtk.StateFlags.ACTIVE, False)
+        return True
+
+    def _key_release(self, button, event):
+        if event.keyval not in FreshActivation.KEYS:
+            return False
+        button.unset_state_flags(Gtk.StateFlags.ACTIVE)
+        modified = bool(event.state & Gtk.accelerator_get_default_mod_mask())
+        if self.activation.key_release(event.keyval, modified):
+            self.response(Gtk.ResponseType.OK)
+        return True
+
+    def _opening_key_release(self, _, event):
+        # GtkWindow emits this before its default handler forwards the event
+        # to the focused button. Do not consume that button's armed key pair.
+        if self.get_focus() != self.confirm_button:
+            self.activation.key_release(event.keyval)
+        return False
+
+    def _cancel_activation(self, button, _):
+        self.activation.cancel()
+        button.unset_state_flags(Gtk.StateFlags.ACTIVE)
+        return False
+
+
 def confirm(parent, title, detail):
-    dialog = Gtk.MessageDialog(transient_for=parent, modal=True,
-                               message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
-                               text=title)
-    dialog.add_buttons(_('Cancel'), Gtk.ResponseType.CANCEL, _('OK'), Gtk.ResponseType.OK)
-    dialog.format_secondary_text(detail)
-    result = dialog.run() == Gtk.ResponseType.OK; dialog.destroy()
-    return result
+    dialog = ConfirmationDialog(parent, title, detail)
+    try:
+        return dialog.run() == Gtk.ResponseType.OK
+    finally:
+        dialog.destroy()
 
 
 def spawn(argv, parent=None):
@@ -70,12 +164,12 @@ def spawn(argv, parent=None):
         return None
 
 
-def terminal(argv, parent=None):
+def terminal(argv, parent=None, hold=False):
     exe = shutil.which('foot')
     if not exe:
         error(parent, _('The foot terminal is not installed. Install foot to use this action.'))
         return None
-    return spawn([exe, '-e', *argv], parent)
+    return spawn([exe, *(['--hold'] if hold else []), '-e', *argv], parent)
 
 
 def _icon_directory():
@@ -143,14 +237,7 @@ def icon_button(name, tip, callback, fallback='husk-app'):
 
 
 def installed(app):
-    if app.flatpak_id:
-        flatpak = shutil.which('flatpak')
-        if not flatpak: return False
-        try:
-            return subprocess.run([flatpak, 'info', app.flatpak_id], stdout=subprocess.DEVNULL,
-                                  stderr=subprocess.DEVNULL, timeout=4).returncode == 0
-        except (OSError, subprocess.TimeoutExpired): return False
-    return shutil.which(Path(app.command[0]).name) is not None
+    return app_installed(app)
 
 
 def launch_app(appid, parent=None):
@@ -159,7 +246,7 @@ def launch_app(appid, parent=None):
     detail = (_('Install from Flathub as a Flatpak for this user. The installer will show dependencies and ask for confirmation.')
               if app.flatpak_id else _('Install signed Arch packages with a full system upgrade. Pacman will show the changes and ask for confirmation.'))
     if confirm(parent, _('Install {application}?').format(application=app.name), detail):
-        return terminal(['/usr/bin/husk-install-app', appid], parent)
+        return terminal(['/usr/bin/husk-install-app', appid], parent, hold=True)
 
 
 def open_path(path, parent=None):
