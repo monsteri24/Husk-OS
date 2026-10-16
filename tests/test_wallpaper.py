@@ -85,4 +85,3 @@ class WallpaperGTKTests(unittest.TestCase):
             self.assertEqual((image.pixbuf.get_width(), image.pixbuf.get_height()), (1536, 864))
             self.assertIsInstance(image, Gtk.DrawingArea)
             self.assertEqual(image.get_preferred_width().minimum_width, 0)
-

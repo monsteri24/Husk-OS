@@ -34,17 +34,18 @@ class Launcher:
     def refresh(self):
         query = self.search.get_text().casefold()
         for row in self.app_list.get_children(): self.app_list.remove(row)
-        entries = [(app.name, app.icon, lambda id=app.id: launch_app(id, self.shell.panel)) for app in APPS]
+        entries = [(app.name, app.icon, 'husk-games' if app.id in {'steam', 'heroic', 'lutris'} else 'husk-app',
+                    lambda id=app.id: launch_app(id, self.shell.panel)) for app in APPS]
         for app in sorted(self.system_apps, key=lambda a:a.get_display_name().casefold()):
             name = app.get_display_name()
             if name.casefold() in {'steam','lutris','discord','firefox'}: continue
-            entries.append((name, app.get_icon(), lambda info=app:self.launch_desktop(info)))
+            entries.append((name, app.get_icon(), 'husk-app', lambda info=app:self.launch_desktop(info)))
         count = 0
-        for name, app_icon, callback in entries:
+        for name, app_icon, fallback, callback in entries:
             if query not in name.casefold(): continue
             row = Gtk.ListBoxRow(); row.app_name = name; row.activate_callback = callback
             content = Gtk.Box(spacing=14); content.set_border_width(10)
-            image = Gtk.Image.new_from_gicon(app_icon, Gtk.IconSize.BUTTON) if isinstance(app_icon,Gio.Icon) else icon(app_icon)
+            image = icon(app_icon, fallback=fallback)
             content.pack_start(image, False, False, 0); content.pack_start(Gtk.Label(label=name,xalign=0), True, True, 0)
             row.add(content); self.app_list.add(row); count += 1
             if count == 80: break

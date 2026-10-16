@@ -78,14 +78,66 @@ def terminal(argv, parent=None):
     return spawn([exe, '-e', *argv], parent)
 
 
-def icon(name, size=24):
-    image = Gtk.Image.new_from_icon_name(name, Gtk.IconSize.BUTTON)
+def _icon_directory():
+    source = Path(__file__).resolve().parents[3] / 'data/icons'
+    return source if source.is_dir() else Path('/usr/share/icons/hicolor/scalable/apps')
+
+
+def _icon_theme():
+    theme = Gtk.IconTheme.get_default()
+    # The source preview has no installed hicolor theme. An unthemed search
+    # directory also keeps our fallback available in third-party icon themes.
+    directory = str(_icon_directory())
+    if directory not in theme.get_search_path():
+        theme.append_search_path(directory)
+    return theme
+
+
+def _loadable_icon(theme, name, size):
+    if isinstance(name, Gio.Icon):
+        info = theme.lookup_by_gicon(name, size, Gtk.IconLookupFlags.FORCE_SIZE)
+    elif isinstance(name, str) and name:
+        info = theme.lookup_icon(name, size, Gtk.IconLookupFlags.FORCE_SIZE)
+    else:
+        return False
+    if info is None:
+        return False
+    try:
+        # A name may exist in the theme cache but reference an unreadable file.
+        return info.load_icon() is not None
+    except GLib.Error:
+        return False
+
+
+def icon(name, size=24, fallback='husk-app'):
+    """Use installed application art when loadable, with a bundled fallback.
+
+    Validate both names and desktop-file GIcons before handing them to GTK:
+    Gtk.Image otherwise silently displays its missing-image placeholder.
+    Keep the result themed so GTK handles symbolic colors and display scale.
+    """
+    theme = _icon_theme()
+    for candidate in (name, fallback, 'husk-app'):
+        if not _loadable_icon(theme, candidate, size):
+            continue
+        image = (Gtk.Image.new_from_gicon(candidate, Gtk.IconSize.BUTTON)
+                 if isinstance(candidate, Gio.Icon)
+                 else Gtk.Image.new_from_icon_name(candidate, Gtk.IconSize.BUTTON))
+        break
+    else:
+        # Bypass a damaged third-party theme's override of our fallback name.
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+            str(_icon_directory() / 'husk-app.svg'), size, size, True)
+        image = Gtk.Image.new_from_pixbuf(pixbuf)
     image.set_pixel_size(size)
+    image.set_size_request(size, size)
+    image.set_halign(Gtk.Align.CENTER); image.set_valign(Gtk.Align.CENTER)
     return image
 
 
-def icon_button(name, tip, callback):
-    button = Gtk.Button(); button.add(icon(name)); button.set_tooltip_text(tip)
+def icon_button(name, tip, callback, fallback='husk-app'):
+    button = Gtk.Button(); button.add(icon(name, fallback=fallback)); button.set_tooltip_text(tip)
+    button.get_accessible().set_name(tip)
     button.connect('clicked', lambda _: callback())
     return button
 

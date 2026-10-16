@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 @unittest.skipUnless(os.environ.get('OWNOS_UI_TESTS') == '1', 'Run with OWNOS_UI_TESTS=1 inside a test display')
@@ -44,6 +45,23 @@ class UISmokeTests(unittest.TestCase):
         self.addCleanup(window.destroy)
         window.navigate(self.root / 'folder'); self.drain()
         self.assertEqual(window.current, self.root / 'folder')
+
+    def test_husk_interface_stays_english_with_a_finnish_host_locale(self):
+        from ownos.i18n import configure
+        with patch.dict(os.environ, {'LANGUAGE': 'fi', 'LANG': 'fi_FI.UTF-8'}):
+            configure()
+            window = self.file_manager.FileWindow(self.root)
+            control = self.control.ControlWindow(store=self.store)
+        self.addCleanup(window.destroy); self.addCleanup(control.destroy)
+        self.assertEqual(window.get_title(), 'Husk Files')
+        self.assertIn('Husk Settings', control.get_title())
+        self.assertEqual(window.status.get_text(), '0 items')
+        (self.root / 'one.txt').write_text('one')
+        window.navigate(self.root); self.drain()
+        self.assertEqual(window.status.get_text(), '1 item')
+        (self.root / 'two.txt').write_text('two')
+        window.navigate(self.root); self.drain()
+        self.assertEqual(window.status.get_text(), '2 items')
 
     def test_notification_center_shows_plain_text(self):
         shell = self.shell.OwnShell(preview=True, store=self.store)

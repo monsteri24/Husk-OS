@@ -43,6 +43,10 @@ package_ownos-ui() {
   install -Dm644 ownos/data/wallpapers/husk-desert.jpg "$pkgdir/usr/share/ownos/wallpapers/husk-desert.jpg"
   for command in own-shell own-control own-files husk-desktop husk-shell husk-control husk-files; do ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"; done
   install -m644 ownos/data/org.ownos.*.desktop "$pkgdir/usr/share/applications/"
+  for icon in ownos/data/icons/*.svg; do
+    install -Dm644 "$icon" "$pkgdir/usr/share/icons/hicolor/scalable/apps/${icon##*/}"
+  done
+  install -Dm644 ownos/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE.icons"
 }
 
 package_ownos-desktop() {

@@ -1,0 +1,68 @@
+name: System2 real Wayland desktop
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'config/labwc/**'
+      - 'native/**'
+      - 'packaging/ownos/**'
+      - 'scripts/test-labwc.py'
+      - 'scripts/labwc-test-observer/**'
+      - '.github/workflows/system2-desktop.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'config/labwc/**'
+      - 'native/**'
+      - 'packaging/ownos/**'
+      - 'scripts/test-labwc.py'
+      - 'scripts/labwc-test-observer/**'
+      - '.github/workflows/system2-desktop.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  labwc-desktop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install real compositor and client dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y labwc foot grim xdotool xvfb xauth dbus-x11 \
+            python3-gi python3-gi-cairo python3-cairo python3-pil python3-yaml \
+            gir1.2-gtk-3.0 gir1.2-gtklayershell-0.1 adwaita-icon-theme fonts-noto-core \
+            libwayland-dev libglib2.0-bin pkg-config gettext
+      - name: Build current source and install into disposable runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          make PYTHON=/usr/bin/python3 native
+          test_stage="$(mktemp -d)"
+          ln -s "$PWD" "$test_stage/ownos"
+          (
+            cd "$test_stage"
+            source ownos/packaging/ownos/PKGBUILD
+            pkgdir="$test_stage/root"
+            pkgname=ownos-core; package_ownos-core
+            pkgname=ownos-ui; package_ownos-ui
+            pkgname=ownos-desktop; package_ownos-desktop
+          )
+          sudo cp -a "$test_stage/root/." /
+      - name: Test actual Wayland surfaces and decoration pointer input
+        run: /usr/bin/python3 scripts/test-labwc.py --artifacts .build/system2-desktop
+      - name: Preserve real screenshots, logs and machine-readable evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system2-desktop-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .build/system2-desktop/
+          if-no-files-found: warn
+          retention-days: 30

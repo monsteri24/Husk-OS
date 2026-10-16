@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- SPDX-License-Identifier: MIT; Copyright (c) 2026 OwnOS contributors -->
+  <g fill="none" stroke="#eaf1ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 3h4l.6 2.5 1.4.8 2.5-.7 2 3.5-1.9 1.8v1.7l1.9 1.8-2 3.5-2.5-.7-1.4.8L14 21h-4l-.6-2.5-1.4-.8-2.5.7-2-3.5 1.9-1.8v-1.7L3.5 9.6l2-3.5 2.5.7L9.4 6z"/>
+    <circle cx="12" cy="12" r="3" stroke="#76b5ff"/>
+  </g>
+</svg>
