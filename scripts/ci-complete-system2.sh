@@ -40,12 +40,28 @@ pacman -U --noconfirm "${packages[0]}"
 bash scripts/ci-test-application.sh
 
 python3 - <<'PY'
-import hashlib, json, os
+import ast, hashlib, json, os, sys
 from pathlib import Path
+sys.path.insert(0, 'src')
+from ownos.rootfs import guest_path
 root = Path('.build/system2-iso-root')
+language = {}
+for node in ast.parse((root / 'usr/lib/ownos/ownos/i18n.py').read_text()).body:
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id in ('DEFAULT_LANGUAGE', 'SUPPORTED_LANGUAGES'):
+                language[target.id] = ast.literal_eval(node.value)
+assert language == dict(DEFAULT_LANGUAGE='en', SUPPORTED_LANGUAGES=('en',)), language
+assert not list(root.glob('usr/share/locale/*/LC_MESSAGES/huskos.mo')), 'Postponed catalogs must not ship'
+for payload in ('usr/bin/pkexec', 'usr/bin/husk-install-app', 'usr/lib/ownos/own-admin',
+                'usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1'):
+    path = guest_path(root, payload)
+    assert path.is_file() and path.stat().st_mode & 0o111, payload
+with Path('out/HuskOS-system-2.iso').open('rb') as stream:
+    iso_digest = hashlib.file_digest(stream, 'sha256').hexdigest()
 result = dict(image_source_commit=os.environ['HUSK_SOURCE_SHA'], reused_iso=True,
               iso_bytes=Path('out/HuskOS-system-2.iso').stat().st_size,
-              iso_sha256=hashlib.file_digest(Path('out/HuskOS-system-2.iso').open('rb'), 'sha256').hexdigest(),
+              iso_sha256=iso_digest, husk_language=language, authentication_payloads_present=True,
               wallpaper_sha256=hashlib.sha256((root / 'usr/share/ownos/wallpapers/husk-desert.jpg').read_bytes()).hexdigest(),
               rootfs=json.loads(Path('out/iso-rootfs-check.json').read_text()),
               application='Signed Firefox package transaction, installed-state query and normal sandboxed headless launch passed in the separate build container')

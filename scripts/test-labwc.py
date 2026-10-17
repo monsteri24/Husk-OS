@@ -344,10 +344,30 @@ class DesktopTest:
         self.wait('Start mapped for ' + name, lambda:
                   self.state().get('start_mapped') and self.state().get('start', [0, 0, 0, 0])[2] >= 400)
         self.click(self.state()['search'])
-        self.key('ctrl+a')
-        self.type_text(name)
-        return self.wait('exact Start search result for ' + name, lambda: next((row for row in
-            self.state().get('rows', []) if row['name'] == name and self.state().get('search_text') == name), None))
+        if self.state().get('search_text') != name:
+            self.key('ctrl+a')
+            self.type_text(name)
+        # Rewriting an unchanged query destroys/recreates rows immediately and
+        # again in SearchEntry's delayed search-changed signal. Old telemetry
+        # can already match that query while its input/layout is still pending.
+        # Require three fresh matching snapshots of one actual row before use.
+        sequence = self.state().get('sequence', 0)
+        previous = None
+        samples = 0
+        def stable_result():
+            nonlocal sequence, previous, samples
+            state = self.state()
+            if state.get('sequence', 0) <= sequence:
+                return None
+            sequence = state['sequence']
+            row = next((row for row in state.get('rows', [])
+                        if row['name'] == name and row.get('rect') and row['rect'][2] > 0
+                        and state.get('start_mapped') and state.get('search_text') == name), None)
+            signature = (row.get('identity'), tuple(row['rect'])) if row else None
+            samples = samples + 1 if signature is not None and signature == previous else 1
+            previous = signature
+            return row if row and samples >= 3 else None
+        return self.wait('fresh stable Start search result for ' + name, stable_result)
 
     def confirmation(self, kind='desktop'):
         return self.native_window(kind, lambda window: bool(window.get('confirmation')))

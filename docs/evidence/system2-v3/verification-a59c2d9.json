@@ -1,0 +1,47 @@
+{
+  "verification_commit": "a59c2d9532b1cbd2fd1250deff4beab72941600b",
+  "image_source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "payload_paths_unchanged": true,
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39004320126",
+  "source_job": 117313549961,
+  "source_result": "PASSED",
+  "gtk_tests": {
+    "passed": 234,
+    "failed": 0,
+    "skipped": 0
+  },
+  "syntax_checks": 121,
+  "desktop_job": 117313549804,
+  "desktop_result": "FAILED",
+  "completed_scenarios": 15,
+  "failure": "Timed out opening the second real Firefox confirmation before keyboard OK scenario; investigate recorded state/allocation, no identical rerun",
+  "iso": "Unchanged completed ISO preserved; recovery/boot job skipped by desktop gate",
+  "published": false,
+  "diagnosis": {
+    "run_id": 39004320126,
+    "job_id": 117313549804,
+    "commit": "a59c2d9532b1cbd2fd1250deff4beab72941600b",
+    "artifact_id": 12090651039,
+    "artifact_sha256": "37139206e957c5bd67d7ed73c4930f9cd2dd46e099df0ca6a3ff1147cfb39d69",
+    "failure_screenshot": "FAILURE.png",
+    "screenshot_sha256": "2fd79055a32a5f415fcbb1c71196a2b45755fb7364b6e5fff03a37efd515f705",
+    "failure": "Timed out: real missing-Firefox confirmation from Start",
+    "final_query": "Firefox",
+    "final_rows": [
+      "Firefox",
+      "Firefox Web Browser"
+    ],
+    "intended_rect": [
+      406,
+      318,
+      468,
+      48
+    ],
+    "last_key_release_monotonic": 108.850584972,
+    "row_click_monotonic": 108.854985485,
+    "hypothesis": "Repeated identical query accepted a pre-typing telemetry snapshot and clicked during delayed SearchEntry row refresh.",
+    "correction": "Reuse unchanged query; require three fresh observer samples with stable row identity/allocation before activation; repair passive button event serialization.",
+    "headless_tests_passed": 8,
+    "real_wayland_rerun": "Pending"
+  }
+}

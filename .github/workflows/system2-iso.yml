@@ -131,12 +131,14 @@ jobs:
           Download/checksum/USB guide: https://github.com/$GITHUB_REPOSITORY/blob/main/docs/INSTALL.md
           Automated evidence is attached. Physical USB testing is separate.
           EOF
+          extra_evidence=()
+          if [[ -s out/system2-recovery.json ]]; then extra_evidence+=(out/system2-recovery.json); fi
           gh release create system-2 --repo "$GITHUB_REPOSITORY" --target "$HUSK_IMAGE_SOURCE" \
             --title 'Husk OS System 2 — Experimental Live' --prerelease --notes-file out/RELEASE-NOTES.md \
             out/HuskOS-system-2.iso out/HuskOS-system-2-SHA256.txt out/system2-build.json \
             out/iso-rootfs-check.json out/boot-system2/result.json out/boot-system2/guest.json \
             out/boot-system2/desktop-start.png out/boot-system2/desktop-terminal.png \
-            out/firefox-package.txt out/firefox-version.txt out/firefox-headless.png
+            out/firefox-package.txt out/firefox-version.txt out/firefox-headless.png "${extra_evidence[@]}"
           asset=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/system-2" \
             --jq '.assets[] | select(.name=="HuskOS-system-2.iso")')
           test "$(jq -r .state <<< "$asset")" = uploaded

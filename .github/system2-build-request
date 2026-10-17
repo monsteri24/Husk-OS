@@ -6,3 +6,4 @@ Validate actual ISO/rootfs, UEFI boot, terminal, signed optional-app transaction
 Preserve system-1 and all history. Never overwrite an existing System 2 release asset automatically.
 reuse_run_id=39001566844
 2026-10-17 continuation: reuse its completed 2101264384-byte ISO; fix only CI provider selection, then boot and publish the unchanged checksummed image.
+2026-10-17 verification correction: wait for fresh stable Start result rows and reuse unchanged search text; preserve the recorded stale-row failure before the new bounded run.

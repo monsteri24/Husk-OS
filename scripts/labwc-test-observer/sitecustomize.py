@@ -27,6 +27,7 @@ if kind and directory:
     shell = None
     latest = {'pid': os.getpid(), 'kind': kind, 'exited': False}
     observed = weakref.WeakSet()
+    sequence = 0
 
     def observe_input(widget, event, window_id):
         """Record delivered GTK events without consuming or synthesizing them."""
@@ -35,7 +36,7 @@ if kind and directory:
         if isinstance(widget, Gtk.Button):
             value['label'] = widget.get_label()
         if event.type in (Gdk.EventType.BUTTON_PRESS, Gdk.EventType.BUTTON_RELEASE):
-            value['button'] = event.button
+            value['button'] = event.get_button()[1]
         elif event.type in (Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE):
             value['key'] = Gdk.keyval_name(event.keyval)
         else:
@@ -89,7 +90,8 @@ if kind and directory:
         return [x, y, width, height]
 
     def poll():
-        global latest
+        global latest, sequence
+        sequence += 1
         try:
             windows = []
             for window in Gtk.Window.list_toplevels():
@@ -135,7 +137,7 @@ if kind and directory:
                                      for notebook in widgets if isinstance(notebook, Gtk.Notebook)
                                      for i in range(notebook.get_n_pages())]
                 windows.append(value)
-            latest = dict(pid=os.getpid(), kind=kind, exited=False, windows=windows,
+            latest = dict(pid=os.getpid(), kind=kind, exited=False, windows=windows, sequence=sequence,
                           display=type(Gdk.Display.get_default()).__name__)
             if shell is not None and not shell.stopped:
                 panel = surface(shell.panel)
@@ -152,6 +154,7 @@ if kind and directory:
                 latest['search'] = rectangle(shell.search, shell.start_window, start)
                 latest['search_text'] = shell.search.get_text()
                 latest['rows'] = [dict(name=row.app_name,
+                                       identity=str(hash(row)),
                                        focused=any(w.has_focus() for w in descendants(row)),
                                        rect=rectangle(row, shell.start_window, start))
                                   for row in shell.app_list.get_children()]

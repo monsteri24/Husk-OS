@@ -73,6 +73,16 @@ Build run [39001566844](https://github.com/monsteri24/Husk-OS/actions/runs/39001
 
 The later CI-only Firefox test failed: its single `y` was consumed by a JACK-provider choice, followed by a font-provider choice and EOF at the actual installation confirmation. Production interactive prompts were not bypassed. The CI setup now selects explicit trusted `pipewire-jack` and `noto-fonts` providers before the real helper transaction. A continuation workflow reuses the exact checksum-pinned ISO, rechecks its extracted filesystem and embedded signed helper, and completes the application/boot/publication gates; it does not rebuild the image.
 
+Continuation `a59c2d9` passed all 234 GTK tests and 121 syntax checks, but its
+desktop repeat stopped after 15 scenarios before a second Firefox confirmation.
+Recorded state showed the correct curated row clicked about 4 ms after the last
+key release, while SearchEntry could still replace that row. The harness now
+reuses an unchanged query and requires fresh, stable row identity/allocation;
+the observer's passive pointer log also uses the proper numeric button accessor.
+No desktop timeout was increased and no OS payload source changed. The
+[failed continuation and diagnosis](docs/evidence/system2-v3/verification-a59c2d9.json)
+remain recorded; the new real run is pending.
+
 The existing separate [System 2 workflow](.github/workflows/system2-iso.yml) reuses source/GTK/native and real desktop gates, signed Arch packaging, Archiso and the proven first-boot TTY1/PAM path. It validates ISO9660/UEFI/kernel/initramfs/SquashFS, extracts the completed ISO to inspect the actual payload and wallpaper/package inventory, then boots the exact checksummed image with QEMU/OVMF and verifies Foot plus shutdown. It also performs a real signed Firefox transaction and headless launch in a separate disposable Arch build container. That transaction does not alter the ISO and does not prove Live GUI/polkit authentication.
 
 Publication requires those gates and verifies the uploaded asset's size, digest and a complete fresh download. System 1 is preserved. ISOs and private signing keys are never committed to normal Git history.

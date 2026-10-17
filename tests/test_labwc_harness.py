@@ -88,3 +88,29 @@ class LabwcHarnessTests(unittest.TestCase):
             self.assertEqual(command[command.index('--window') + 1:][:3], ['0x200004', '640', '208'])
         self.assertEqual(commands[0][-2:], ['click', '1'])
         self.assertEqual(commands[1][-2:], ['click', '1'])
+
+    def test_reopening_same_query_keeps_text_and_waits_for_fresh_stable_row(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        current = dict(sequence=40, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],
+                       start_mapped=True, start=[0, 0, 510, 540], search=[20, 50, 460, 50],
+                       search_text='Firefox', rows=[dict(name='Firefox', identity='old', rect=[20, 110, 460, 48])])
+        test.state = lambda: current
+        test.click = lambda rectangle: None
+        test.key = lambda key: self.fail('An unchanged query must not be rewritten')
+        test.type_text = lambda text: self.fail('An unchanged query must not be rewritten')
+
+        def wait(description, predicate):
+            if description.startswith('Start mapped'):
+                return predicate()
+            # An old sample cannot count. A replacement row resets stability,
+            # and rereading the same observer sample cannot advance it.
+            for sequence, identity in [(40, 'old'), (41, 'old'), (42, 'new'), (42, 'new'), (43, 'new')]:
+                current['sequence'] = sequence
+                current['rows'][0]['identity'] = identity
+                self.assertIsNone(predicate())
+            current['sequence'] = 44
+            return predicate()
+
+        test.wait = wait
+        row = test.search_start('Firefox')
+        self.assertEqual(row['identity'], 'new')
