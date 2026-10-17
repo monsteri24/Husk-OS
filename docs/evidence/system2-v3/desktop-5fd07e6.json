@@ -1,0 +1,28 @@
+{
+  "verification_commit": "5fd07e697128153c117e63e7c3477fb5db9da853",
+  "image_source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39004672433",
+  "job": 117314586040,
+  "result": "PASSED",
+  "scenarios": [
+    "wayland-desktop-started",
+    "01-desktop-wallpaper",
+    "start-pointer-search-launch",
+    "legacy-regression-reproduced",
+    "saved-config-migration-X-fixed",
+    "foot-keyboard-command-roundtrip",
+    "06-foot-close-minimize-maximize",
+    "files-real-folder-location-Home-Up-navigation",
+    "07-files-close-minimize-maximize",
+    "07-control-close-minimize-maximize",
+    "missing-app-default-keyboard-Cancel",
+    "missing-app-cross-button-drag-and-fresh-Cancel",
+    "confirmation-inherited-pointer-release-over-OK-rejected",
+    "confirmation-inherited-pointer-release-over-Cancel-rejected",
+    "missing-app-deliberate-pointer-OK-opens-real-terminal",
+    "missing-app-deliberate-keyboard-OK-opens-real-terminal",
+    "08-wallpaper-after-output-resize",
+    "desktop-survives-all-app-controls"
+  ],
+  "scope": "Actual nested Labwc and GTK Wayland clients, real pointer/keyboard events; same OS payload as the completed ISO. Authenticated Arch package installation and ISO boot are independent gates."
+}

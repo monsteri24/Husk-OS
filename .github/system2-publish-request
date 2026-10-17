@@ -1,0 +1,7 @@
+2026-10-17: Publish the genuine, unchanged ISO already accepted in run 39004672433.
+Image source b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58; verification source 5fd07e697128153c117e63e7c3477fb5db9da853.
+Size 2101264384 bytes; SHA256 d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99.
+All source/GTK/desktop, signed Firefox, actual-rootfs, QEMU/OVMF desktop/terminal/shutdown gates passed.
+Prior release call returned403 because its older image target differs in workflows from main.
+Create the tag at this publication commit, whose OS payload is unchanged; retain the original image source explicitly in notes/evidence.
+Use existing verified artifacts. Do not rebuild, retest the guest, broaden token permissions or alter System1.

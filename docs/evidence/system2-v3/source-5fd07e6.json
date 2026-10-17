@@ -1,0 +1,20 @@
+{
+  "verification_commit": "5fd07e697128153c117e63e7c3477fb5db9da853",
+  "image_source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39004672433",
+  "job": 117314586312,
+  "headless": {
+    "discovered": 235,
+    "passed": 199,
+    "failed": 0,
+    "skipped": 36
+  },
+  "gtk": {
+    "discovered": 235,
+    "passed": 235,
+    "failed": 0,
+    "skipped": 0
+  },
+  "syntax_checks": 121,
+  "scope": "Actual source/GTK/native CI; ISO reuse, application and boot gates recorded separately"
+}

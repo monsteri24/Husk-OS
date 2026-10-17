@@ -107,48 +107,7 @@ jobs:
       - name: Publish the verified System 2 and verify its download
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          iso_sha=$(cut -d ' ' -f1 out/HuskOS-system-2-SHA256.txt)
-          iso_size=$(cat out/HuskOS-system-2-SIZE.txt)
-          cat > out/RELEASE-NOTES.md <<EOF
-          Husk OS System 2 is an experimental Arch-based gaming operating system with its own GTK Husk Desktop and Labwc/Wayland.
-
-          This release is a Live USB/VM environment. It has no completed graphical operating-system installer. The historical System 1 release is preserved unchanged.
-
-          Includes the original black-and-gold desert wallpaper, English UI, Start/search/taskbar, window controls, Husk Settings, Husk Files, Foot terminal and user-confirmed optional application installation. System 2 supports English only; Finnish translations are preserved in source for a future release. Steam, Firefox, Heroic and other optional user apps are not preinstalled.
-
-          Source/GTK/native and real nested Labwc interaction checks passed before building. The resulting ISO filesystem, exact wallpaper and installed package inventory were checked, then the exact ISO booted through QEMU/OVMF to the live Wayland desktop and shut down. A real signed Firefox installation and headless launch were tested separately in the disposable Arch build container; this is not a physical hardware or GUI authentication test.
-
-          Known limits: no System 2 physical hardware acceptance; no game/FPS, NVIDIA/Optimus, VRR, suspend, multi-monitor or long-duration certification. CPU policy and Optimus controls are planned. GameMode/MangoHud and 32-bit gaming libraries are optional and must be installed when needed; first-boot edition ships 64-bit Mesa. Unsupported anti-cheat games are not promised. Native .hpk packaging and a maintained Husk update repository remain planned. GUI/polkit authentication for a real network application installation on Live hardware still needs acceptance testing.
-
-          Image source commit: $HUSK_IMAGE_SOURCE
-          Verification workflow commit: $GITHUB_SHA
-          Filename: HuskOS-system-2.iso
-          Size: $iso_size bytes
-          SHA-256: $iso_sha
-
-          Download/checksum/USB guide: https://github.com/$GITHUB_REPOSITORY/blob/main/docs/INSTALL.md
-          Automated evidence is attached. Physical USB testing is separate.
-          EOF
-          extra_evidence=()
-          if [[ -s out/system2-recovery.json ]]; then extra_evidence+=(out/system2-recovery.json); fi
-          gh release create system-2 --repo "$GITHUB_REPOSITORY" --target "$HUSK_IMAGE_SOURCE" \
-            --title 'Husk OS System 2 — Experimental Live' --prerelease --notes-file out/RELEASE-NOTES.md \
-            out/HuskOS-system-2.iso out/HuskOS-system-2-SHA256.txt out/system2-build.json \
-            out/iso-rootfs-check.json out/boot-system2/result.json out/boot-system2/guest.json \
-            out/boot-system2/desktop-start.png out/boot-system2/desktop-terminal.png \
-            out/firefox-package.txt out/firefox-version.txt out/firefox-headless.png "${extra_evidence[@]}"
-          asset=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/system-2" \
-            --jq '.assets[] | select(.name=="HuskOS-system-2.iso")')
-          test "$(jq -r .state <<< "$asset")" = uploaded
-          test "$(jq -r .size <<< "$asset")" = "$iso_size"
-          test "$(jq -r .digest <<< "$asset")" = "sha256:$iso_sha"
-          download_url=$(jq -r .browser_download_url <<< "$asset")
-          curl --fail --location --retry 2 --max-time 600 "$download_url" -o "$RUNNER_TEMP/HuskOS-system-2.iso"
-          test "$(sha256sum "$RUNNER_TEMP/HuskOS-system-2.iso" | cut -d ' ' -f1)" = "$iso_sha"
-          printf 'ISO: %s\nSize: %s bytes\nSHA-256: %s\nSource: %s\nQEMU/OVMF: PASSED\nPhysical hardware: NOT TESTED\n' \
-            "$download_url" "$iso_size" "$iso_sha" "$HUSK_IMAGE_SOURCE" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: bash scripts/publish-system2.sh
       - name: Preserve bounded test and build evidence
         if: always()
         uses: actions/upload-artifact@v4

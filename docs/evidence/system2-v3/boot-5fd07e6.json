@@ -1,0 +1,28 @@
+{
+  "iso": "HuskOS-system-2.iso",
+  "accelerator": "tcg",
+  "boot": "PASSED",
+  "shutdown": "PASSED",
+  "problems": [],
+  "iso_sha256": "d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99",
+  "iso_bytes": 2101264384,
+  "desktop_status": {
+    "backend": "wayland",
+    "bridge_connected": true,
+    "desktop": "Husk Desktop",
+    "desktop_surfaces": 1,
+    "keyring_ready": true,
+    "live": true,
+    "os": "Husk OS",
+    "panel_mapped": true,
+    "panel_visible": true,
+    "renderer": "pixman",
+    "version": "system-2",
+    "window_count": 0
+  },
+  "terminal": "PASSED",
+  "terminal_pids": [
+    1362
+  ],
+  "terminal_shortcut_sent": true
+}

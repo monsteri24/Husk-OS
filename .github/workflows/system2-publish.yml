@@ -1,0 +1,78 @@
+name: Husk OS System 2 publish verified ISO
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/system2-publish-request]
+permissions:
+  contents: read
+concurrency:
+  group: husk-system-2-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    env:
+      HUSK_IMAGE_SOURCE: b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58
+      HUSK_VERIFICATION_SHA: 5fd07e697128153c117e63e7c3477fb5db9da853
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Require the exact accepted source and completed verification gates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" = "$GITHUB_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/39004672433" --jq .head_sha)" = "$HUSK_VERIFICATION_SHA"
+          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/39004672433/jobs" > "$RUNNER_TEMP/verified-jobs.json"
+          python3 - "$RUNNER_TEMP/verified-jobs.json" <<'PY'
+          import json, sys
+          jobs = {job['name']: job for job in json.load(open(sys.argv[1]))['jobs']}
+          for name in ('source / models-and-gtk-preview', 'desktop / labwc-desktop'):
+              assert jobs[name]['conclusion'] == 'success', name
+          steps = {step['name']: step for step in jobs['build-boot-publish']['steps']}
+          for name in ('Recover the exact completed ISO and original build evidence',
+                       'Reverify the recovered ISO and complete the real application test',
+                       'Boot the exact candidate through QEMU and OVMF'):
+              assert steps[name]['conclusion'] == 'success', name
+          PY
+          gh release view system-1 --repo "$GITHUB_REPOSITORY" --json tagName,assets
+          if gh release view system-2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Preserving the existing System 2 release; refusing to overwrite assets.' >&2
+            exit 1
+          fi
+      - name: Recover the already tested ISO and accepted evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p out "$RUNNER_TEMP/husk-publish"
+          gh run download 39004672433 --repo "$GITHUB_REPOSITORY" \
+            --name HuskOS-system-2-recovery-39004672433 --dir "$RUNNER_TEMP/husk-publish"
+          gh run download 39004672433 --repo "$GITHUB_REPOSITORY" \
+            --name system2-release-evidence-39004672433 --dir out
+          cmp "$RUNNER_TEMP/husk-publish/HuskOS-system-2-SHA256.txt" out/HuskOS-system-2-SHA256.txt
+          mv "$RUNNER_TEMP/husk-publish/HuskOS-system-2.iso" out/
+          test "$(stat -c '%s' out/HuskOS-system-2.iso)" = 2101264384
+          test "$(cut -d ' ' -f1 out/HuskOS-system-2-SHA256.txt)" = d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99
+          (cd out && sha256sum -c HuskOS-system-2-SHA256.txt)
+      - name: Publish at the current verified payload and check the actual download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/publish-system2.sh
+      - name: Preserve publication output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system2-publication-${{ github.run_id }}
+          path: out/RELEASE-NOTES.md
+          if-no-files-found: warn
+          retention-days: 30

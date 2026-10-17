@@ -10,8 +10,9 @@ installed. The desktop never installs optional apps at startup.
 Flatpak remains installation infrastructure. The first-boot release candidate
 uses 64-bit Mesa; the standard development profile also includes 32-bit graphics
 libraries. Generating a profile or testing an inventory fixture does not establish
-what a finished ISO contains: the new ISO workflow must check the package records
-in the actual extracted image. **That build and acceptance are pending.**
+what a finished ISO contains. The completed System 2 image has now been extracted
+and its actual package records and required payloads have passed validation.
+The separate optional-app transaction does not add Firefox to that image.
 
 ## Curated choices and trusted sources
 
@@ -76,19 +77,29 @@ installation path adds the held Foot window described above.
 
 ## Current verification limits
 
-Source tests cover deliberate dialog input, command contracts, trusted-remote
-checks, failure/cancellation reporting and installed-state verification. The new
-GTK and real Labwc interaction jobs are pending for the current candidate.
-No System 2 ISO or release exists yet, and **a real Live GUI/polkit-authenticated
-application download has not been accepted**.
+Current verification commit `5fd07e6` passed **235 actual GTK tests without
+skips**, 121 source/configuration checks and **18 real nested Labwc scenarios**.
+These include default/fresh Cancel, inherited pointer releases over both buttons,
+cross-button dragging, and deliberate pointer/keyboard OK opening the real held
+Foot installer terminal. See [the verification run](https://github.com/monsteri24/Husk-OS/actions/runs/39004672433)
+and [the System 2 report](../HuskOS-system-2-REPORT.md).
 
-The separate ISO workflow is configured to install signed Firefox packages and
-launch Firefox headlessly in its disposable Arch **build container**, after ISO
-creation and filesystem checks. That prospective test does not install Firefox
-into the release ISO and does not exercise Live GUI authentication, physical
-networking, a graphical browser session or a game. Its result remains pending
-until the workflow actually runs. See the [System 2 report](../HuskOS-system-2-REPORT.md)
-for dated evidence.
+The immutable System 2 ISO was created and its actual extracted root filesystem,
+original wallpaper, English-only Husk configuration, authentication helpers and
+package inventory were checked. The same signed Husk core package embedded in
+that image was verified and installed in a separate disposable Arch container.
+There, the real `own-admin` helper installed signed Firefox packages through a
+full pacman transaction; the package record, nonroot version command and normal
+headless Firefox launch/screenshot all passed. Explicit font/JACK providers were
+selected during CI setup before the actual transaction confirmation.
+
+**A complete Live GUI/password/polkit/network installation and subsequent GUI
+application launch has not been accepted end to end.** The independent package
+transaction and real dialog-input checks do not establish that path or physical
+networking. The Ubuntu source-test terminal safely displayed its missing-pkexec
+error; that screenshot is evidence of visible failure handling, not a successful
+Arch installation. Heroic/Steam/Lutris downloads, launcher account login and games
+have no new runtime acceptance result.
 
 ## Updates and gaming tools
 

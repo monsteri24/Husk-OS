@@ -1,0 +1,21 @@
+{
+  "image_source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "reused_iso": true,
+  "iso_bytes": 2101264384,
+  "iso_sha256": "d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99",
+  "husk_language": {
+    "DEFAULT_LANGUAGE": "en",
+    "SUPPORTED_LANGUAGES": [
+      "en"
+    ]
+  },
+  "authentication_payloads_present": true,
+  "wallpaper_sha256": "e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac",
+  "rootfs": {
+    "status": "PASS",
+    "rootfs": ".build/system2-iso-root",
+    "boot": ".build/system2-iso-boot",
+    "problems": []
+  },
+  "application": "Signed Firefox package transaction, installed-state query and normal sandboxed headless launch passed in the separate build container"
+}
