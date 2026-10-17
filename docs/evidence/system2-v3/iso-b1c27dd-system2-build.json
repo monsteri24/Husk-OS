@@ -1,0 +1,11 @@
+{
+  "source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "wallpaper_sha256": "e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac",
+  "iso_bytes": 2101264384,
+  "rootfs": {
+    "status": "PASS",
+    "rootfs": ".build/system2-iso-root",
+    "boot": ".build/system2-iso-boot",
+    "problems": []
+  }
+}

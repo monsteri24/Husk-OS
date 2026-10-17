@@ -1,0 +1,343 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "test": "wayland-desktop-started",
+      "passed": true,
+      "status": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    },
+    {
+      "test": "01-desktop-wallpaper",
+      "passed": true,
+      "output": [
+        1280,
+        800
+      ],
+      "pixel_mean_absolute_error": 0.312,
+      "source_sha256": "e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac",
+      "telemetry": [
+        {
+          "source": "/usr/share/ownos/wallpapers/husk-desert.jpg",
+          "size": [
+            1280,
+            800
+          ]
+        }
+      ]
+    },
+    {
+      "test": "start-pointer-search-launch",
+      "passed": true,
+      "application": {
+        "id": 1,
+        "title": "Husk-Integration-Terminal",
+        "app_id": "husk-integration-terminal",
+        "active": true,
+        "minimized": false
+      }
+    },
+    {
+      "test": "legacy-regression-reproduced",
+      "passed": true,
+      "pointer": [
+        976,
+        122,
+        1,
+        1
+      ],
+      "application_survived": true,
+      "config": "legacy-rc.xml"
+    },
+    {
+      "test": "saved-config-migration-X-fixed",
+      "passed": true,
+      "desktop": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    },
+    {
+      "test": "foot-keyboard-command-roundtrip",
+      "passed": true,
+      "application": {
+        "id": 2,
+        "title": "foot",
+        "app_id": "foot",
+        "active": true,
+        "minimized": false
+      },
+      "command": "printf '%s\\n' husk-foot-91ebc132b297f98d2e254961d7e4b1e4 > /tmp/husk-labwc-bw1d1t9y/typed-command-7aca059e7a29e2a3.txt",
+      "content": "husk-foot-91ebc132b297f98d2e254961d7e4b1e4\n",
+      "artifact": "foot-command-roundtrip.txt"
+    },
+    {
+      "test": "06-foot-close-minimize-maximize",
+      "passed": true,
+      "application": "foot",
+      "before": [
+        290,
+        110,
+        700,
+        25
+      ],
+      "maximized": [
+        0,
+        0,
+        1280,
+        25
+      ],
+      "desktop": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    },
+    {
+      "test": "files-real-folder-location-Home-Up-navigation",
+      "passed": true,
+      "steps": [
+        {
+          "input": "folder-row-pointer",
+          "current": "/tmp/husk-labwc-bw1d1t9y/home/Husk navigation 8cb8ffc8"
+        },
+        {
+          "input": "folder-row-pointer",
+          "current": "/tmp/husk-labwc-bw1d1t9y/home/Husk navigation 8cb8ffc8/Nested folder"
+        },
+        {
+          "input": "Up-pointer",
+          "current": "/tmp/husk-labwc-bw1d1t9y/home/Husk navigation 8cb8ffc8"
+        },
+        {
+          "input": "location-keyboard-Return",
+          "current": "/tmp/husk-labwc-bw1d1t9y/home/Husk navigation 8cb8ffc8/Nested folder/Keyboard target"
+        },
+        {
+          "input": "Home-pointer",
+          "current": "/tmp/husk-labwc-bw1d1t9y/home"
+        }
+      ],
+      "title": "Husk Files",
+      "backend": "GdkWaylandDisplay"
+    },
+    {
+      "test": "07-files-close-minimize-maximize",
+      "passed": true,
+      "application": "Husk Files",
+      "before": [
+        215,
+        80,
+        850,
+        25
+      ],
+      "maximized": [
+        0,
+        0,
+        1280,
+        25
+      ],
+      "desktop": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    },
+    {
+      "test": "07-control-close-minimize-maximize",
+      "passed": true,
+      "application": "Husk Settings \u00b7 Gaming Control Center \u00b7 Experimental",
+      "before": [
+        190,
+        35,
+        900,
+        25
+      ],
+      "maximized": [
+        0,
+        0,
+        1280,
+        25
+      ],
+      "desktop": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    },
+    {
+      "test": "missing-app-default-keyboard-Cancel",
+      "passed": true,
+      "default": "Cancel",
+      "installer_started": false
+    },
+    {
+      "test": "missing-app-cross-button-drag-and-fresh-Cancel",
+      "passed": true,
+      "installer_started": false,
+      "sequence": [
+        "Cancel press",
+        "move to OK",
+        "OK release",
+        "fresh Cancel click"
+      ]
+    },
+    {
+      "test": "confirmation-inherited-pointer-release-over-OK-rejected",
+      "passed": true,
+      "result": {
+        "response": -6,
+        "accepted": false
+      },
+      "client": "separate real GTK client using unchanged production ConfirmationDialog"
+    },
+    {
+      "test": "confirmation-inherited-pointer-release-over-Cancel-rejected",
+      "passed": true,
+      "result": {
+        "response": -6,
+        "accepted": false
+      },
+      "client": "separate real GTK client using unchanged production ConfirmationDialog"
+    },
+    {
+      "test": "missing-app-deliberate-pointer-OK-opens-real-terminal",
+      "passed": true,
+      "application": {
+        "id": 12,
+        "title": "foot",
+        "app_id": "foot",
+        "active": true,
+        "minimized": false
+      },
+      "processes": [
+        {
+          "pid": 3574,
+          "executable": "/usr/bin/foot",
+          "argv": [
+            "/usr/bin/foot",
+            "--hold",
+            "-e",
+            "/usr/bin/husk-install-app",
+            "firefox"
+          ]
+        }
+      ],
+      "installation": "Not assessed: real terminal creation on an Ubuntu source-test host only."
+    },
+    {
+      "test": "missing-app-deliberate-keyboard-OK-opens-real-terminal",
+      "passed": true,
+      "application": {
+        "id": 14,
+        "title": "foot",
+        "app_id": "foot",
+        "active": true,
+        "minimized": false
+      },
+      "processes": [
+        {
+          "pid": 3602,
+          "executable": "/usr/bin/foot",
+          "argv": [
+            "/usr/bin/foot",
+            "--hold",
+            "-e",
+            "/usr/bin/husk-install-app",
+            "firefox"
+          ]
+        }
+      ],
+      "installation": "Not assessed: real terminal creation on an Ubuntu source-test host only."
+    },
+    {
+      "test": "08-wallpaper-after-output-resize",
+      "passed": true,
+      "output": [
+        1280,
+        960
+      ],
+      "pixel_mean_absolute_error": 0.283,
+      "source_sha256": "e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac",
+      "telemetry": [
+        {
+          "source": "/usr/share/ownos/wallpapers/husk-desert.jpg",
+          "size": [
+            1280,
+            960
+          ]
+        }
+      ]
+    },
+    {
+      "test": "desktop-survives-all-app-controls",
+      "passed": true,
+      "status": {
+        "os": "Husk OS",
+        "desktop": "Husk Desktop",
+        "version": "system-2",
+        "live": false,
+        "keyring_ready": false,
+        "backend": "wayland",
+        "desktop_surfaces": 1,
+        "panel_visible": true,
+        "panel_mapped": true,
+        "bridge_connected": true,
+        "window_count": 0,
+        "renderer": "pixman"
+      }
+    }
+  ],
+  "failure": null,
+  "environment": "Ubuntu source install; real Labwc on wlroots X11 backend with Xvfb parent",
+  "limitations": "No ISO boot, GPU/KMS, physical monitor, audio, networking or installed Arch session acceptance is implied."
+}

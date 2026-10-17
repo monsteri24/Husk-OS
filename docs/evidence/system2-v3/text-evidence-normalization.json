@@ -1,0 +1,12 @@
+[
+  {
+    "file": "iso-b1c27dd-firefox-install.log",
+    "normalization": "Trailing whitespace removed only; raw captured text remains in the checked Actions ZIP",
+    "original_sha256": "087072be3b19e832fdca128707c089811f1f3f6ae6e7584b176889eeeb9a45d8"
+  },
+  {
+    "file": "labwc-b1c27dd-versions.txt",
+    "normalization": "Trailing whitespace removed only; raw captured text remains in the checked Actions ZIP",
+    "original_sha256": "1a2e677d458ef8f4b6620dc4e3473801951693111cacca3da206a28ad11bd38a"
+  }
+]

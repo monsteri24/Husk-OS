@@ -1,0 +1,26 @@
+{
+  "source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39001566844",
+  "source_job": 117305402066,
+  "headless": {
+    "discovered": 234,
+    "passed": 198,
+    "failed": 0,
+    "skipped": 36
+  },
+  "gtk": {
+    "discovered": 234,
+    "passed": 234,
+    "failed": 0,
+    "skipped": 0
+  },
+  "syntax_checks": 119,
+  "native": "Build and unchanged ASan/UBSan JSON helper passed on the Actions runner",
+  "corrected_gtk_cases": [
+    "test_default_return_cancels_without_starting_confirmation",
+    "test_held_opening_return_autorepeat_cannot_activate_default_cancel"
+  ],
+  "release_language": "English only; six actual GTK localization-policy cases passed",
+  "desktop": "PENDING; recorded separately",
+  "iso": "NOT BUILT at source acceptance"
+}

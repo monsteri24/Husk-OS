@@ -1,0 +1,28 @@
+{
+  "source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39001566844",
+  "job": 117305401818,
+  "scenarios": 18,
+  "passed": true,
+  "artifact": {
+    "id": 12089312252,
+    "bytes": 26417642,
+    "sha256": "8cf3225692d5574f77dbb3f337f9c7d30f5d90626b1ce56a834a203673f8688b",
+    "expires": "2026-11-16"
+  },
+  "screenshots": {
+    "firefox-fresh-OK.png": {
+      "bytes": 746916,
+      "sha256": "6d4d83f9a5b81c271f58a310dc66cd9c725602c598b6718f8a6e217f81132da9"
+    },
+    "files-navigation-complete.png": {
+      "bytes": 487096,
+      "sha256": "5d22c6a1c88445d9537d8d189fc3ed099372f9ab021c0b29c9d12aac689fc678"
+    },
+    "missing-app-deliberate-pointer-OK-opens-real-terminal.png": {
+      "bytes": 578630,
+      "sha256": "0a8491f1212c23390ce61333295eea86d9bc2675f3bdca949854201987380294"
+    }
+  },
+  "scope": "Actual nested Labwc input. No ISO, hardware or authenticated Arch installation claim. The Ubuntu held terminal visibly reports missing pkexec; successful package transaction is a separate Arch gate."
+}

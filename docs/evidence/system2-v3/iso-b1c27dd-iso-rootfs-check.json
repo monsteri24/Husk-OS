@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "rootfs": ".build/system2-iso-root",
+  "boot": ".build/system2-iso-boot",
+  "problems": []
+}

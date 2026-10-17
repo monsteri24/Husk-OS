@@ -20,10 +20,12 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Verify committed source and preserve existing releases
         env:
           GH_TOKEN: ${{ github.token }}
@@ -36,6 +38,19 @@ jobs:
             echo 'System 2 already exists; preserving every existing asset.' >&2
             exit 1
           fi
+          reuse_run=$(sed -n 's/^reuse_run_id=//p' .github/system2-build-request)
+          image_source="$GITHUB_SHA"
+          if [[ -n "$reuse_run" ]]; then
+            # Continue the already built and checked image; never rebuild it
+            # merely because the independent application smoke test failed.
+            test "$reuse_run" = 39001566844
+            image_source=b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58
+            test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$reuse_run" --jq .head_sha)" = "$image_source"
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$reuse_run/jobs" > "$RUNNER_TEMP/prior-jobs.json"
+            jq -e '[.jobs[] | select(.name == "source / models-and-gtk-preview" or .name == "desktop / labwc-desktop")] | length == 2 and all(.[]; .conclusion == "success")' "$RUNNER_TEMP/prior-jobs.json"
+            git diff --exit-code "$image_source" HEAD -- src bin config data branding installer iso native packaging
+          fi
+          printf 'HUSK_REUSE_RUN=%s\nHUSK_IMAGE_SOURCE=%s\n' "$reuse_run" "$image_source" >> "$GITHUB_ENV"
       - name: Prepare disposable runner disk and VM dependencies
         run: |
           set -euo pipefail
@@ -44,7 +59,25 @@ jobs:
           test "$(df -B1 --output=avail . | tail -1 | tr -d ' ')" -ge 26843545600
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 ovmf python3-pil
+      - name: Recover the exact completed ISO and original build evidence
+        if: env.HUSK_REUSE_RUN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p out "$RUNNER_TEMP/husk-recovery"
+          gh run download "$HUSK_REUSE_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "HuskOS-system-2-recovery-$HUSK_REUSE_RUN" --dir "$RUNNER_TEMP/husk-recovery"
+          gh run download "$HUSK_REUSE_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "system2-release-evidence-$HUSK_REUSE_RUN" --dir out
+          cmp "$RUNNER_TEMP/husk-recovery/HuskOS-system-2-SHA256.txt" out/HuskOS-system-2-SHA256.txt
+          mv "$RUNNER_TEMP/husk-recovery/HuskOS-system-2.iso" out/
+          test "$(jq -r .source_commit out/system2-build.json)" = "$HUSK_IMAGE_SOURCE"
+          test "$(stat -c '%s' out/HuskOS-system-2.iso)" = 2101264384
+          test "$(cut -d ' ' -f1 out/HuskOS-system-2-SHA256.txt)" = d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99
+          (cd out && sha256sum -c HuskOS-system-2-SHA256.txt)
       - name: Build signed packages and verify the actual ISO filesystem
+        if: env.HUSK_REUSE_RUN == ''
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/husk-gnupg"
@@ -55,6 +88,15 @@ jobs:
             -e HUSK_SOURCE_SHA="$GITHUB_SHA" \
             -e HUSK_HOST_UID="$(id -u)" -e HUSK_HOST_GID="$(id -g)" \
             archlinux:base-devel bash /src/scripts/ci-build-system2.sh
+      - name: Reverify the recovered ISO and complete the real application test
+        if: env.HUSK_REUSE_RUN != ''
+        run: |
+          set -euo pipefail
+          timeout 900 docker run --rm --privileged \
+            -v "$GITHUB_WORKSPACE:/src" \
+            -e HUSK_SOURCE_SHA="$HUSK_IMAGE_SOURCE" \
+            -e HUSK_HOST_UID="$(id -u)" -e HUSK_HOST_GID="$(id -g)" \
+            archlinux:base-devel bash /src/scripts/ci-complete-system2.sh
       - name: Boot the exact candidate through QEMU and OVMF
         run: |
           cd out
@@ -80,15 +122,16 @@ jobs:
 
           Known limits: no System 2 physical hardware acceptance; no game/FPS, NVIDIA/Optimus, VRR, suspend, multi-monitor or long-duration certification. CPU policy and Optimus controls are planned. GameMode/MangoHud and 32-bit gaming libraries are optional and must be installed when needed; first-boot edition ships 64-bit Mesa. Unsupported anti-cheat games are not promised. Native .hpk packaging and a maintained Husk update repository remain planned. GUI/polkit authentication for a real network application installation on Live hardware still needs acceptance testing.
 
-          Source commit: $GITHUB_SHA
+          Image source commit: $HUSK_IMAGE_SOURCE
+          Verification workflow commit: $GITHUB_SHA
           Filename: HuskOS-system-2.iso
           Size: $iso_size bytes
           SHA-256: $iso_sha
 
-          Download/checksum/USB guide: https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/docs/INSTALL.md
+          Download/checksum/USB guide: https://github.com/$GITHUB_REPOSITORY/blob/main/docs/INSTALL.md
           Automated evidence is attached. Physical USB testing is separate.
           EOF
-          gh release create system-2 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+          gh release create system-2 --repo "$GITHUB_REPOSITORY" --target "$HUSK_IMAGE_SOURCE" \
             --title 'Husk OS System 2 — Experimental Live' --prerelease --notes-file out/RELEASE-NOTES.md \
             out/HuskOS-system-2.iso out/HuskOS-system-2-SHA256.txt out/system2-build.json \
             out/iso-rootfs-check.json out/boot-system2/result.json out/boot-system2/guest.json \
@@ -103,7 +146,7 @@ jobs:
           curl --fail --location --retry 2 --max-time 600 "$download_url" -o "$RUNNER_TEMP/HuskOS-system-2.iso"
           test "$(sha256sum "$RUNNER_TEMP/HuskOS-system-2.iso" | cut -d ' ' -f1)" = "$iso_sha"
           printf 'ISO: %s\nSize: %s bytes\nSHA-256: %s\nSource: %s\nQEMU/OVMF: PASSED\nPhysical hardware: NOT TESTED\n' \
-            "$download_url" "$iso_size" "$iso_sha" "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+            "$download_url" "$iso_size" "$iso_sha" "$HUSK_IMAGE_SOURCE" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Preserve bounded test and build evidence
         if: always()
         uses: actions/upload-artifact@v4

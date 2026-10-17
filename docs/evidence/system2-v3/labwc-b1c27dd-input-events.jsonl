@@ -1,0 +1,73 @@
+{"event": "pointer-click", "button": 1, "x": 536, "y": 773, "time": 191.414745199}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 279, "time": 191.834700188}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 342, "time": 192.572989526}
+{"event": "pointer-click", "button": 1, "x": 976, "y": 122, "time": 193.262122237}
+{"event": "pointer-click", "button": 1, "x": 976, "y": 122, "time": 195.428563759}
+{"event": "keyboard", "key": "super+Return", "time": 195.785859843}
+{"event": "type", "text": "printf '%s\\n' husk-foot-91ebc132b297f98d2e254961d7e4b1e4 > /tmp/husk-labwc-bw1d1t9y/typed-command-7aca059e7a29e2a3.txt", "time": 195.914854489}
+{"event": "keyboard", "key": "Return", "time": 196.840305584}
+{"event": "pointer-click", "button": 1, "x": 950, "y": 122, "time": 197.059781438}
+{"event": "pointer-click", "button": 1, "x": 1240, "y": 12, "time": 197.813827177}
+{"event": "pointer-click", "button": 1, "x": 924, "y": 122, "time": 198.610594323}
+{"event": "pointer-click", "button": 1, "x": 764, "y": 773, "time": 199.060264744}
+{"event": "pointer-click", "button": 1, "x": 976, "y": 122, "time": 199.543391378}
+{"event": "keyboard", "key": "super+e", "time": 199.900245243}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 208, "time": 200.257554142}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 208, "time": 200.72443682}
+{"event": "pointer-click", "button": 1, "x": 253, "y": 147, "time": 201.193725897}
+{"event": "pointer-click", "button": 1, "x": 652, "y": 147, "time": 201.664673964}
+{"event": "keyboard", "key": "ctrl+a", "time": 202.017679278}
+{"event": "type", "text": "/tmp/husk-labwc-bw1d1t9y/home/Husk navigation 8cb8ffc8/Nested folder/Keyboard target", "time": 202.045207234}
+{"event": "keyboard", "key": "Return", "time": 202.703314235}
+{"event": "pointer-click", "button": 1, "x": 314, "y": 147, "time": 202.931796573}
+{"event": "pointer-click", "button": 1, "x": 1025, "y": 92, "time": 203.489159455}
+{"event": "pointer-click", "button": 1, "x": 1240, "y": 12, "time": 204.24727955}
+{"event": "pointer-click", "button": 1, "x": 999, "y": 92, "time": 205.036766639}
+{"event": "pointer-click", "button": 1, "x": 764, "y": 773, "time": 205.489439833}
+{"event": "pointer-click", "button": 1, "x": 1051, "y": 92, "time": 205.970254333}
+{"event": "keyboard", "key": "super+i", "time": 206.32754718}
+{"event": "pointer-click", "button": 1, "x": 1050, "y": 47, "time": 206.683578672}
+{"event": "pointer-click", "button": 1, "x": 1240, "y": 12, "time": 207.448483034}
+{"event": "pointer-click", "button": 1, "x": 1024, "y": 47, "time": 208.231252151}
+{"event": "pointer-click", "button": 1, "x": 765, "y": 773, "time": 208.68136268}
+{"event": "pointer-click", "button": 1, "x": 1076, "y": 47, "time": 209.164882409}
+{"event": "pointer-click", "button": 1, "x": 536, "y": 773, "time": 209.527184009}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 279, "time": 209.879772057}
+{"event": "keyboard", "key": "ctrl+a", "time": 210.232563087}
+{"event": "type", "text": "Firefox", "time": 210.259972082}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 342, "time": 210.417537176}
+{"event": "keyboard", "key": "Return", "time": 210.770546806}
+{"event": "pointer-click", "button": 1, "x": 536, "y": 773, "time": 211.241321759}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 279, "time": 211.594327286}
+{"event": "keyboard", "key": "ctrl+a", "time": 211.947209385}
+{"event": "type", "text": "Firefox", "time": 211.97457206}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 342, "time": 212.131773953}
+{"event": "mousedown", "button": 1, "time": 212.775402512, "x": 499, "y": 436}
+{"event": "move", "button": 1, "time": 212.927704784, "x": 781, "y": 436}
+{"event": "mouseup", "button": 1, "time": 213.080144915}
+{"event": "pointer-click", "button": 1, "x": 499, "y": 436, "time": 213.822363588}
+{"event": "mousedown", "button": 1, "time": 214.884305387, "x": 640, "y": 386}
+{"event": "move", "button": 1, "time": 215.186731121, "x": 775, "y": 440}
+{"event": "mouseup", "button": 1, "time": 215.339297847}
+{"event": "pointer-click", "button": 1, "x": 504, "y": 440, "time": 216.067463336}
+{"event": "mousedown", "button": 1, "time": 216.766435873, "x": 640, "y": 386}
+{"event": "move", "button": 1, "time": 217.068977712, "x": 504, "y": 440}
+{"event": "mouseup", "button": 1, "time": 217.221364754}
+{"event": "pointer-click", "button": 1, "x": 504, "y": 440, "time": 217.949264931}
+{"event": "pointer-click", "button": 1, "x": 536, "y": 773, "time": 218.30223886}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 279, "time": 218.655223413}
+{"event": "keyboard", "key": "ctrl+a", "time": 219.008209309}
+{"event": "type", "text": "Firefox", "time": 219.035657708}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 342, "time": 219.19341435}
+{"event": "mousedown", "button": 1, "time": 219.69238775, "x": 781, "y": 436}
+{"event": "mouseup", "button": 1, "time": 220.049889159}
+{"event": "pointer-click", "button": 1, "x": 976, "y": 122, "time": 220.411919272}
+{"event": "pointer-click", "button": 1, "x": 536, "y": 773, "time": 220.7699936}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 279, "time": 221.123339377}
+{"event": "keyboard", "key": "ctrl+a", "time": 221.476241718}
+{"event": "type", "text": "Firefox", "time": 221.503534861}
+{"event": "pointer-click", "button": 1, "x": 640, "y": 342, "time": 221.560875617}
+{"event": "keyboard", "key": "Tab", "time": 221.913856556}
+{"event": "keydown", "key": "space", "time": 222.029273521}
+{"event": "keyup", "key": "space", "time": 222.248799815}
+{"event": "pointer-click", "button": 1, "x": 976, "y": 122, "time": 222.577807678}

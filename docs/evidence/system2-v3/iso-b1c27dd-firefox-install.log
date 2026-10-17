@@ -1,0 +1,102 @@
+Husk OS: verified full-system transaction: /usr/bin/pacman -Syu --needed firefox
+:: Synchronizing package databases...
+ core downloading...
+ extra downloading...
+:: Starting full system upgrade...
+resolving dependencies...
+:: There are 2 providers available for jack:
+:: Repository extra
+
+Enter a number (default=1): error: invalid number: y
+
+Enter a number (default=1):    1) jack2  2) pipewire-jack
+:: There are 11 providers available for ttf-font:
+:: Repository extra
+
+Enter a number (default=1):    1) gnu-free-fonts  2) noto-fonts  3) ttf-bitstream-vera  4) ttf-croscore  5) ttf-dejavu  6) ttf-droid  7) ttf-ibm-plex  8) ttf-input  9) ttf-input-nerd  10) ttf-liberation  11) ttf-roboto
+looking for conflicting packages...
+
+Package (77)              New Version              Net Change  Download Size
+
+extra/alsa-lib            1.2.16.1-1                 1.75 MiB
+extra/alsa-topology-conf  1.2.5.1-4                  0.33 MiB
+extra/alsa-ucm-conf       1.2.16.1-1                 0.68 MiB
+extra/aom                 3.15.2-1                   9.50 MiB       2.97 MiB
+extra/ffmpeg              2:9.0.2-2                 48.45 MiB      15.16 MiB
+extra/fftw                3.3.11-1                   8.83 MiB
+extra/flac                1.5.0-1                    1.14 MiB
+extra/glslang             1:1.4.363.0-1             13.98 MiB       2.60 MiB
+extra/gnu-free-fonts      20120503-9                 6.65 MiB       3.19 MiB
+extra/gsm                 1.0.24-1                   0.10 MiB       0.04 MiB
+extra/hidapi              0.15.0-1                   0.13 MiB
+extra/jack2               1.9.22-2                   1.84 MiB       0.46 MiB
+extra/l-smash             2.14.5-4                   1.02 MiB       0.31 MiB
+extra/lame                4.0-1                      1.10 MiB
+extra/libass              0.17.5-1                   0.30 MiB       0.12 MiB
+extra/libasyncns          1:0.8+r3+g68cd5af-3        0.05 MiB
+extra/libavc1394          0.5.4-7                    0.12 MiB       0.03 MiB
+extra/libbluray           1.5.1-1                    1.26 MiB
+extra/libbs2b             3.1.0-10                   0.07 MiB       0.02 MiB
+extra/libbsd              0.12.2-2                   0.33 MiB
+extra/libdovi             3.4.0-1                    0.66 MiB       0.28 MiB
+extra/libdvdnav           7.0.0-1                    0.16 MiB       0.06 MiB
+extra/libdvdread          7.1.1-1                    0.43 MiB       0.14 MiB
+extra/libiec61883         1.2.0-9                    0.12 MiB       0.03 MiB
+extra/libmd               1.3.0-1                    0.13 MiB
+extra/libmodplug          0.8.9.0-7                  0.37 MiB       0.17 MiB
+extra/libogg              1.3.6-1                    0.44 MiB
+extra/libopenmpt          0.8.9-1                    2.53 MiB       0.90 MiB
+extra/libpgm              5.3.128-4                  0.35 MiB
+extra/libplacebo          7.360.1-7                  1.61 MiB       0.52 MiB
+extra/libpulse            17.0+r98+gb096704c0-1      1.46 MiB
+extra/libraw1394          2.1.2-4                    0.16 MiB       0.05 MiB
+extra/libsamplerate       0.2.2-3                    1.55 MiB
+extra/libsndfile          1.2.2-4                    0.93 MiB
+extra/libsodium           1.0.22-1                   0.64 MiB
+extra/libsoxr             0.1.3-5                    0.21 MiB       0.08 MiB
+extra/libssh              0.12.2-1                   0.75 MiB       0.25 MiB
+extra/libtheora           1.2.0-1                    2.34 MiB       0.42 MiB
+extra/libunibreak         7.0-1                      0.15 MiB       0.03 MiB
+extra/libva               2.24.1-1                   1.00 MiB
+extra/libvdpau            1.5-4                      0.28 MiB       0.06 MiB
+extra/libvorbis           1.3.7-4                    0.83 MiB
+extra/libvpl              2.17.0-1                   0.99 MiB       0.23 MiB
+extra/libvpx              1.17.0-1                   3.72 MiB       1.32 MiB
+extra/libxss              1.2.5-1                    0.03 MiB
+extra/libxv               1.0.13-1                   0.06 MiB
+extra/mailcap             2.1.54-3                   0.11 MiB       0.03 MiB
+extra/mpg123              1.33.7-1                   1.20 MiB
+core/nspr                 4.40-1                     0.72 MiB
+core/nss                  3.131-1                    5.45 MiB
+extra/ocl-icd             2.3.5-1                    0.50 MiB       0.10 MiB
+extra/opencore-amr        0.1.6-2                    0.29 MiB       0.14 MiB
+extra/openjpeg2           2.5.4-1                   13.37 MiB
+extra/opus                1.6.1-1                    4.16 MiB
+extra/portaudio           1:19.7.0-4                 0.33 MiB       0.10 MiB
+extra/rav1e               0.8.1-3                    7.49 MiB       1.58 MiB
+extra/rubberband          4.0.0-2                    1.52 MiB       0.29 MiB
+extra/sdl2-compat         2.32.74-1                  3.09 MiB       0.46 MiB
+extra/sdl3                3.4.18-1                   6.98 MiB       1.72 MiB
+extra/shaderc             2026.4-1                   0.68 MiB       0.16 MiB
+extra/snappy              1.3.1-1                    0.11 MiB       0.04 MiB
+extra/sndio               1.10.0-1                   0.28 MiB       0.12 MiB
+extra/speex               1.2.1-2                    0.62 MiB       0.47 MiB
+extra/speexdsp            1.2.1-2                    0.54 MiB       0.44 MiB
+extra/srt                 1.5.7-2                    1.60 MiB       0.54 MiB
+extra/svt-av1             4.2.0-1                    5.36 MiB       1.98 MiB
+extra/v4l-utils           1.32.0-2                  11.31 MiB       1.99 MiB
+extra/vapoursynth         80-1                      11.79 MiB       3.20 MiB
+extra/vid.stab            1.1.2-1                    0.52 MiB       0.09 MiB
+extra/vmaf                3.2.1-1                    7.11 MiB
+extra/vulkan-icd-loader   1.4.363.0-1                0.67 MiB
+extra/x264                3:0.165.r3222.b35605a-2    3.79 MiB       0.75 MiB
+extra/x265                4.3-1                     21.46 MiB       2.11 MiB
+extra/xvidcore            1.3.7-4                    0.66 MiB       0.22 MiB
+extra/zeromq              4.3.5-3                    3.03 MiB
+extra/zimg                3.0.6-2                    0.70 MiB       0.24 MiB
+extra/firefox             158.0-1                  301.97 MiB      86.17 MiB
+
+Total Download Size:   132.34 MiB
+Total Installed Size:  536.91 MiB
+
+:: Proceed with installation? [Y/n]

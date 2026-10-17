@@ -59,11 +59,4 @@ PY
 # A real signed optional-app transaction in the disposable BUILD container.
 # This does not modify the ISO and does not stand in for GUI/polkit acceptance.
 pacman -U --noconfirm .build/repo/ownos-core-*.pkg.tar.zst
-printf 'y\n' | /usr/lib/ownos/own-admin install firefox 2>&1 | tee out/firefox-install.log
-pacman -Q firefox | tee out/firefox-package.txt
-runuser -u builder -- /usr/bin/firefox --version 2>&1 | tee out/firefox-version.txt
-install -d -m755 -o builder -g builder /firefox-smoke
-runuser -u builder -- timeout 60 /usr/bin/firefox --headless \
-  --screenshot /firefox-smoke/firefox-headless.png about:blank > out/firefox-headless.log 2>&1
-install -m644 /firefox-smoke/firefox-headless.png out/firefox-headless.png
-test -s out/firefox-headless.png
+bash scripts/ci-test-application.sh

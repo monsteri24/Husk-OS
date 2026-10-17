@@ -1,0 +1,24 @@
+xorriso 1.5.8.pl02 : RockRidge filesystem manipulator, libburnia project.
+
+xorriso : NOTE : Environment variable SOURCE_DATE_EPOCH encountered with value 1792210222
+xorriso : NOTE : ISO image bears MBR with  -boot_image any partition_offset=16
+xorriso : NOTE : Loading ISO image tree from LBA 0
+xorriso : UPDATE :     107 nodes read in 1 seconds
+libisofs: NOTE : Found hidden El-Torito image for EFI.
+libisofs: NOTE : EFI image start and load size: 890312 * 2048 , 0 * 512
+libisofs: NOTE : Roughly estimated EFI image size: 277872640 bytes
+xorriso : NOTE : Detected El-Torito boot information which currently is set to be discarded
+Drive current: -indev 'out/huskos-2026.10.17-x86_64.iso'
+Media current: stdio file, overwriteable
+Media status : is written , is appendable
+Boot record  : El Torito , MBR isohybrid cyl-align-off GPT
+Media summary: 1 session, 1026008 data blocks, 2004m data, 91.8g free
+Volume id    : 'HUSK_20261017'
+El Torito catalog  : 114  1
+El Torito cat path : /boot/syslinux/boot.cat
+El Torito images   :   N  Pltf  B   Emul  Ld_seg  Hdpt  Ldsiz         LBA
+El Torito boot img :   1  BIOS  y   none  0x0000  0x00      4         115
+El Torito boot img :   2  UEFI  y   none  0x0000  0x00      0      890312
+El Torito img path :   1  /boot/syslinux/isolinux.bin
+El Torito img opts :   1  boot-info-table isohybrid-suitable
+El Torito img blks :   2  135680
