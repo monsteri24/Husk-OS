@@ -491,8 +491,10 @@ Gtk.main()
         self.wait('installer Foot process exits', lambda: not self.installer_terminals())
 
     def missing_app_confirmation(self):
-        assert shutil.which('firefox', path=self.environment['PATH']) is None, (
-            'Missing-app acceptance requires the disposable source-test host to have no Firefox executable')
+        from ownos.app_install import app_installed
+        from ownos.catalog import app_by_id
+        assert not app_installed(app_by_id('firefox')), (
+            'Missing-app acceptance requires no authoritative installed Firefox package record')
         dialog = self.firefox_confirmation()
         before = {entry['id'] for entry in self.entries()}
         self.key('Return')

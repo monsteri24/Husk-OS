@@ -132,6 +132,22 @@ class InstallationGTKTests(unittest.TestCase):
         window = widget.get_toplevel()
         event.window = window.get_window()
         event.keyval = key
+        # GTK's built-in key bindings translate the physical keycode, unlike
+        # our OK handler which can read keyval directly. A zero keycode tests
+        # only that custom handler and silently misses default Cancel.
+        keymap = self.Gdk.Keymap.get_for_display(window.get_display())
+        found, entries = keymap.get_entries_for_keyval(key)
+        self.assertTrue(found, 'The test display must map the requested key')
+        entry = min((entry for entry in entries if entry.level == 0),
+                    key=lambda entry: entry.group, default=None)
+        self.assertIsNotNone(entry, 'The test key must be available without modifiers')
+        event.hardware_keycode = entry.keycode
+        event.group = entry.group
+        event.state = self.Gdk.ModifierType(0)
+        event.time = self.Gdk.CURRENT_TIME
+        translated = keymap.translate_keyboard_state(event.hardware_keycode, event.state, event.group)
+        self.assertTrue(translated[0], 'The synthetic hardware keycode must translate')
+        self.assertEqual(translated[1], key)
         event.send_event = True
         event.set_device(self.Gdk.Display.get_default().get_default_seat().get_keyboard())
         # Route through GtkWindow's normal focus propagation, rather than

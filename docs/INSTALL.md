@@ -86,10 +86,10 @@ Live changes, installed applications and any temporary password normally disappe
 at shutdown. No persistent-USB setup is provided by this guide. Save files you
 need to separate persistent storage before leaving the session.
 
-English is the default Husk interface language. Select **Settings → Appearance →
-Interface language → Suomi (fi-FI)** for Finnish. The desktop reloads its controls;
-reopen Settings, Files and other Husk applications for the full change. Keyboard
-layout is separate under **Input**. See [localization](LOCALIZATION.md).
+System 2 supports **English only**. Finnish is postponed and is not selectable;
+earlier saved Finnish choices and Finnish host locales fall back to English.
+Keyboard layout remains a separate setting under **Input**, including the Finnish
+layout. See [localization](LOCALIZATION.md).
 
 | Shortcut | Action |
 |---|---|

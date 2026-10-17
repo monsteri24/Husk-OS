@@ -4,14 +4,14 @@
 
 The current candidate retains Arch Linux, the modular GTK Husk Desktop and the
 existing signed Archiso build mechanism. **As of 2026-10-16, no System 2 ISO or
-release exists.** The latest recorded headless source baseline discovered 240
-tests: 203 passed and 37 display-dependent tests were skipped. The new GTK,
+release exists.** The latest recorded headless source baseline discovered 234
+tests: 198 passed and 36 display-dependent tests were skipped. The new GTK,
 Labwc, ISO and QEMU/OVMF acceptance runs are pending. See the dated
 [System 2 report](../HuskOS-system-2-REPORT.md); older successful compositor
 runs apply to their recorded source commits.
 
-English remains the default; Finnish is explicitly selectable and saved in
-Settings. GNU gettext compiles the shipped Finnish catalog into the core package.
+System 2 supports English only. The Finnish PO catalog is preserved in source
+for later work and is neither enabled at runtime nor shipped in binary packages.
 The UI package declares Python Cairo/librsvg dependencies and includes bundled
 icons and the exact official wallpaper. The base excludes optional user applications. The System 2
 release candidate uses `--first-boot`: the retained TTY1/PAM Live startup and
@@ -23,14 +23,14 @@ The separate **Husk OS System 2 ISO** workflow is
 [system2-iso.yml](../.github/workflows/system2-iso.yml). It is configured to:
 
 1. Require the source/native/GTK job and the real nested Labwc interaction job
-   on the exact candidate source. These include new Finnish-selection,
+   on the exact candidate source. These include English-only fallback,
    file-navigation and deliberate dialog-input checks.
 2. Build signed Husk packages and the first-boot Archiso image inside a disposable
    privileged Arch build container. This environment is isolated from user disks;
    the signing secret stays outside the source tree and ISO payload.
 3. Extract the actual completed ISO's SquashFS and verify kernel/initramfs,
-   installed modules, the wallpaper's exact hash, a usable compiled Finnish
-   catalog and pacman's package inventory, including the absence of known
+   installed modules, the wallpaper's exact hash and pacman's package inventory,
+   including the absence of known
    optional applications. Fixture/profile checks are separate from this gate.
 4. Install signed Firefox packages and launch Firefox headlessly in the separate
    build container. This runs after image creation and does not add Firefox to

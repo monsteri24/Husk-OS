@@ -6,6 +6,11 @@ Latest executable source with successful source/GTK and real Labwc evidence:
 `993d80bf8a9d94a7f4f43e0a74b65fdafbde62cd`. The two later commits contain only
 documentation and preserved evidence. No source rollback was necessary.
 
+Release decision on 2026-10-17 supersedes the original Finnish requirement below:
+**System 2 is English only.** Finnish PO sources remain for a future release;
+Finnish is not selectable or shipped as a binary Husk catalog. The inventory
+below records the requirements and evidence at recovery, before that decision.
+
 ## Repository and evidence reviewed before implementation
 
 Reviewed the complete tracked-file inventory, all 26 historical commits,

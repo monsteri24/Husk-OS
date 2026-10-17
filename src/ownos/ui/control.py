@@ -160,9 +160,10 @@ class ControlWindow(Gtk.Window):
         except (OSError, ET.ParseError, subprocess.TimeoutExpired) as exc: error(self, exc)
 
     def appearance_page(self, box):
-        box.pack_start(row_box(_('Interface language'), _('Choose the language for Husk applications. Reopen applications to apply a change. Keyboard layout is set separately under Input.')), False, False, 0)
+        box.pack_start(row_box(_('Interface language')), False, False, 0)
         self.language = Gtk.ComboBoxText()
-        self.language.append('en', 'English'); self.language.append('fi', 'Suomi (fi-FI)')
+        self.language.append('en', 'English')
+        self.language.set_sensitive(False)
         self.language.set_active_id(self.settings['language'])
         self.language_handler = self.language.connect('changed', self.change_language)
         box.pack_start(self.language, False, False, 0)

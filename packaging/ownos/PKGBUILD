@@ -24,13 +24,7 @@ package_ownos-core() {
     ln -s ../lib/ownos/own.py "$pkgdir/usr/bin/$command"
   done
   install -Dm644 ownos/data/org.ownos.admin.policy "$pkgdir/usr/share/polkit-1/actions/org.ownos.admin.policy"
-  # English source strings need no catalog. Compile reviewed translations.
-  for catalog in ownos/locale/*/LC_MESSAGES/huskos.po; do
-    [ -f "$catalog" ] || continue
-    language=${catalog#ownos/locale/}; language=${language%%/*}
-    install -dm755 "$pkgdir/usr/share/locale/$language/LC_MESSAGES"
-    msgfmt --check --check-format "$catalog" -o "$pkgdir/usr/share/locale/$language/LC_MESSAGES/huskos.mo"
-  done
+  # System 2 is English-only. Keep postponed PO sources out of binary packages.
   install -Dm644 ownos/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 

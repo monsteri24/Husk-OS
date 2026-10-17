@@ -14,9 +14,9 @@ current candidate.
 
 ## Current System 2 source
 
-- English is the default interface language. **Settings → Appearance → Interface
-  language → Suomi (fi-FI)** saves Finnish for subsequent application starts;
-  the desktop reloads its translated controls. See [localization](docs/LOCALIZATION.md).
+- System 2 supports **English only**, including when an earlier settings file or
+  the host locale requests Finnish. Finnish is postponed; its catalog remains
+  in source for later work. See [localization](docs/LOCALIZATION.md).
 - The original black-and-gold desert wallpaper, Start/search, taskbar,
   notifications, window controls, Husk Settings, Husk Files and Foot terminal
   are retained.
@@ -31,8 +31,8 @@ current candidate.
   [Application installation](docs/APP-INSTALLATION.md) explains the sequence and
   its current acceptance limits.
 
-The latest recorded headless source baseline has **240 discovered tests: 203
-passed and 37 display-dependent tests skipped**. New graphical acceptance and
+The latest recorded headless source baseline has **234 discovered tests: 198
+passed and 36 display-dependent tests skipped**. New graphical acceptance and
 System 2 ISO/QEMU checks are pending. Source tests, a nested Wayland desktop,
 a booted ISO and physical hardware are separate evidence categories.
 
@@ -84,7 +84,7 @@ must not be overwritten by System 2.
 | `src/ownos/ui/` | GTK desktop, launcher, taskbar, Settings, Files and notifications |
 | `native/` | Wayland toplevel helper and window actions |
 | `config/labwc/` | Window controls, shortcuts and session/input configuration |
-| `locale/` | Gettext template and Finnish catalog |
+| `locale/` | Gettext template and postponed Finnish source catalog |
 | `packaging/` | Signed Arch package recipes and optional Calamares integration |
 | `installer/` | Experimental installation policy and configuration |
 | `iso/` | Live profile inputs and session setup |

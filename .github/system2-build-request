@@ -1,0 +1,6 @@
+2026-10-17: Continue System 2 from preserved c3a78a2 history.
+Release decision: English only; Finnish PO retained for the future.
+Candidate includes authoritative Firefox package-state precondition and valid GTK hardware keycode/group input.
+Run exact-source GTK/native and real Labwc gates before building the real first-boot Archiso image.
+Validate actual ISO/rootfs, UEFI boot, terminal, signed optional-app transaction/launch and checksum before separate system-2 publication.
+Preserve system-1 and all history. Never overwrite an existing System 2 release asset automatically.

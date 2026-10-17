@@ -1,7 +1,7 @@
 """English source messages and an explicit gettext language allowlist.
 
-Add a reviewed language to SUPPORTED_LANGUAGES when its catalog is shipped.
-Host locale variables never select an unsupported translation implicitly.
+System 2 supports English only. Other catalogs remain source material for
+future releases; saved choices and host locale variables cannot enable them.
 """
 import gettext as _gettext
 import struct
@@ -9,7 +9,7 @@ from pathlib import Path
 
 DOMAIN = 'huskos'
 DEFAULT_LANGUAGE = 'en'
-SUPPORTED_LANGUAGES = ('en', 'fi')
+SUPPORTED_LANGUAGES = ('en',)
 LOCALEDIR = Path('/usr/share/locale')
 
 _translation = _gettext.NullTranslations()

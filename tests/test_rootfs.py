@@ -51,13 +51,6 @@ class RootfsTests(unittest.TestCase):
         source = Path(__file__).resolve().parents[1]
         (self.root / 'usr/share/ownos/wallpapers/husk-desert.jpg').write_bytes(
             (source / 'data/wallpapers/husk-desert.jpg').read_bytes())
-        catalog = self.put('usr/share/locale/fi/LC_MESSAGES/huskos.mo', '')
-        subprocess.run(['msgfmt', '-o', str(catalog), '-'], input='''msgid ""
-msgstr "Language: fi\\nContent-Type: text/plain; charset=UTF-8\\nPlural-Forms: nplurals=2; plural=(n != 1);\\n"
-
-msgid "Settings"
-msgstr "Asetukset"
-''', text=True, capture_output=True, check=True)
         self.put('var/lib/pacman/local/base-3-1/desc', '%NAME%\nbase\n\n%VERSION%\n3-1\n')
 
     def put(self, name, content, mode=0o644):
@@ -86,12 +79,9 @@ msgstr "Asetukset"
         self.assertTrue(any('wallpaper' in error.lower() and 'checksum' in error.lower()
                             for error in errors), errors)
 
-    def test_finnish_catalog_must_exist_and_be_valid(self):
-        catalog = self.root / 'usr/share/locale/fi/LC_MESSAGES/huskos.mo'
-        catalog.unlink()
-        self.assertTrue(any('huskos.mo' in error for error in validate_rootfs(self.root)))
-        catalog.write_bytes(b'nonempty corrupt catalog')
-        self.assertTrue(any('catalog' in error.lower() for error in validate_rootfs(self.root)))
+    def test_english_only_system2_does_not_require_a_finnish_catalog(self):
+        self.assertFalse((self.root / 'usr/share/locale/fi/LC_MESSAGES/huskos.mo').exists())
+        self.assertEqual(validate_rootfs(self.root), [])
 
     def test_inventory_uses_name_fields_and_keeps_package_infrastructure_and_libraries(self):
         for name in ('flatpak', 'lib32-mesa', 'vulkan-radeon', 'python-cairo', 'polkit-gnome'):

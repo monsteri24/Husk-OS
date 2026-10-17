@@ -1,0 +1,29 @@
+{
+  "source_commit": "c3a78a2c8d414b2e03c60816ab87532fe10ae681",
+  "source_workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/38936617990",
+  "source_job": 117093623053,
+  "headless_tests": {"discovered": 240, "passed": 203, "failed": 0, "skipped": 37},
+  "gtk_tests": {"discovered": 240, "passed": 238, "failed": 2, "skipped": 0},
+  "gtk_failures": [
+    "test_default_return_cancels_without_starting_confirmation: no Cancel response",
+    "test_held_opening_return_autorepeat_cannot_activate_default_cancel: fresh Return did not produce Cancel after the opening hold was safely consumed"
+  ],
+  "gtk_next_hypothesis": "Synthetic GDK events lack hardware keycode/group for GTK's normal default-button key binding; custom OK handler reads keyval directly. Investigate test input before modifying production Cancel.",
+  "localization_ui": "All seven real GTK localization cases passed",
+  "desktop_workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/38936618020",
+  "desktop_job": 117093622409,
+  "desktop_artifact": 12061442562,
+  "desktop_artifact_bytes": 14605481,
+  "desktop_artifact_sha256": "97e13dad53bc744a682f738bb71bcc981191bcd27d10ca5741ef2e0068ab9643",
+  "completed_scenarios": [
+    "wayland-desktop-started", "01-desktop-wallpaper", "start-pointer-search-launch",
+    "legacy-regression-reproduced", "saved-config-migration-X-fixed",
+    "foot-keyboard-command-roundtrip", "06-foot-close-minimize-maximize",
+    "files-real-folder-location-Home-Up-navigation",
+    "07-files-close-minimize-maximize", "07-control-close-minimize-maximize"
+  ],
+  "desktop_failure": "Firefox fixture incorrectly required the unrelated Ubuntu host executable to be absent; production uses authoritative Arch/Flatpak package state",
+  "desktop_hypothesis_change": "Use the same app_installed(app_by_id('firefox')) query as production; do not remove or hide the host executable",
+  "iso": "NOT BUILT",
+  "note": "Failed candidate retained. Real Files navigation and same-coordinate movement now passed; installation-dialog scenarios had not yet executed."
+}

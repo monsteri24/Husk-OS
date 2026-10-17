@@ -39,6 +39,19 @@ class PackagingTests(unittest.TestCase):
                                             capture_output=True, text=True)
                     self.assertEqual(result.returncode, 17, result.stderr)
 
+    def test_system2_core_does_not_ship_postponed_finnish_catalog(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp); (path / 'ownos').symlink_to(ROOT, target_is_directory=True)
+            dest = path / 'dest'; env = dict(os.environ, pkgdir=str(dest))
+            result = subprocess.run(['bash', '--noprofile', '--norc', '-ec',
+                'source "$1"; pkgname=ownos-core; package_ownos-core', 'package-test',
+                str(ROOT / 'packaging/ownos/PKGBUILD')], cwd=path, env=env,
+                capture_output=True, text=True, timeout=15)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((dest / 'usr/lib/ownos/ownos/i18n.py').is_file())
+            self.assertEqual(list(dest.rglob('huskos.mo')), [])
+            self.assertTrue((ROOT / 'locale/fi/LC_MESSAGES/huskos.po').is_file())
+
     def test_packaged_session_uses_installed_helpers_and_explicit_tryexec(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp); source = path / 'ownos'; source.mkdir()

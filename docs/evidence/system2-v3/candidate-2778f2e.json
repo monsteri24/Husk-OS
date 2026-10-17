@@ -4,7 +4,7 @@
   "source_job": 117089890827,
   "gtk_tests": 235,
   "gtk_failures": 1,
-  "gtk_failure": "test_default_return_cancels_without_starting_confirmation: checked before GtkButton's animated activation emitted Cancel",
+  "gtk_failure": "test_default_return_cancels_without_starting_confirmation: no Cancel response observed; the initial animation-timing hypothesis was not confirmed and a later bounded event-loop wait did not fix the test",
   "localization_ui": "All seven real GTK localization cases passed",
   "desktop_workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/38935513537",
   "desktop_job": 117089891451,
