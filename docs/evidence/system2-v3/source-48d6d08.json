@@ -1,0 +1,20 @@
+{
+  "verification_commit": "48d6d08a0e4ab4700879de075c7839496218758e",
+  "image_source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39005805938",
+  "job": 117317929403,
+  "headless": {
+    "discovered": 235,
+    "passed": 199,
+    "failed": 0,
+    "skipped": 36
+  },
+  "gtk": {
+    "discovered": 235,
+    "passed": 235,
+    "failed": 0,
+    "skipped": 0
+  },
+  "syntax_checks": 122,
+  "scope": "Publication-only workflow/helper changes; unchanged OS payload. Source/native and actual GTK passed; accepted Labwc/ISO boot evidence remains recorded at verification 5fd07e6."
+}

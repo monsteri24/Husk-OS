@@ -1,16 +1,19 @@
 # Download, USB boot and installation status
 
-**System 2 is development source, with no published ISO or release as of
-2026-10-16.** Its new graphical tests, ISO build and QEMU/OVMF acceptance are
-pending. The [Releases page](https://github.com/monsteri24/Husk-OS/releases) and
-[System 2 report](../HuskOS-system-2-REPORT.md) are the places to check for a
-later verified image. Do not treat a source archive or a successful unit test
-as a bootable release.
+Husk OS is an experimental Arch-based gaming operating system with its own GTK
+Husk Desktop on Labwc/Wayland. **System 2 was published on 2026-10-17 as an
+experimental Live USB/VM release.** It has no completed permanent graphical
+operating-system installer.
 
-The existing [System 1 release](https://github.com/monsteri24/Husk-OS/releases/tag/system-1)
-is a preserved experimental Live image. Its [original report](../HuskOS-system-1-REPORT.md)
-records an actual QEMU/OVMF desktop boot and the known limits. Instructions below
-explain Live use; they do not describe a completed permanent installer.
+The [System 2 release](https://github.com/monsteri24/Husk-OS/releases/tag/system-2)
+contains the actual ISO, checksum and automated evidence. The exact image passed
+filesystem validation and a QEMU/OVMF UEFI boot to the English desktop, real Foot
+terminal launch and clean shutdown. See the [verification report](../HuskOS-system-2-REPORT.md).
+Physical System 2 hardware acceptance remains outstanding.
+
+The historical [System 1 release](https://github.com/monsteri24/Husk-OS/releases/tag/system-1)
+and its [report](../HuskOS-system-1-REPORT.md) are preserved as a separate recovery
+baseline. Its checksum is different; always use the matching release files.
 
 ## Target and reference environment
 
@@ -25,32 +28,29 @@ Start with a disposable VM. A Live boot does not require an internal installatio
 disk. Keep important files backed up before experimenting with removable media
 or operating-system installation tools.
 
-## Download and verify an existing release
+## Download and verify System 2
 
-1. Open the [Releases page](https://github.com/monsteri24/Husk-OS/releases) and
-   choose a release that actually has an ISO, matching checksum file and report.
-   Currently that is the historical System 1 image, not System 2.
-2. Download the ISO and checksum from the same release. For System 1 these are
-   [HuskOS-system-1.iso](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1.iso)
-   and [HuskOS-system-1-SHA256.txt](https://github.com/monsteri24/Husk-OS/releases/download/system-1/HuskOS-system-1-SHA256.txt).
-3. Verify the complete download before writing or booting it. In a Linux terminal,
-   with both files in the current directory:
+1. Open the [official System 2 release](https://github.com/monsteri24/Husk-OS/releases/tag/system-2).
+2. Download [HuskOS-system-2.iso](https://github.com/monsteri24/Husk-OS/releases/download/system-2/HuskOS-system-2.iso)
+   and [HuskOS-system-2-SHA256.txt](https://github.com/monsteri24/Husk-OS/releases/download/system-2/HuskOS-system-2-SHA256.txt)
+   from that release. A source archive is not a bootable ISO.
+3. Verify the complete download before writing or booting it. With both files
+   in the current directory on Linux:
 
    ```sh
-   sha256sum -c HuskOS-system-1-SHA256.txt
+   sha256sum -c HuskOS-system-2-SHA256.txt
    ```
 
    In PowerShell, compute the digest and compare all 64 hexadecimal characters
    with the matching release checksum:
 
    ```powershell
-   Get-FileHash .\HuskOS-system-1.iso -Algorithm SHA256
+   Get-FileHash .\HuskOS-system-2.iso -Algorithm SHA256
    ```
 
-4. For the preserved System 1 image, the size is **2,103,050,240 bytes** and SHA-256
-   is `8f14dc313556db9e56fb37a0ce3ef33f2d46cf35200238fb61a3b6240c856363`.
-   Stop if either differs. A future System 2 image must have its own published
-   checksum; never use the System 1 digest to verify a different image.
+4. The exact ISO size is **2,101,264,384 bytes**. Its SHA-256 is
+   `d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99`.
+   Stop if the size or checksum differs.
 
 ## Write a USB image
 
@@ -67,7 +67,7 @@ and files. Check its model and capacity carefully.**
    Live boot entry. Firmware menu names vary by machine.
 
 A successful USB write does not prove the machine's hardware is supported. The
-System 1 automated evidence is a VM boot; System 2 USB/hardware acceptance is
+System 2 automated evidence is a VM boot; physical USB/hardware acceptance is
 still pending.
 
 ## Use the Live session
@@ -107,7 +107,9 @@ for an application transaction does not enable Live-session locking.
 
 ## Install an optional application on demand
 
-These steps describe the current System 2 source behavior. **A real Live GUI
+The release contains this application workflow; its dialogs passed actual GTK
+and Labwc input tests, and a separate signed Firefox installation/headless launch
+passed in Arch CI. **A real Live GUI
 administrator-authentication and network-install transaction has not yet been
 accepted.** The separate build-container application test does not prove that path.
 
@@ -141,7 +143,7 @@ helpers and gaming-tool limitations.
 ## Permanent installation and updates
 
 **There is no completed graphical operating-system installer in the current
-release candidate.** Calamares and the Husk Desktop/KDE/GNOME/Minimal choices
+System 2 Live release.** Calamares and the Husk Desktop/KDE/GNOME/Minimal choices
 remain experimental source. The default first-boot Live build omits Calamares.
 A custom `--with-installer` build is not evidence of successful partitioning,
 installation or an installed-system reboot. Do not use this guide to replace an

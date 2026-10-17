@@ -5,12 +5,15 @@ its own GTK **Husk Desktop** on Labwc/Wayland. The desktop, Settings, Files,
 launcher and taskbar are developed here. Existing `ownos` package, configuration
 and D-Bus names remain for compatibility.
 
-**System 2 is current development source. As of 2026-10-16, no System 2 ISO or
-release is available.** New GTK/Labwc acceptance checks and the signed ISO build
-are pending. Check the [Releases page](https://github.com/monsteri24/Husk-OS/releases)
-and the dated [System 2 report](HuskOS-system-2-REPORT.md) for publication and
-verification status. Results for an older source commit do not validate the
-current candidate.
+**System 2 is published as an experimental Live USB/VM release (2026-10-17).**
+
+- [Download HuskOS-system-2.iso](https://github.com/monsteri24/Husk-OS/releases/download/system-2/HuskOS-system-2.iso) — **2,101,264,384 bytes**.
+- [SHA-256 file](https://github.com/monsteri24/Husk-OS/releases/download/system-2/HuskOS-system-2-SHA256.txt) — `d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99`.
+- [Release and automated evidence](https://github.com/monsteri24/Husk-OS/releases/tag/system-2), [USB/Live guide](docs/INSTALL.md) and [verification report](HuskOS-system-2-REPORT.md).
+
+The exact ISO passed filesystem validation and a QEMU/OVMF UEFI desktop,
+terminal and clean-shutdown test. System 2 physical hardware testing remains
+outstanding. System 1 is preserved unchanged.
 
 ## Current System 2 source
 
@@ -31,10 +34,13 @@ current candidate.
   [Application installation](docs/APP-INSTALLATION.md) explains the sequence and
   its current acceptance limits.
 
-The latest recorded headless source baseline has **234 discovered tests: 198
-passed and 36 display-dependent tests skipped**. New graphical acceptance and
-System 2 ISO/QEMU checks are pending. Source tests, a nested Wayland desktop,
-a booted ISO and physical hardware are separate evidence categories.
+Verification passed **235 actual GTK tests with no skips**, **18 real nested
+Labwc scenarios** and **122 source/configuration syntax checks**. The headless
+run passed 199 tests with 36 display-dependent skips; those cases passed in the
+GTK run. Signed Firefox installation and a nonroot headless launch passed in a
+separate Arch container. The full Live GUI/password/polkit/network installation
+and subsequent GUI launch still need acceptance testing. See the report for
+image, verification and publication commit identities.
 
 ## Try or build Husk OS
 
@@ -45,7 +51,7 @@ The [build guide](docs/BUILD.md) describes the new System 2 gates and preserves
 historical System 1 instructions. [VM testing](docs/VM-TESTING.md) documents
 isolated virtual-disk checks.
 
-The release candidate uses the first-boot Live profile, with 64-bit Mesa and
+The release uses the first-boot Live profile, with 64-bit Mesa and
 TTY1/PAM session startup. The standard development profile also retains 32-bit
 graphics libraries. GameMode and MangoHud are optional tools: their Settings
 switches configure `husk-game` and do not install them. Install the tools or

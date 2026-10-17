@@ -1,18 +1,21 @@
 # A clean base and optional applications
 
-System 2 development profiles retain Husk Desktop, Husk Settings, Husk Files,
+The System 2 Live release and development profiles retain Husk Desktop, Husk Settings, Husk Files,
 Labwc, Foot, the kernel, firmware, graphics libraries and essential network,
 audio, storage and recovery tools. Steam, Proton, Wine/Winetricks, Lutris, Heroic,
 Discord, Firefox, OBS and other optional user applications are excluded from the
 default package policy. A catalog entry or taskbar icon does not mean an app is
 installed. The desktop never installs optional apps at startup.
 
-Flatpak remains installation infrastructure. The first-boot release candidate
+Flatpak remains installation infrastructure. The first-boot release
 uses 64-bit Mesa; the standard development profile also includes 32-bit graphics
 libraries. Generating a profile or testing an inventory fixture does not establish
 what a finished ISO contains. The completed System 2 image has now been extracted
 and its actual package records and required payloads have passed validation.
 The separate optional-app transaction does not add Firefox to that image.
+The published exact ISO also passed QEMU/OVMF desktop/terminal/shutdown and a
+complete public-download checksum verification. See the
+[System 2 release](https://github.com/monsteri24/Husk-OS/releases/tag/system-2).
 
 ## Curated choices and trusted sources
 

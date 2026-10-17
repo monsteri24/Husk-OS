@@ -1,0 +1,127 @@
+{
+  "verified_at": "2026-10-17",
+  "workflow": "https://github.com/monsteri24/Husk-OS/actions/runs/39005805931",
+  "job": 117317929444,
+  "conclusion": "success",
+  "full_fresh_public_iso_download_sha256": "PASSED",
+  "image_source_commit": "b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58",
+  "verification_commit": "5fd07e697128153c117e63e7c3477fb5db9da853",
+  "publication_tag_commit": "48d6d08a0e4ab4700879de075c7839496218758e",
+  "release": {
+    "id": 415599247,
+    "tag": "system-2",
+    "url": "https://github.com/monsteri24/Husk-OS/releases/tag/system-2",
+    "published_at": "2026-10-17T05:22:05Z",
+    "draft": false,
+    "prerelease": true,
+    "assets": [
+      {
+        "id": 649628680,
+        "name": "desktop-start.png",
+        "state": "uploaded",
+        "size": 581608,
+        "digest": "sha256:03e47974d0e24ef67ff4857d4f73f48e743354b71229668487ff221518136a4d",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/desktop-start.png"
+      },
+      {
+        "id": 649628681,
+        "name": "desktop-terminal.png",
+        "state": "uploaded",
+        "size": 579795,
+        "digest": "sha256:75ca7388156606ee39e9387fb147634a71203afead468b4f274c91dd4f9e9041",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/desktop-terminal.png"
+      },
+      {
+        "id": 649628699,
+        "name": "firefox-headless.png",
+        "state": "uploaded",
+        "size": 5763,
+        "digest": "sha256:6d46b98e36b72d6efcb94c2d245345ed5460d394305e41bdf723d29c231c8f77",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/firefox-headless.png"
+      },
+      {
+        "id": 649628683,
+        "name": "firefox-package.txt",
+        "state": "uploaded",
+        "size": 16,
+        "digest": "sha256:873133d71e7ecfcd162146345a78cc2ac9afc7f9080243f0eef584e56f63172e",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/firefox-package.txt"
+      },
+      {
+        "id": 649628695,
+        "name": "firefox-version.txt",
+        "state": "uploaded",
+        "size": 22,
+        "digest": "sha256:759dd5b4db9197f1f6eeffc655f86df140f51f87ebcc6ea7cd8c357af4d7a365",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/firefox-version.txt"
+      },
+      {
+        "id": 649628677,
+        "name": "guest.json",
+        "state": "uploaded",
+        "size": 26744,
+        "digest": "sha256:8294239db65a4030c72fd7ae5ab913a877f96b63d1599b1d4128c20330d8f672",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/guest.json"
+      },
+      {
+        "id": 649628645,
+        "name": "HuskOS-system-2-SHA256.txt",
+        "state": "uploaded",
+        "size": 86,
+        "digest": "sha256:0bb61fdd6b7913a8fc4e3f54fa0649653e65669f1bf553896dfd4f5000997853",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/HuskOS-system-2-SHA256.txt"
+      },
+      {
+        "id": 649628659,
+        "name": "HuskOS-system-2.iso",
+        "state": "uploaded",
+        "size": 2101264384,
+        "digest": "sha256:d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/HuskOS-system-2.iso"
+      },
+      {
+        "id": 649628643,
+        "name": "iso-rootfs-check.json",
+        "state": "uploaded",
+        "size": 117,
+        "digest": "sha256:c1e7fbc9003be364adbe5d7f7d2562a979c50a8ea09fbbf4786f8168c9c11b37",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/iso-rootfs-check.json"
+      },
+      {
+        "id": 649628650,
+        "name": "result.json",
+        "state": "uploaded",
+        "size": 660,
+        "digest": "sha256:7537fcb59cefa4d22ed164a0d82d4bf1b8205591fd8ab0dd7db78f8cce43f2b1",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/result.json"
+      },
+      {
+        "id": 649628646,
+        "name": "system2-build.json",
+        "state": "uploaded",
+        "size": 323,
+        "digest": "sha256:f099882c29a8e06c3d224c15d99a38ebd7bfd5b75e42a1afc2a1f29b26f2d74e",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/system2-build.json"
+      },
+      {
+        "id": 649628704,
+        "name": "system2-recovery.json",
+        "state": "uploaded",
+        "size": 734,
+        "digest": "sha256:c976d31f63d2b794da056de5764c24b240574bca70ed81b4d6bc7cf7d115d3ea",
+        "url": "https://github.com/monsteri24/Husk-OS/releases/download/system-2/system2-recovery.json"
+      }
+    ]
+  },
+  "system1_preserved": {
+    "release_id": 414611526,
+    "tag": "system-1",
+    "iso": [
+      {
+        "id": 646339649,
+        "size": 2103050240,
+        "digest": "sha256:8f14dc313556db9e56fb37a0ce3ef33f2d46cf35200238fb61a3b6240c856363"
+      }
+    ]
+  }
+}

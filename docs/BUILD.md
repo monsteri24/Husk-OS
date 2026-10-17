@@ -1,20 +1,25 @@
 # Building packages and ISO images
 
-## System 2 development and pending release gates
+## System 2 build and verified release
 
-The current candidate retains Arch Linux, the modular GTK Husk Desktop and the
-existing signed Archiso build mechanism. **As of 2026-10-16, no System 2 ISO or
-release exists.** The latest recorded headless source baseline discovered 234
-tests: 198 passed and 36 display-dependent tests were skipped. The new GTK,
-Labwc, ISO and QEMU/OVMF acceptance runs are pending. See the dated
-[System 2 report](../HuskOS-system-2-REPORT.md); older successful compositor
-runs apply to their recorded source commits.
+The experimental [System 2 release](https://github.com/monsteri24/Husk-OS/releases/tag/system-2)
+was published on 2026-10-17 using the existing signed Archiso process, Arch Linux,
+GTK Husk Desktop and Labwc/Wayland. The actual ISO is **2,101,264,384 bytes**, SHA-256
+`d36214faecce244cf5c92e0730849857821499cae4f20c3bd71f2448952e8f99`.
+
+Image source: `b1c27dd8bc73d7dc4e9f9856083dd69c67f30d58`. Accepted complete
+verification: `5fd07e697128153c117e63e7c3477fb5db9da853`. Publication/tag:
+`48d6d08a0e4ab4700879de075c7839496218758e`, with identical OS payload.
+[235 GTK tests, 18 real Labwc scenarios, actual ISO/rootfs checks and QEMU/OVMF
+boot/terminal/shutdown passed](../HuskOS-system-2-REPORT.md). The publication
+commit also passed 122 source/configuration checks and all 235 GTK tests.
+Physical System 2 hardware acceptance is still outstanding.
 
 System 2 supports English only. The Finnish PO catalog is preserved in source
 for later work and is neither enabled at runtime nor shipped in binary packages.
 The UI package declares Python Cairo/librsvg dependencies and includes bundled
 icons and the exact official wallpaper. The base excludes optional user applications. The System 2
-release candidate uses `--first-boot`: the retained TTY1/PAM Live startup and
+release uses `--first-boot`: the retained TTY1/PAM Live startup and
 64-bit Mesa, without Calamares or optional 32-bit gaming tools. The standard
 profile additionally retains 32-bit graphics libraries. Neither profile is a
 completed permanent-installer release.
@@ -42,7 +47,13 @@ The separate **Husk OS System 2 ISO** workflow is
    pre-release with `HuskOS-system-2.iso`, its own checksum and evidence. Verify
    the remote asset's size/digest and a complete fresh download.
 
-These are configured gates, **not claims that the current runs have passed**.
+The completed verification and publication gates passed for the exact ISO above;
+results and genuine guest screenshots are attached to the release. An initial
+Firefox provider-prompt failure and a later stale desktop-test row were corrected
+without changing working OS payload. The original image was reused after the
+successful build; a publication-only workflow recovered the accepted evidence,
+targeted its current commit and verified the full fresh public download.
+
 A real Live GUI administrator-authentication and public-network application
 installation remains a separate unaccepted path. Native app installation in Live
 asks the user to set a temporary password with `passwd`, then uses mandatory
@@ -229,9 +240,10 @@ Se ei luo ISOa tai käynnistä VM:ää. Ikkunatestit ajetaan erikseen sallittua
 näyttöä tarvitsevan `test-gtk.sh`-skriptin avulla; viiden kierroksen GUI-ohitukset
 on korvattava oikeilla testeillä ennen graafista hyväksyntää.
 
-Toimituksen Ubuntu-kontin todelliset tulokset ovat `TEST-RESULTS.md`:ssä.
-Täällä käytettiin yksityisesti purettuja GTK-/Wayland-riippuvuuksia, ei asennettu
-Husk OS:ää. Archissa käytetään VM:n normaalisti asennettuja kirjastoja.
+Current source, real Labwc, signed-package, ISO and QEMU results are retained in
+[the System 2 report](../HuskOS-system-2-REPORT.md) and
+[permanent V3 evidence](evidence/system2-v3/). Prepared GTK/Xvfb source checks,
+nested compositor checks, actual ISO boot and hardware tests remain distinct.
 
 Lähdepuu sisältää ylläpidetyn profiiligeneraattorin ja overlayn; valmis ISO
 ja SHA-256 ovat GitHub Releasessa. Kevyen System 1 -profiilin riippuvuusratkaisu,
