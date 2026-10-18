@@ -445,6 +445,8 @@ class DesktopTest:
                       if entry['id'] not in before and 'foot' in entry['app_id'].lower()]
         assert not unexpected, description + ': unexpected Foot window ' + repr(unexpected)
         assert not self.installer_terminals(), description + ': installer terminal started'
+        assert not any(window.get('app_install') for window in self.state().get('windows', [])), (
+            description + ': graphical installer started')
 
     def held_pointer_confirmation(self, release_over='confirm'):
         """A separate real GTK client maps the production dialog during a hold."""
@@ -527,7 +529,7 @@ Gtk.main()
                 self.assert_no_installer(before, 'OK key press without release', delay=0.2)
             finally:
                 self.key_event('keyup', 'space')
-            name = 'missing-app-deliberate-keyboard-OK-opens-real-terminal'
+            name = 'missing-app-deliberate-keyboard-OK-opens-native-installer'
         else:
             target = self.window_rectangle(dialog, dialog['confirmation']['confirm'], 'firefox-fresh-OK')
             self.pointer_event('mousedown', target)
@@ -535,22 +537,26 @@ Gtk.main()
                 self.assert_no_installer(before, 'OK pointer press without release', delay=0.2)
             finally:
                 self.pointer_event('mouseup')
-            name = 'missing-app-deliberate-pointer-OK-opens-real-terminal'
-        terminal = self.wait('deliberate OK creates real Foot installer terminal', lambda: next((entry for entry
-            in self.entries() if entry['id'] not in before and 'foot' in entry['app_id'].lower()), None))
-        processes = self.wait('real Foot --hold installer command process', self.installer_terminals)
-        expected = str(Path(shutil.which('foot', path=self.environment['PATH'])).resolve())
-        assert all(process['executable'] == expected for process in processes), processes
+            name = 'missing-app-deliberate-pointer-OK-opens-native-installer'
+        def installer():
+            return self.native_window('desktop',lambda window:
+                window.get('app_install',{}).get('appid') == 'firefox')
+        window = self.wait('deliberate OK creates the real native application installer',installer)
         self.wait('confirmation closes after deliberate OK', lambda: self.confirmation() is None)
+        # This Ubuntu source runner has no Arch package manager. Real preflight
+        # must report that failure graphically before requesting authorization.
+        window = self.wait('native preflight reports the missing repository tools',lambda:
+            installer() if installer() and installer()['app_install']['state'] == 'failed' else None)
+        assert 'repository' in window['app_install']['status'].lower(), window
+        assert not self.installer_terminals(), 'The graphical installer started a Foot password sequence'
+        assert not any(entry['id'] not in before and 'foot' in entry['app_id'].lower()
+                       for entry in self.entries()), 'A terminal opened after graphical confirmation'
         self.screenshot(name)
-        (self.artifacts / (name + '.json')).write_text(json.dumps(processes, indent=2) + '\n')
-        self.record(name, application=terminal, processes=processes,
-                    installation='Not assessed: real terminal creation on an Ubuntu source-test host only.')
-        self.wait('installer Foot is active before closing', lambda:
-                  self.entry(terminal['id']) and self.entry(terminal['id'])['active'])
-        self.click(self.titlebar(name + '-before-close')['buttons']['close'])
-        self.wait('installer terminal closes through real decoration input', lambda: self.entry(terminal['id']) is None)
-        self.wait('installer Foot process exits', lambda: not self.installer_terminals())
+        self.record(name, application=window['app_install'], terminal_started=False,
+                    installation='Not assessed: actual graphical preflight fails closed without Arch tools on Ubuntu.')
+        close = next(button for button in window['buttons'] if button['label'] == 'Close')
+        self.click(self.window_rectangle(window,close['rect'],name+'-close'))
+        self.wait('native installer closes through its real Close button',lambda: installer() is None)
 
     def missing_app_confirmation(self):
         from ownos.app_install import app_installed

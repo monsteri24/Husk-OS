@@ -103,6 +103,14 @@ class LabwcHarnessTests(unittest.TestCase):
         self.assertEqual(commands[1][-6:], ['click', '--repeat', '2', '--delay', '90', '1'])
         self.assertEqual([(event['button'], event['count']) for event in events], [(3, 1), (1, 2)])
 
+    def test_cancel_guard_detects_a_graphical_installer_as_a_side_effect(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        test.entries = lambda: []
+        test.installer_terminals = lambda: []
+        test.state = lambda: dict(windows=[dict(app_install=dict(appid='firefox',state='checking'))])
+        with patch.object(self.harness.time,'sleep'), self.assertRaisesRegex(AssertionError,'graphical'):
+            test.assert_no_installer(set(),'Cancel')
+
     def test_reopening_same_query_keeps_text_and_waits_for_fresh_stable_row(self):
         test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
         current = dict(sequence=40, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],

@@ -128,6 +128,9 @@ if kind and directory:
                         rows=[dict(name=row.path.name, path=str(row.path),
                                    rect=rectangle(row, window, (0, 0)))
                               for row in window.list.get_children()])
+                if type(window).__name__ == 'AppInstallWindow':
+                    value['app_install'] = dict(appid=window.app.id, state=window.state,
+                                                status=window.status.get_text())
                 if hasattr(window, 'language'):
                     value['language'] = dict(active_id=window.language.get_active_id(),
                                              rect=rectangle(window.language, window, (0, 0)))
