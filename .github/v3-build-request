@@ -1,0 +1,3 @@
+request=V3 Phase 2 guarded installer candidate
+acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI
+release=blocked-until-all-essential-acceptance-gates-pass

@@ -85,6 +85,8 @@ class DesktopFileUITests(unittest.TestCase):
         event.set_device(Gdk.Display.get_default().get_default_seat().get_keyboard())
         self.Gtk.main_do_event(event)
         self.drain_until(lambda: self.surface.active_menu is None)
+        self.assertFalse(menu.get_mapped())
+        self.assertIsNone(self.surface.menu_host)
 
     def test_trash_file_window_uses_trash_location_and_confirmed_empty_action(self):
         from ownos.ui.file_manager import FileWindow

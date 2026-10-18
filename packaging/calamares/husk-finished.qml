@@ -80,7 +80,7 @@ Page {
             horizontalAlignment: Text.AlignHCenter
             font.pixelSize: 30
             font.bold: true
-            text: config.failed ? "Installation Failed" : "Husk OS is Ready"
+            text: config.failed ? "Installation Failed" : "Installation Complete"
         }
 
         Label {
@@ -105,7 +105,7 @@ Page {
             visible: !config.failed
             horizontalAlignment: Text.AlignHCenter
             font.pixelSize: 22
-            text: "Restarting in " + finished.secondsRemaining + " seconds"
+            text: "Restarting in " + finished.secondsRemaining + " seconds..."
         }
 
         RowLayout {

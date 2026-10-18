@@ -59,7 +59,7 @@ class LivePasswordDialog(Gtk.Dialog):
         self._validate()
         self.show_all()
 
-    def _validate(self, *_):
+    def _validate(self, *_signal_args):
         password, repeated = self.password.get_text(), self.repeat.get_text()
         self.set_button.set_sensitive(valid_password(password) and password == repeated)
         self.message.set_text(_('Passwords do not match.') if repeated and password != repeated else '')
@@ -169,7 +169,7 @@ class AppInstallWindow(Gtk.Window):
         if self.state not in ('password', 'installing'):
             self.destroy()
 
-    def _install(self, *_):
+    def _install(self, *_signal_args):
         # Each retry is a new informed decision, with new network/auth checks.
         if self.state not in ('ready', 'failed'):
             return

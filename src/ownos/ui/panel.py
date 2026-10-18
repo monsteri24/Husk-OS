@@ -124,7 +124,12 @@ class Panel:
         if native is None:
             return False
         if self.mode == 'desktop':
-            native.input_shape_combine_region(None, 0, 0)
+            # GDK's C API accepts NULL to reset the mask, but the GTK 3
+            # introspection binding rejects None. Use the actual logical
+            # allocation so restoring from compact mode covers the full bar.
+            region = cairo.Region(cairo.RectangleInt(0, 0, self.window.get_allocated_width(),
+                                                      self.window.get_allocated_height()))
+            native.input_shape_combine_region(region, 0, 0)
             return False
         region = cairo.Region()
         def buttons(widget):

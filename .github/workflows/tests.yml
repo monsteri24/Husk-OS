@@ -8,9 +8,23 @@ permissions:
 jobs:
   models-and-gtk-preview:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y python3-gi python3-gi-cairo python3-yaml gir1.2-gtk-3.0 librsvg2-common xvfb dbus-x11 libwayland-dev pkg-config gettext
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-gi-cairo python3-yaml python3-pil \
+            gir1.2-gtk-3.0 gir1.2-nm-1.0 librsvg2-common xvfb dbus-x11 \
+            libwayland-dev pkg-config gettext qt6-base-dev qt6-declarative-dev \
+            qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts \
+            qml6-module-qtquick-templates qml6-module-qtquick-window \
+            qml6-module-qtqml-workerscript qemu-utils
+      - name: Fetch and verify the pinned Calamares source fixture
+        run: |
+          curl -fsSL --retry 3 --connect-timeout 30 --max-time 120 \
+            https://github.com/calamares/calamares/releases/download/v3.3.14/calamares-3.3.14.tar.gz \
+            -o "$RUNNER_TEMP/calamares.tar.gz"
+          printf '%s  %s\n' 5547f80db067dea923ae693ba6bb88eb2b2eeac1da3ebec42fce453e31c290c0 "$RUNNER_TEMP/calamares.tar.gz" | sha256sum -c -
+          tar -xf "$RUNNER_TEMP/calamares.tar.gz" -C ..
       - run: make PYTHON=/usr/bin/python3 check native
       - run: PATH=/usr/bin:$PATH ./scripts/test-gtk.sh

@@ -13,7 +13,9 @@ def pretty_name():
 
 def run():
     try:
-        configure_cloned_target(libcalamares.globalstorage.value('rootMountPoint'))
+        configure_cloned_target(libcalamares.globalstorage.value('rootMountPoint'),
+            keyboard={'layout':libcalamares.globalstorage.value('keyboardLayout'),
+                      'variant':libcalamares.globalstorage.value('keyboardVariant') or ''})
         return None
     except (OSError, ValueError, TypeError, subprocess.CalledProcessError) as exc:
         detail = str(exc)

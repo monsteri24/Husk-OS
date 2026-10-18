@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from ownos.identity import OS_NAME, VERSION
 from ownos.i18n import _, configure_saved
-from ownos.config import ConfigStore, HUSK_YELLOW, KEYMAPS
+from ownos.config import ConfigStore, HUSK_YELLOW, keymap_options
 from ownos.metrics import SystemSampler
 from ownos.library import discover_steam_games
 from ownos.input_config import write_input_config
@@ -51,6 +51,8 @@ class ControlWindow(Gtk.Window):
 
     def save(self, key, value):
         settings = dict(self.settings); settings[key] = value
+        if key == 'keymap' and value != self.settings['keymap']:
+            settings['keymap_variant'] = ''
         try: self.store.save(settings)
         except (OSError, ValueError) as exc: error(self, exc); return False
         self.settings = settings
@@ -145,7 +147,7 @@ class ControlWindow(Gtk.Window):
     def input_page(self, box):
         box.pack_start(row_box(_('Husk Desktop input settings'), _('These settings apply to the Husk labwc session. KDE and GNOME use their own input settings.')), False, False, 0)
         self.keymap = Gtk.ComboBoxText()
-        for code in KEYMAPS: self.keymap.append(code, code.upper())
+        for code in keymap_options(): self.keymap.append(code, code.upper())
         self.keymap.set_active_id(self.settings['keymap']); box.pack_start(self.keymap, False, False, 0)
         self.speed = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, -1, 1, 0.05)
         self.speed.set_value(self.settings['pointer_speed'])

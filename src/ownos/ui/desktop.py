@@ -172,6 +172,8 @@ class DesktopSurface:
                                                             Gdk.EventType._2BUTTON_PRESS, Gdk.EventType._3BUTTON_PRESS)
         menu = self.build_menu(entry); self.active_menu = menu
         menu.connect('deactivate', self.menu_deactivated)
+        menu.connect('unmap', self.menu_deactivated)
+        menu.connect('key-press-event', self.menu_key_pressed)
         if self.shell.layer:
             # A BACKGROUND layer intentionally has no keyboard focus. Give the
             # native popup a short-lived OVERLAY parent instead of making the
@@ -216,6 +218,15 @@ class DesktopSurface:
             else: menu.popup_at_widget(self.window, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
             if not pointer_event: menu.select_first(True)
         return True
+
+    def menu_key_pressed(self, _, event):
+        # Handle dismissal at the receiving menu as well as its layer host.
+        # GtkMenu's key bindings otherwise depend on the backend translating
+        # the event's hardware keycode, even when its keyval is already Escape.
+        if event.keyval == Gdk.KEY_Escape:
+            self.dismiss_menu()
+            return True
+        return False
 
     def menu_deactivated(self, menu):
         if self.active_menu is menu:

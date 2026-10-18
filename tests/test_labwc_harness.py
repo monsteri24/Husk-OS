@@ -89,6 +89,20 @@ class LabwcHarnessTests(unittest.TestCase):
         self.assertEqual(commands[0][-2:], ['click', '1'])
         self.assertEqual(commands[1][-2:], ['click', '1'])
 
+    def test_native_context_and_double_clicks_record_the_actual_pointer_buttons(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        test.output = '0x200004'; commands = []
+        test.command = lambda argv: commands.append(argv)
+        with tempfile.TemporaryDirectory() as directory, patch.object(self.harness.time, 'sleep'):
+            test.artifacts = Path(directory)
+            test.click([900, 200, 1, 1], button=3)
+            test.click([240, 188, 800, 40], count=2)
+            import json
+            events = [json.loads(line) for line in (test.artifacts / 'input-events.jsonl').read_text().splitlines()]
+        self.assertEqual(commands[0][-2:], ['click', '3'])
+        self.assertEqual(commands[1][-6:], ['click', '--repeat', '2', '--delay', '90', '1'])
+        self.assertEqual([(event['button'], event['count']) for event in events], [(3, 1), (1, 2)])
+
     def test_reopening_same_query_keeps_text_and_waits_for_fresh_stable_row(self):
         test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
         current = dict(sequence=40, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],
@@ -114,3 +128,26 @@ class LabwcHarnessTests(unittest.TestCase):
         test.wait = wait
         row = test.search_start('Firefox')
         self.assertEqual(row['identity'], 'new')
+
+    def test_search_result_rejects_unallocated_one_pixel_rows(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        current = dict(sequence=1, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],
+                       start_mapped=True, start=[385, 180, 510, 540], search=[406, 254, 468, 50],
+                       search_text='Terminal', rows=[dict(name='Terminal', identity='new', rect=[405, 317, 1, 1])])
+        test.state = lambda: current
+        test.click = lambda rectangle: None
+        test.key = lambda key: self.fail('The matching query is already typed')
+        test.type_text = lambda text: self.fail('The matching query is already typed')
+        def wait(description, predicate):
+            if description.startswith('Start mapped'): return predicate()
+            for sequence in (2, 3, 4, 5):
+                current['sequence'] = sequence
+                self.assertIsNone(predicate(), 'A stable 1×1 GTK allocation is not a clickable row')
+            current['rows'][0]['rect'] = [406, 318, 468, 48]
+            for sequence in (6, 7):
+                current['sequence'] = sequence
+                self.assertIsNone(predicate())
+            current['sequence'] = 8
+            return predicate()
+        test.wait = wait
+        self.assertEqual(test.search_start('Terminal')['rect'], [406, 318, 468, 48])

@@ -1,9 +1,11 @@
 """Calamares target configuration; privileged commands always run in its chroot."""
+import json
 import subprocess
 import shutil
 from pathlib import Path
 from ownos.installer import installation_plan, validate_target
 from ownos.build import safe_path, write
+from ownos.config import validate_keyboard_record
 
 CLEANUP = ('etc/sddm.conf.d/ownos-live.conf',
            'etc/profile.d/husk-live-session.sh',
@@ -33,7 +35,7 @@ def flush_target(root, run=None):
     run(['/usr/bin/sync','-f',str(root)])
 
 
-def configure_cloned_target(root, run=None, kernel_source=None):
+def configure_cloned_target(root, run=None, kernel_source=None, keyboard=None):
     """Install the verified Live payload offline, retaining its signed packages.
 
     Calamares has already mounted/copied the target and created the account.
@@ -42,6 +44,7 @@ def configure_cloned_target(root, run=None, kernel_source=None):
     Calamares's subsequent initcpio and bootloader jobs must still succeed.
     """
     root = validate_target(root)
+    keyboard = validate_keyboard_record(keyboard) if keyboard is not None else None
     if run is None:
         def run(argv):
             return subprocess.run(['/usr/bin/arch-chroot',str(root),*argv],
@@ -69,6 +72,9 @@ def configure_cloned_target(root, run=None, kernel_source=None):
     write(root,'etc/mkinitcpio.conf','MODULES=()\nBINARIES=()\nFILES=()\nHOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)\n')
     write(root,'etc/mkinitcpio.d/linux.preset', 'ALL_config="/etc/mkinitcpio.conf"\nALL_kver="/boot/vmlinuz-linux"\nPRESETS=(\'default\' \'fallback\')\ndefault_image="/boot/initramfs-linux.img"\nfallback_image="/boot/initramfs-linux-fallback.img"\nfallback_options="-S autodetect"\n')
     write(root,'etc/locale.conf','LANG=en_US.UTF-8\n')
+    if keyboard is not None:
+        write(root,'etc/ownos/keyboard.json',json.dumps(keyboard,sort_keys=True)+'\n')
+        safe_path(root,'etc/ownos/keyboard.json').chmod(0o644)
     write(root,'etc/NetworkManager/conf.d/husk-network.conf',
         '[main]\ndns=default\nrc-manager=symlink\ndhcp=internal\n\n[device]\nwifi.backend=wpa_supplicant\n')
     resolver = root/'etc/resolv.conf'

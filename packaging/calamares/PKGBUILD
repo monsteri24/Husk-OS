@@ -7,7 +7,7 @@ arch=('x86_64')
 url='https://calamares.io/'
 license=('GPL-3.0-or-later' 'BSD-2-Clause' 'LGPL-2.1-or-later')
 depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-wayland' 'kpmcore' 'yaml-cpp'
-         'python' 'icu' 'libpwquality' 'polkit' 'kconfig' 'kcoreaddons' 'ki18n'
+         'python' 'icu' 'libpwquality' 'polkit' 'polkit-qt6' 'kconfig' 'kcoreaddons' 'ki18n'
          'kservice' 'kiconthemes' 'solid' 'kjobwidgets')
 makedepends=('cmake' 'ninja' 'extra-cmake-modules' 'qt6-tools' 'git' 'pkgconf' 'pybind11')
 source=("https://github.com/calamares/calamares/releases/download/v${pkgver}/calamares-${pkgver}.tar.gz"

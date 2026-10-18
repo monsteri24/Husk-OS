@@ -101,7 +101,7 @@ if kind and directory:
                 widgets = list(descendants(window))
                 for widget in widgets:
                     if widget not in observed and isinstance(widget, (
-                            Gtk.Window, Gtk.Button, Gtk.Entry, Gtk.ListBoxRow, Gtk.ComboBox)):
+                            Gtk.Window, Gtk.Button, Gtk.Entry, Gtk.ListBoxRow, Gtk.ComboBox, Gtk.Menu, Gtk.MenuItem)):
                         widget.connect('event', observe_input, identifier)
                         observed.add(widget)
                 value = dict(id=identifier, type=type(window).__name__, title=window.get_title(),
@@ -164,6 +164,25 @@ if kind and directory:
                     latest['wallpapers'].append(dict(
                         source=str(getattr(wallpaper, 'source_path', '')),
                         size=[wallpaper.get_allocated_width(), wallpaper.get_allocated_height()]))
+                latest['desktop_menus'] = []
+                for desktop in shell.desktop_surfaces:
+                    menu, host = desktop.active_menu, desktop.menu_host
+                    selected = menu.get_selected_item() if menu is not None else None
+                    if menu is not None:
+                        for widget in descendants(menu):
+                            if widget not in observed and isinstance(widget, (Gtk.Menu, Gtk.MenuItem)):
+                                widget.connect('event', observe_input, 'desktop-menu-' + str(id(menu)))
+                                observed.add(widget)
+                    latest['desktop_menus'].append(dict(
+                        active=menu is not None, type=type(menu).__name__ if menu is not None else None,
+                        mapped=bool(menu is not None and menu.get_mapped()),
+                        host_present=host is not None, host_mapped=bool(host is not None and host.get_mapped()),
+                        background_keyboard_mode=int(shell.layer.get_keyboard_mode(desktop.window)),
+                        host_keyboard_mode=int(shell.layer.get_keyboard_mode(host)) if host is not None else None,
+                        selected=selected.get_label() if selected is not None else None,
+                        labels=[item.get_label() for item in menu.get_children()
+                                if isinstance(item, Gtk.MenuItem) and not isinstance(item, Gtk.SeparatorMenuItem)]
+                               if menu is not None else []))
             save(latest)
         except Exception as exc:
             save(dict(latest, observer_error=repr(exc)))

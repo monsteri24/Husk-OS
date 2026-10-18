@@ -169,18 +169,20 @@ class DesktopTest:
         self.command(['grim', str(path)])
         return Image.open(path).convert('RGB')
 
-    def click(self, rect):
+    def click(self, rect, button=1, count=1):
         if rect is None:
             raise AssertionError('The target has no mapped GTK allocation')
+        assert button in (1, 3) and count in (1, 2), (button, count)
         x, y, width, height = rect
         with (self.artifacts / 'input-events.jsonl').open('a') as stream:
-            stream.write(json.dumps(dict(event='pointer-click', button=1,
+            stream.write(json.dumps(dict(event='pointer-click', button=button, count=count,
                                          x=x + width // 2, y=y + height // 2,
                                          time=time.monotonic())) + '\n')
         # XTest preserves move/click order. --sync can wait forever when two
         # successive targets have the same center (for example nested rows).
+        clicks = ['click', str(button)] if count == 1 else ['click', '--repeat', '2', '--delay', '90', str(button)]
         self.command(['xdotool', 'mousemove', '--window', self.output,
-                      str(x + width // 2), str(y + height // 2), 'click', '1'])
+                      str(x + width // 2), str(y + height // 2), *clicks])
         time.sleep(0.25)
 
     def key(self, key):
@@ -305,17 +307,57 @@ class DesktopTest:
         self.record('foot-keyboard-command-roundtrip', application=terminal,
                     command=command, content=token + '\n', artifact='foot-command-roundtrip.txt')
 
+    def desktop_context_menu(self):
+        before = self.screenshot('desktop-before-context-menu')
+        target = [before.width * 3 // 4, before.height // 3, 1, 1]
+        expected = ['New Folder', 'New File', 'Paste', 'Refresh', 'Display Settings', 'Change Wallpaper', 'Personalize']
+        def mapped():
+            return next((menu for menu in self.state().get('desktop_menus', []) if menu.get('mapped')), None)
+        def dismissed():
+            menus = self.state().get('desktop_menus', [])
+            return menus and all(not any(menu.get(key) for key in ('active', 'mapped', 'host_present', 'host_mapped'))
+                                 for menu in menus)
+        def open_menu():
+            self.click(target, button=3)
+            menu = self.wait('actual native desktop context menu and keyboard layer host map', mapped)
+            assert menu['type'] == 'Menu' and menu['host_mapped'], menu
+            assert menu['labels'] == expected, menu
+            assert menu['background_keyboard_mode'] == 0 and menu['host_keyboard_mode'] == 1, menu
+            return menu
+        menu = open_menu()
+        image = self.screenshot('desktop-native-context-menu')
+        surface = (21, 30, 46)
+        before_count = list(before.getdata()).count(surface)
+        after_count = list(image.getdata()).count(surface)
+        assert after_count > before_count + 1000, 'Mapped desktop menu has no visible dark native surface'
+        self.key('Home')
+        self.wait('desktop menu receives real keyboard Home', lambda: mapped() and mapped().get('selected') == 'New Folder')
+        self.key('Down')
+        self.wait('desktop menu navigates to New File with real Down', lambda: mapped() and mapped().get('selected') == 'New File')
+        self.screenshot('desktop-context-menu-keyboard-selection')
+        self.key('Escape')
+        self.wait('Escape closes the native menu and releases its layer keyboard host', dismissed)
+        open_menu()
+        self.click([before.width // 2, before.height - 95, 1, 1])
+        self.wait('outside pointer click closes the native menu and layer host', dismissed)
+        self.screenshot('desktop-context-menu-dismissed')
+        self.record('desktop-native-context-menu-keyboard-and-outside-click', labels=menu['labels'],
+                    keyboard=['Home', 'Down', 'Escape'], outside_click=True,
+                    visible_dark_pixels=after_count - before_count, status=self.healthy())
+
     def files_navigation(self):
         def current(path):
             return self.native_window('files', lambda window:
                 window.get('files', {}).get('current') == str(path)
-                and window['files'].get('location') == str(path))
+                and window['files'].get('location') == str(path)
+                and all(row.get('rect') and row['rect'][2] >= 100 and row['rect'][3] >= 24
+                        for row in window['files'].get('rows', [])))
         home = Path(self.environment['HOME'])
         window = self.wait('Files starts at the isolated home directory', lambda: current(home))
         steps = []
         for destination in (self.navigation_root, self.navigation_root / 'Nested folder'):
             row = next(row for row in window['files']['rows'] if row['path'] == str(destination))
-            self.click(self.window_rectangle(window, row['rect'], 'files-row-' + str(len(steps))))
+            self.click(self.window_rectangle(window, row['rect'], 'files-row-' + str(len(steps))), count=2)
             window = self.wait('Files directory opens by real row pointer activation', lambda: current(destination))
             steps.append(dict(input='folder-row-pointer', current=window['files']['current']))
         up = next(button for button in window['buttons'] if button['label'] == 'Up')
@@ -361,7 +403,7 @@ class DesktopTest:
                 return None
             sequence = state['sequence']
             row = next((row for row in state.get('rows', [])
-                        if row['name'] == name and row.get('rect') and row['rect'][2] > 0
+                        if row['name'] == name and row.get('rect') and row['rect'][2] >= 200 and row['rect'][3] >= 24
                         and state.get('start_mapped') and state.get('search_text') == name), None)
             signature = (row.get('identity'), tuple(row['rect'])) if row else None
             samples = samples + 1 if signature is not None and signature == previous else 1
@@ -670,19 +712,9 @@ Gtk.main()
                   self.state().get('status', {}).get('panel_mapped'))
         self.record('wayland-desktop-started', status=self.healthy())
         self.wallpaper('01-desktop-wallpaper')
-        button = next(button for button in self.state()['panel_buttons']
-                      if (button.get('tooltip') or '').startswith('Start'))
-        self.click(button['rect'])
-        self.wait('Start popup mapped and allocated after taskbar click', lambda:
-                  self.state().get('start_mapped') and self.state().get('start', [0, 0, 0, 0])[2] >= 400)
+        self.desktop_context_menu()
+        row = self.search_start('Husk Integration Terminal')
         self.screenshot('02-start-popup')
-        self.click(self.state()['search'])
-        self.command(['xdotool', 'type', '--clearmodifiers', '--delay', '30', 'Husk Integration Terminal'])
-        self.wait('search text delivered through real keyboard input', lambda:
-                  self.state().get('search_text') == 'Husk Integration Terminal' and
-                  len(self.state().get('rows', [])) == 1)
-        row = self.wait('real launcher search result', lambda: next((row for row in
-            self.state().get('rows', []) if row['name'] == 'Husk Integration Terminal'), None))
         self.click(row['rect'])
         terminal = self.wait('Foot launched from Start', lambda: next((entry for entry in self.entries()
             if entry['app_id'] == 'husk-integration-terminal'), None))

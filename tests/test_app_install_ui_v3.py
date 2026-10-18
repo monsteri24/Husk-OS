@@ -7,6 +7,33 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 
+class AppInstallCallbackTests(unittest.TestCase):
+    """Exercise GTK callbacks without constructing widgets or opening a display."""
+    def setUp(self):
+        try:
+            from ownos.ui import app_install
+        except ModuleNotFoundError as exc:
+            if exc.name != 'gi':
+                raise
+            self.skipTest('GTK imports require the prepared runtime: ' + str(exc))
+        self.ui = app_install
+
+    def test_install_callback_can_translate_its_title_and_cancel_with_signal_arguments(self):
+        window = SimpleNamespace(state='ready', app=self.ui.app_by_id('steam'), begin=MagicMock())
+        with patch.object(self.ui, 'confirm', return_value=False) as confirmation:
+            self.ui.AppInstallWindow._install(window, object())
+        confirmation.assert_called_once_with(window, 'Install Steam?', self.ui.installation_detail(window.app))
+        window.begin.assert_not_called()
+
+    def test_password_validation_can_translate_a_mismatch_with_signal_arguments(self):
+        dialog = SimpleNamespace(password=SimpleNamespace(get_text=lambda: 'Test password'),
+                                 repeat=SimpleNamespace(get_text=lambda: 'Different password'),
+                                 set_button=MagicMock(), message=MagicMock())
+        self.ui.LivePasswordDialog._validate(dialog, object())
+        dialog.set_button.set_sensitive.assert_called_once_with(False)
+        dialog.message.set_text.assert_called_once_with('Passwords do not match.')
+
+
 @unittest.skipUnless(os.environ.get('OWNOS_UI_TESTS') == '1',
                      'Run with OWNOS_UI_TESTS=1 inside a test display')
 class GraphicalAppInstallTests(unittest.TestCase):

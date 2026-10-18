@@ -219,16 +219,29 @@ QtObject {
     auto invoke = [](QObject* object, const char* method) {
         check(QMetaObject::invokeMethod(object, method), "QML action invocation failed");
     };
+    auto hasText = [](QObject* object, const QString& text) {
+        for (const auto* child : object->findChildren<QObject*>())
+        {
+            if (child->property("text").toString() == text) { return true; }
+        }
+        return false;
+    };
     auto object = create();
     auto timer = object->findChild<QObject*>("husk-restart-timer");
     check(timer && !timer->property("running").toBool(), "countdown cannot run when QML is constructed");
     invoke(object.get(), "onActivate");
     check(timer->property("running").toBool() && object->property("secondsRemaining").toInt() == 30, "success activation must begin at 30");
+    check(object->findChild<QObject*>("husk-finish-title")->property("text").toString() == "Installation Complete", "success title must be exact");
+    check(hasText(object.get(), "Restarting in 30 seconds..."), "countdown must begin with exact text and ellipsis");
     check(!config->property("restartNowWanted").toBool(), "auto restart wanted must remain false");
-    for (int tick = 0; tick < 29; ++tick) { invoke(timer, "triggered"); }
+    invoke(timer, "triggered");
+    check(hasText(object.get(), "Restarting in 29 seconds..."), "countdown text must decrease with each tick");
+    for (int tick = 1; tick < 29; ++tick) { invoke(timer, "triggered"); }
     check(config->property("restarts").toInt() == 0 && object->property("secondsRemaining").toInt() == 1, "restart cannot happen early");
+    check(hasText(object.get(), "Restarting in 1 seconds..."), "countdown text must show remaining seconds");
     invoke(timer, "triggered");
     check(config->property("restarts").toInt() == 1 && object->property("secondsRemaining").toInt() == 0, "30th tick must restart once");
+    check(hasText(object.get(), "Restarting in 0 seconds..."), "countdown text must reach zero");
     invoke(timer, "triggered");
     check(config->property("restarts").toInt() == 1, "restart must be idempotent");
     object.reset();
