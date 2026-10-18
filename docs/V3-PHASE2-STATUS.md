@@ -68,10 +68,25 @@ iproute2 returned an error. The fixture now inspects each address family,
 flushes only existing default routes and still fails if inspection fails or
 external routes remain. Four regression tests cover this and stronger disk
 operation evidence. The current recovery workflow verifies the exact ISO
-hash/size and requires unchanged production sources before reusing it.
+hash/size and requires unchanged runtime sources before reusing it. The only
+excluded source file is the build-only profile generator `ownos/build.py`;
+its new compression is recorded separately and is not claimed to be present
+in the reused image.
 
-[39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527)
-continues the same image through the corrected real VM test. It may attach
+The older TCG run [39122974054](https://github.com/monsteri24/Husk-OS/actions/runs/39122974054)
+expired without any guest setup report. Its captured screen showed boot still
+in progress when the fixed-delay VT keyboard command was delivered. The new
+test uses systemd's debug shell on a test-only serial socket, waits for a
+random root/network acknowledgement and sends the setup exactly once. Missing
+acknowledgement or execution now has a separate bounded failure. No test debug
+options are passed to the second installed-system boot. The QEMU serial
+transport has a real socket-pair regression; the Qt driver also records and
+times out unexpected dialogs without inspecting password controls.
+
+The recovery workflow reuses the already-passed Live UEFI evidence for the
+verified identical ISO instead of repeating that separate boot. The new
+installation VM still has to reach real Calamares and the installed desktop.
+The replaced fixed-delay run was superseded by this acknowledged test. It may attach
 only a newly created 32 GiB qcow2 without a backing file and read-only Live
 media. Actual Qt pointer/keyboard input must select the target, IANA zone and
 account, review and cancel before writes, then separately confirm a fresh
@@ -90,7 +105,7 @@ real Labwc run at `6dd54d1` passed with this focus check.
 
 ## Coverage limits
 
-The VM input fixture uses a test-only root debug VT; it does not verify the
+The VM input fixture uses a test-only root debug console; it does not verify the
 normal graphical polkit/PAM authorization or Live password dialog. The signed
 package test also runs as an explicitly consented disposable root container;
 it does not launch Steam or games. Restart Now and automatic-zero behavior
@@ -100,7 +115,7 @@ and USB removal still need compatible hardware tests. Cross-filesystem Cut is
 deliberately refused; Copy remains available and existing files are not
 silently overwritten.
 
-The local sandbox prevents Unix sockets, so actual Xvfb/Labwc and VM acceptance
+The local sandbox prevents binding Unix listener sockets, so actual Xvfb/Labwc and VM acceptance
 runs in GitHub Actions. Local sanitizer checks disable leak detection because
 the required process metadata is unavailable. Offscreen Qt and source checks
 alone never imply ISO or installation success. Do not publish this candidate

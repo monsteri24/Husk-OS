@@ -9,7 +9,7 @@ permissions:
   actions: read
 concurrency:
   group: husk-v3-recovered-acceptance-39123206803
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   source:
     uses: ./.github/workflows/tests.yml
@@ -37,9 +37,30 @@ jobs:
           test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2214559744
           test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
+          mkdir -p .build/prior-evidence
+          gh run download 39123206803 --repo "$GITHUB_REPOSITORY" \
+            --name v3-candidate-evidence-39123206803 --dir .build/prior-evidence
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          prior = Path('.build/prior-evidence')
+          build = json.loads((prior/'v3-build.json').read_text())
+          boot = json.loads((prior/'boot-v3/result.json').read_text())
+          assert build['source_commit'] == os.environ['HUSK_IMAGE_SOURCE']
+          assert boot['iso_sha256'] == '7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088'
+          assert boot['iso_bytes'] == 2214559744
+          assert all(boot[name] == 'PASSED' for name in ('boot','terminal','shutdown'))
+          assert boot['desktop_status']['version'] == 'v3-phase2'
+          boot['proof_reused_from_run'] = 39123206803
+          boot['proof_scope'] = 'Prior real Live UEFI boot of this exact immutable image; not rerun in this workflow'
+          Path('out/reused-live-boot.json').write_text(json.dumps(boot,indent=2)+'\n')
+          PY
           printf 'image_source=%s\nacceptance_source=%s\n' "$HUSK_IMAGE_SOURCE" "$GITHUB_SHA" > out/recovered-image-source.txt
           git diff --stat "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging > out/changes-since-image.txt
-          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging
+          # The profile generator's new compression is not in this reused ISO.
+          # Record that build-only difference; require identical runtime sources.
+          git diff "$HUSK_IMAGE_SOURCE" HEAD -- src/ownos/build.py > out/build-profile-changes-not-in-image.txt
+          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging ':(exclude)src/ownos/build.py'
       - name: Install VM tools and inspect the exact recovered payload
         run: |
           set -euo pipefail
@@ -67,10 +88,8 @@ jobs:
                 $(pkg-config --cflags --libs Qt6Widgets Qt6Test Qt6Quick)
               chown "$HUSK_HOST_UID:$HUSK_HOST_GID" out/v3-installer-driver.so
             '
-      - name: Verify real Live UEFI startup
-        run: timeout 780 /usr/bin/python3 scripts/ci-test-system1.py --iso out/HuskOS-v3-phase2.iso --artifacts out/boot-v3 --expected-version v3-phase2
       - name: Cancel without writes, install offline and boot the installed UEFI disk
-        run: timeout 2400 /usr/bin/python3 scripts/ci-test-v3-install.py --artifacts out/install-v3 --expected-version v3-phase2
+        run: timeout 3000 /usr/bin/python3 scripts/ci-test-v3-install.py --artifacts out/install-v3 --expected-version v3-phase2 --timeout 1800 --boot-timeout 600
       - name: Preserve bounded evidence for this exact image, without publishing a release
         if: always()
         uses: actions/upload-artifact@v4

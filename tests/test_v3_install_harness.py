@@ -4,6 +4,7 @@ import ast
 from pathlib import Path
 import shutil
 import subprocess
+import socket
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -60,13 +61,36 @@ class InstallHarnessTests(unittest.TestCase):
             live = self.harness.make_qemu_command('live', **values)
             installed = self.harness.make_qemu_command('installed', **values)
             self.assertIn('-kernel', live)
-            self.assertIn('systemd.debug_shell=1', live[live.index('-append') + 1])
+            self.assertIn('systemd.debug_shell=ttyS0', live[live.index('-append') + 1])
+            self.assertIn('systemd.mask=serial-getty@ttyS0.service', live[live.index('-append') + 1])
+            self.assertIn('-chardev', live)
+            self.assertNotIn('-chardev', installed)
             for argument in ('-cdrom', '-kernel', '-initrd', '-append'):
                 self.assertNotIn(argument, installed)
             self.assertNotIn(str(values['iso']), installed)
             self.assertTrue(any('serial=HUSK-DISPOSABLE' in item for item in installed))
             with self.assertRaises(ValueError):
                 self.harness.make_qemu_command('installed', **dict(values, disk=Path('/dev/vda')))
+
+    def test_serial_setup_waits_for_real_output_and_rejects_multiline_commands(self):
+        self.assertTrue(hasattr(self.harness,'SerialConsole'), 'The acknowledged serial test channel is missing')
+        try: client, guest = socket.socketpair()
+        except PermissionError: self.skipTest('Local policy blocks Unix sockets; the real channel test runs in Actions')
+        self.addCleanup(guest.close)
+        console = self.harness.SerialConsole(connection=client)
+        self.addCleanup(console.close)
+        self.assertEqual(console.read(), b'')
+        console.sendline('id -u')
+        self.assertEqual(guest.recv(1024), b'id -u\n')
+        guest.sendall(b'boot is still running\r\n')
+        self.assertIn(b'boot is still running', console.read())
+        guest.sendall(b'HUSK-READY-test-token\r\n')
+        self.assertIn(b'HUSK-READY-test-token', console.read())
+        for command in ('id\nreboot', 'id\rreboot', 'id\0'):
+            with self.subTest(command=command), self.assertRaises(ValueError): console.sendline(command)
+        guest.close()
+        with self.assertRaisesRegex(RuntimeError,'serial console'):
+            console.read()
 
     def test_installed_evidence_requires_real_user_disk_session_and_version(self):
         valid = dict(phase='installed', uid=1001, user='huskcheck', live=False, uefi=True,

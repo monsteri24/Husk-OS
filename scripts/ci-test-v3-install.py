@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Install the real V3 ISO onto a newly created disposable UEFI VM disk.
 
-The live phase uses a test-only debug VT to deliver a Qt mouse/keyboard fixture.
+The live phase uses an acknowledged test-only serial console to deliver a Qt input fixture.
 It executes the unmodified privileged wrapper, disk guard and Calamares jobs.
 This tests installation, not the graphical polkit authorization dialog. The
 second VM boots the resulting disk through OVMF with no ISO or kernel override,
@@ -88,16 +88,17 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
         '-device', 'virtio-blk-pci,drive=target,serial=HUSK-DISPOSABLE',
         '-device', 'virtio-vga', '-device', 'qemu-xhci', '-device', 'usb-tablet',
         '-nic', 'user,model=virtio-net-pci', '-display', 'none',
-        '-serial', 'file:' + str(artifacts/(stage + '-serial.log')),
         '-qmp', 'unix:' + str(monitor) + ',server=on,wait=off']
     if stage == 'live':
         if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', iso_label):
             raise ValueError('The ISO label is not suitable for an unquoted archisolabel argument')
-        command += ['-cdrom', str(iso), '-boot', 'order=d', '-kernel', str(kernel),
+        command += ['-chardev', 'socket,id=setup,path=' + str(artifacts/'live-setup.sock') +
+            ',server=on,wait=off,logfile=' + str(artifacts/'live-serial.log'),
+            '-serial', 'chardev:setup', '-cdrom', str(iso), '-boot', 'order=d', '-kernel', str(kernel),
             '-initrd', str(initrd), '-append', 'archisobasedir=arch archisolabel=' + iso_label +
-            ' systemd.debug_shell=1 console=tty0 console=ttyS0,115200n8']
+            ' systemd.debug_shell=ttyS0 systemd.mask=serial-getty@ttyS0.service console=tty0 console=ttyS0,115200n8']
     else:
-        command += ['-boot', 'order=c']
+        command += ['-serial', 'file:' + str(artifacts/(stage + '-serial.log')), '-boot', 'order=c']
     return command
 
 
@@ -256,6 +257,7 @@ def inspect_target():
 try:
     if os.getuid()!=0 or not P('/run/archiso').is_dir() or not P('/sys/firmware/efi').is_dir() or serial()!='HUSK-DISPOSABLE':
         raise RuntimeError('The setup fixture is not in its marked disposable UEFI Live guest')
+    post()
     before=json.loads(command(['lsblk','--json','-b','-o','PATH,TYPE,SIZE,SERIAL,RO,MOUNTPOINTS']).stdout)
     disks=[device for device in before['blockdevices'] if device['type']=='disk']
     if len(disks)!=1 or disks[0]['path']!='/dev/vda' or disks[0]['size']!=32*1024**3:
@@ -374,6 +376,34 @@ urllib.request.urlopen(urllib.request.Request(CONFIG['base']+'/report',data=data
 '''
 
 
+class SerialConsole:
+    """A test-only UART channel; VM readiness is acknowledged through real output."""
+    def __init__(self, path=None, *, connection=None):
+        self.socket = connection if connection is not None else socket.socket(socket.AF_UNIX)
+        if connection is None: self.socket.connect(str(path))
+        self.socket.setblocking(False)
+        self.buffer = b''
+
+    def read(self):
+        for _ in range(32):
+            try: chunk = self.socket.recv(65536)
+            except BlockingIOError: break
+            except InterruptedError: continue
+            if not chunk: raise RuntimeError('The VM serial console closed before acceptance')
+            self.buffer = (self.buffer + chunk)[-131072:]
+        return self.buffer
+
+    def sendline(self, command):
+        if any(value in command for value in ('\r','\n','\0')):
+            raise ValueError('A serial test command must contain exactly one line')
+        self.socket.settimeout(10)
+        try: self.socket.sendall(command.encode('ascii') + b'\n')
+        finally: self.socket.setblocking(False)
+
+    def close(self):
+        self.socket.close()
+
+
 class Monitor:
     def __init__(self, path):
         self.socket = socket.socket(socket.AF_UNIX)
@@ -425,11 +455,11 @@ class Acceptance:
         self.token = secrets.token_hex(16)
         self.password = 'V3Orbit7' + secrets.token_hex(12)
         self.kvm = os.access('/dev/kvm', os.R_OK | os.W_OK)
-        self.process = None; self.monitor = None; self.qemu_log = None
+        self.process = None; self.monitor = None; self.qemu_log = None; self.serial = None
         self.auth_started = False
         self.result = dict(installation='FAILED', installed_boot='NOT TESTED',
             live_shutdown='NOT TESTED', installed_shutdown='NOT TESTED', problems=[],
-            polkit='NOT TESTED: test-only root debug shell delivered the input fixture',
+            polkit='NOT TESTED: test-only root serial console delivered the input fixture',
             accelerator='kvm' if self.kvm else 'tcg', user=args.username)
 
     def handler(self):
@@ -474,11 +504,14 @@ class Acceptance:
         self.qemu_log = (self.artifacts/(stage+'-qemu.log')).open('wb')
         self.process = subprocess.Popen(command,stdout=self.qemu_log,stderr=subprocess.STDOUT)
         deadline = time.monotonic()+40
-        while not (self.artifacts/(stage+'.sock')).exists():
+        sockets = [self.artifacts/(stage+'.sock')]
+        if stage == 'live': sockets.append(self.artifacts/'live-setup.sock')
+        while not all(path.exists() for path in sockets):
             self.alive()
             if time.monotonic()>deadline: raise RuntimeError('QEMU monitor startup timed out')
             time.sleep(0.2)
         self.monitor = Monitor(self.artifacts/(stage+'.sock'))
+        if stage == 'live': self.serial = SerialConsole(self.artifacts/'live-setup.sock')
 
     def alive(self):
         if self.process.poll() is not None:
@@ -490,22 +523,35 @@ class Acceptance:
         except subprocess.TimeoutExpired: raise RuntimeError(stage+' did not shut down after ACPI powerdown')
         self.result[stage+'_shutdown'] = 'PASSED' if code == 0 else 'FAILED'
         self.monitor.close(); self.monitor = None
+        if self.serial: self.serial.close(); self.serial = None
         self.qemu_log.close(); self.qemu_log = None
         if code: raise RuntimeError(stage+' QEMU shutdown exited with '+str(code))
 
     def live_install(self):
-        started=time.monotonic(); bootstrapped=False; last_event=None
+        started=time.monotonic(); bootstrapped=False; last_event=None; next_ready=15; setup_sent=None
         while time.monotonic()-started < self.args.timeout:
             self.alive()
             elapsed=time.monotonic()-started
-            if not bootstrapped and elapsed >= (35 if self.kvm else 150):
-                self.monitor.capture(self.artifacts/'live-before-installer.png')
-                self.monitor.key('ctrl-alt-f9'); time.sleep(1)
-                self.monitor.console('loadkeys us')
-                self.monitor.console('curl -fsS --retry 20 --retry-delay 3 --retry-all-errors -o /tmp/husk-v3-setup.py '+
-                    self.base+'/setup.py; python3 /tmp/husk-v3-setup.py')
-                self.monitor.key('ctrl-alt-f1'); bootstrapped=True
+            serial_output = self.serial.read()
+            if not bootstrapped:
+                if self.ready_marker in serial_output:
+                    self.monitor.capture(self.artifacts/'live-before-installer.png')
+                    self.serial.sendline('umask 077; curl -fsS --connect-timeout 5 --max-time 30 --retry 3 '+
+                        '--retry-all-errors --retry-max-time 90 -o /tmp/husk-v3-setup.py '+self.base+
+                        '/setup.py && python3 /tmp/husk-v3-setup.py')
+                    bootstrapped=True; setup_sent=time.monotonic()
+                    self.result['setup_channel']='serial root/network acknowledgement received'
+                    print('VM setup delivered through acknowledged root/network serial channel',flush=True)
+                elif elapsed > (180 if self.kvm else 600):
+                    raise RuntimeError('The root/network serial readiness acknowledgement did not arrive')
+                elif elapsed >= next_ready:
+                    # The random response is not present in this echoed command.
+                    # Repeating this read-only probe cannot start an installer.
+                    self.serial.sendline('[ "$(id -u)" = 0 ] && curl -fsS --connect-timeout 3 --max-time 10 '+self.base+'/ready')
+                    next_ready=elapsed+20
             report=self.latest('installation')
+            if bootstrapped and not report and time.monotonic()-setup_sent > (90 if self.kvm else 180):
+                raise RuntimeError('The guest setup did not acknowledge execution after serial delivery')
             if report:
                 events=report.get('events',[])
                 event=events[-1].get('event') if events else 'setup'
@@ -577,9 +623,10 @@ class Acceptance:
             config=dict(base=self.base,user=self.args.username,password=self.password,
                         version=self.args.expected_version,timeout=self.args.timeout,
                         driver_sha256=hashlib.sha256(driver).hexdigest())
+            self.ready_marker=('HUSK-READY-'+secrets.token_hex(16)).encode()
             self.resources={'setup.py':('CONFIG='+repr(config)+'\n'+GUEST_SETUP).encode(),
                             'installed.py':('CONFIG='+repr(dict(base=self.base))+'\n'+INSTALLED_PROBE).encode(),
-                            'driver.so':driver}
+                            'driver.so':driver, 'ready':self.ready_marker+b'\n'}
             threading.Thread(target=server.serve_forever,daemon=True).start()
             self.start_vm('live',disk,variables,label); self.live_install(); self.shutdown('live')
             self.start_vm('installed',disk,variables,label); self.installed_boot(); self.shutdown('installed')
@@ -596,6 +643,7 @@ class Acceptance:
                 try: self.process.wait(timeout=15)
                 except subprocess.TimeoutExpired: self.process.kill(); self.process.wait()
             if self.monitor: self.monitor.close()
+            if self.serial: self.serial.close()
             if self.qemu_log: self.qemu_log.close()
             if server: server.shutdown(); server.server_close()
             for path in [*self.artifacts.glob('*.log'),*self.artifacts.glob('*.json')]:
