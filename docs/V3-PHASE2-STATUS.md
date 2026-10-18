@@ -18,8 +18,8 @@ Checked filesystem flushing and non-lazy unmount must precede completion.
 Clock choices resolve to geographic IANA zones; real Qt tests cover DST and
 fractional offsets. Completion countdown and Later/Now logic also have Qt tests.
 
-Fresh local verification on 2026-10-18: 413 tests completed with zero failures
-and 69 explicit environment/graphical skips; 171 source/configuration checks
+Fresh local verification on 2026-10-18: 416 tests completed with zero failures
+and 69 explicit environment/graphical skips; 172 source/configuration checks
 passed. Native Wayland code compiles with warnings treated as errors.
 Address/undefined sanitizer checks pass with leak detection disabled because
 this local environment cannot read the required process metadata. Real Gio
@@ -29,8 +29,14 @@ test-only Qt input driver's host-refusal checks were exercised.
 The first graphical Actions run at e551cee failed. It exposed a nullable GTK
 input-region call, gettext shadowing in two application-install callbacks,
 menu Escape delivery and an unallocated launcher-row race in the acceptance
-harness. These have regression fixes; the replacement graphical CI result
-is still required. The installer now retains the selected keyboard layout and
+harness. These have regression fixes. The complete real Labwc acceptance run
+[39121908391](https://github.com/monsteri24/Husk-OS/actions/runs/39121908391)
+passed at `3f2a1b4`: native menu pointer/keyboard dismissal, maximized panel
+transparency and click-through, genuine fullscreen hide/restore, window
+controls, file navigation, missing-app Cancel/confirm and the new graphical
+installer's fail-closed preflight/Close behavior. The source/GTK workflow also
+passed without graphical skips at the previous checkpoint. The installer now
+retains the selected keyboard layout and
 variant in the installed user's Labwc defaults. Completion uses the requested
 exact title and decreasing countdown text.
 
@@ -44,13 +50,23 @@ unverified Actions artifact before VM tests. Its new installation harness can
 attach only a newly created 32 GiB qcow2 file and read-only Live media. Actual
 Qt input must review the target and separate confirmation, observe completion
 and choose Restart Later; it then waits beyond 30 seconds and boots the same
-disk through OVMF with no ISO or kernel override. This harness has not yet run
+disk through OVMF with no ISO or kernel override. It now first cancels from the
+reviewed summary and requires unchanged guest disk write counters and GPT-edge
+hashes before attempting installation. This harness has not yet run
 against a V3 ISO. Test-only root debug delivery does not verify graphical
 polkit authorization. Full installer cancellation also remains unverified in
 the VM. Guest passwords and password hashes are excluded from saved evidence.
 
-Remaining release gates: build the full pinned backend and V3 ISO; run actual
-GTK and Labwc interactions; boot Live; install onto a newly created disposable
+The first package build failed because makepkg links local source assets into
+its source directory while the UI patch deliberately requires regular files.
+The recipe now uses the checksum-verified regular originals; a real prepare()
+regression reproduces makepkg's symlinks and exercises both patches. A second
+full build is in progress. The next build also keeps the immutable repository's
+public signing certificate valid after the build day; private signing material
+remains confined to the disposable runner and is never shipped.
+
+Remaining release gates: build the full pinned backend and V3 ISO; boot Live;
+install onto a newly created disposable
 virtual disk; remove the Live image and boot the installed UEFI system. Until
 those pass, do not publish this candidate as working. Wi-Fi scanning and real
 association, Bluetooth pairing, and physical GPU/firmware behavior still need

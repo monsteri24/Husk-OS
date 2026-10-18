@@ -104,13 +104,15 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
 def validate_install_report(report):
     problems = []
     if not isinstance(report, dict): return ['No installation report was received']
-    for key in ('success', 'restart_postponed', 'offline', 'guard_target_accepted', 'live_medium_rejected'):
+    for key in ('success', 'restart_postponed', 'offline', 'guard_target_accepted', 'live_medium_rejected', 'cancellation'):
         if report.get(key) is not True: problems.append('Installation evidence is missing: ' + key)
     if report.get('process_exit') != 0: problems.append('The real Calamares process did not exit successfully')
     events = {value.get('event') for value in report.get('events', []) if isinstance(value, dict)}
     for event in REQUIRED_DRIVER_EVENTS:
         if event not in events: problems.append('A required real GUI checkpoint is missing: ' + event)
     if 'driver-failed' in events: problems.append('The Qt input driver reported an acceptance failure')
+    for name in ('cancel-click','cancel-confirmed'):
+        if name not in events: problems.append('Real summary-page cancellation evidence is missing: '+name)
     for name in REQUIRED_TARGET_CHECKS:
         if report.get('target_checks', {}).get(name) is not True:
             problems.append('Installed target evidence is missing: ' + name)
@@ -179,6 +181,12 @@ def routes():
     return command(['ip','-4','route','show','default']).stdout.strip() + command(['ip','-6','route','show','default']).stdout.strip()
 def serial():
     return P('/sys/class/block/vda/serial').read_text().strip()
+def disk_write_evidence():
+    if serial()!='HUSK-DISPOSABLE': raise RuntimeError('Cancellation probe disk is not disposable')
+    with open('/dev/vda','rb',buffering=0) as stream:
+        first=stream.read(2*1024**2); stream.seek(32*1024**3-2*1024**2); last=stream.read(2*1024**2)
+    return dict(sectors_written=int(P('/sys/class/block/vda/stat').read_text().split()[6]),
+                partition_edges_sha256=hashlib.sha256(first+last).hexdigest())
 def inspect_target():
     devices = json.loads(command(['lsblk','--json','-b','-o','PATH,TYPE,FSTYPE,UUID,PARTTYPE,SIZE,SERIAL']).stdout)
     disk = next(device for device in devices['blockdevices'] if device['path']=='/dev/vda')
@@ -279,13 +287,26 @@ try:
         HUSK_INSTALL_DRIVER_LOG=str(events_path), HUSK_INSTALL_TEST_USER=CONFIG['user'],
         HUSK_INSTALL_TEST_PASSWORD=CONFIG['password'], QT_QUICK_BACKEND='software')
     state['live_desktop_pid']=desktop
-    with output.open('wb') as stream:
-        process=subprocess.Popen(['/usr/lib/ownos/husk-installer-root'],env=env,stdout=stream,stderr=subprocess.STDOUT)
-        deadline=time.monotonic()+CONFIG['timeout']
-        while process.poll() is None and time.monotonic()<deadline:
-            post(); time.sleep(2)
-        if process.poll() is None:
-            process.terminate(); process.wait(timeout=30); raise RuntimeError('The real installer exceeded the VM deadline')
+    def run_installer(mode):
+        env['HUSK_INSTALL_TEST_MODE']=mode
+        with output.open('ab') as stream:
+            process=subprocess.Popen(['/usr/lib/ownos/husk-installer-root'],env=env,stdout=stream,stderr=subprocess.STDOUT)
+            deadline=time.monotonic()+CONFIG['timeout']
+            while process.poll() is None and time.monotonic()<deadline:
+                post(); time.sleep(2)
+            if process.poll() is None:
+                process.terminate(); process.wait(timeout=30); raise RuntimeError('The real installer exceeded the VM deadline')
+        return process
+    state['cancellation_disk_before']=disk_write_evidence()
+    cancelled=run_installer('cancel')
+    state['cancellation_disk_after']=disk_write_evidence()
+    cancel_events={event.get('event') for event in events()}
+    state['cancellation']=(cancelled.returncode==0 and {'cancel-click','cancel-confirmed','application-quit'}<=cancel_events
+        and 'page-execution' not in cancel_events and 'driver-failed' not in cancel_events
+        and state['cancellation_disk_before']==state['cancellation_disk_after'])
+    post()
+    if not state['cancellation']: raise RuntimeError('Real cancellation did not leave the disposable disk untouched')
+    process=run_installer('install')
     state['process_exit']=process.returncode; post()
     if process.returncode!=0: raise RuntimeError('Calamares or the input driver failed; inspect its real event/log evidence')
     names={event.get('event') for event in events()}

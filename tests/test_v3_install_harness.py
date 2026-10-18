@@ -84,13 +84,16 @@ class InstallHarnessTests(unittest.TestCase):
 
     def test_install_success_requires_explicit_confirmation_and_postponed_restart(self):
         events = [dict(event=name) for name in self.harness.REQUIRED_DRIVER_EVENTS]
+        events += [dict(event='cancel-click'),dict(event='cancel-confirmed')]
         valid = dict(phase='installation', success=True, events=events, process_exit=0,
                      restart_postponed=True, offline=True, guard_target_accepted=True,
-                     live_medium_rejected=True, target_checks={name:True for name in self.harness.REQUIRED_TARGET_CHECKS})
+                     live_medium_rejected=True,cancellation=True,
+                     target_checks={name:True for name in self.harness.REQUIRED_TARGET_CHECKS})
         self.assertEqual(self.harness.validate_install_report(valid), [])
         missing = [event for event in events if event['event'] != 'confirmation-click']
         self.assertTrue(self.harness.validate_install_report(dict(valid, events=missing)))
         self.assertTrue(self.harness.validate_install_report(dict(valid, restart_postponed=False)))
+        self.assertTrue(self.harness.validate_install_report(dict(valid,cancellation=False)))
         self.assertTrue(self.harness.validate_install_report(dict(valid,
             target_checks=dict(valid['target_checks'], initramfs=False))))
 

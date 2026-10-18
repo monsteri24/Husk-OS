@@ -52,6 +52,7 @@ class Driver : public QObject {
     QString logPath = qEnvironmentVariable("HUSK_INSTALL_DRIVER_LOG");
     QString user = qEnvironmentVariable("HUSK_INSTALL_TEST_USER");
     QString password = qEnvironmentVariable("HUSK_INSTALL_TEST_PASSWORD");
+    bool cancelMode = qEnvironmentVariable("HUSK_INSTALL_TEST_MODE") == "cancel";
     QTimer timer;
     QElapsedTimer elapsed, pageTime;
     QSet<int> advanced;
@@ -61,6 +62,7 @@ class Driver : public QObject {
     bool eraseSelected = false, usersEntered = false, summarySeen = false;
     bool zoneClockChosen = false, zoneSelected = false;
     bool confirmationSeen = false, confirmationClicked = false, finishSeen = false;
+    bool cancelRequested = false;
 
     void record(const QString& event, QJsonObject values = {}) {
         values.insert("event", event);
@@ -103,6 +105,15 @@ class Driver : public QObject {
         auto* widget = QApplication::activeModalWidget();
         if (!widget) return false;
         auto* box = qobject_cast<QMessageBox*>(widget);
+        if (box && cancelMode && box->windowTitle().contains("Cancel Installation")) {
+            if (!summarySeen || !cancelRequested) {
+                fail("Cancellation confirmation appeared before the reviewed summary"); return true;
+            }
+            auto* yes = qobject_cast<QPushButton*>(box->button(QMessageBox::Yes));
+            if (!yes || !yes->isEnabled()) { fail("The real cancellation confirmation is unavailable"); return true; }
+            record("cancel-confirmed", {{"text",box->text()}});
+            stopped = true; timer.stop(); click(yes); return true;
+        }
         if (!box || !box->windowTitle().contains("Continue with Installation")) return true;
         if (!summarySeen || !diskSelected || !eraseSelected || !usersEntered) {
             fail("An installation confirmation appeared before the reviewed choices"); return true;
@@ -202,9 +213,11 @@ class Driver : public QObject {
         if (modal()) return;
         QStackedWidget* stack = nullptr;
         QPushButton* next = nullptr;
+        QPushButton* cancel = nullptr;
         for (auto* widget : QApplication::allWidgets()) {
             if (widget->objectName() == "viewManagerStack") stack = qobject_cast<QStackedWidget*>(widget);
             if (widget->objectName() == "view-button-next") next = qobject_cast<QPushButton*>(widget);
+            if (widget->objectName() == "view-button-cancel") cancel = qobject_cast<QPushButton*>(widget);
         }
         if (!stack || !next || !stack->isVisible()) return;
         if (stack->count() != 8) {
@@ -265,6 +278,15 @@ class Driver : public QObject {
                 fail("The actual summary did not identify the selected target and account"); return;
             }
             summarySeen = true; record("summary-reviewed", {{"text", text}});
+        }
+        if (index == 5 && cancelMode) {
+            if (!cancelRequested && pageTime.elapsed() >= 4000) {
+                if (!cancel || !cancel->isVisible() || !cancel->isEnabled()) {
+                    fail("The summary page did not allow cancelling before disk writes"); return;
+                }
+                cancelRequested = true; record("cancel-click"); click(cancel);
+            }
+            return;
         }
         if (index == 6) {
             if (!confirmationClicked) fail("Execution began without the separate explicit confirmation");

@@ -16,8 +16,10 @@ useradd --create-home --user-group --uid "$HUSK_HOST_UID" builder
 install -d -m700 -o builder -g builder /husk-gnupg
 runuser -u builder -- env GNUPGHOME=/husk-gnupg bash -eu -o pipefail -c '
   cd /src
+  # The private build key is discarded with this job. Its public certificate
+  # must keep verifying the immutable bundled repository after the first day.
   gpg --batch --pinentry-mode loopback --passphrase "" \
-    --quick-generate-key "Husk OS V3 ephemeral build key" ed25519 sign 1d
+    --quick-generate-key "Husk OS V3 ephemeral build key" ed25519 sign 0
   OWNOS_SIGNING_KEY=$(gpg --batch --with-colons --list-secret-keys | awk -F: '\''$1 == "fpr" {print $10; exit}'\'')
   export OWNOS_SIGNING_KEY
   make check native
