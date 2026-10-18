@@ -353,6 +353,14 @@ class DesktopTest:
         self.screenshot('desktop-context-menu-keyboard-selection')
         self.key('Escape')
         self.wait('Escape closes the native menu and releases its layer keyboard host', dismissed)
+        # The server processes the popup/layer destruction asynchronously.
+        # A fresh real motion and wl_pointer enter must precede another press;
+        # a second XTest click at the unchanged location can otherwise vanish
+        # into the old compositor grab even though GTK has destroyed it.
+        self.pointer_event('move',[before.width//2,before.height-95,1,1])
+        self.wait('compositor returns pointer focus to the actual desktop after Escape',lambda:
+                  self.state().get('pointer_window_title') == 'Husk Desktop')
+        self.screenshot('desktop-context-menu-escape-dismissed')
         open_menu()
         self.click([before.width // 2, before.height - 95, 1, 1])
         self.wait('outside pointer click closes the native menu and layer host', dismissed)

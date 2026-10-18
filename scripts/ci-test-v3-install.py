@@ -179,13 +179,22 @@ def post():
     except Exception: pass
 def routes():
     return command(['ip','-4','route','show','default']).stdout.strip() + command(['ip','-6','route','show','default']).stdout.strip()
+def disconnect_external_routes():
+    for family in ('-4','-6'):
+        if command(['ip',family,'route','show','default']).stdout.strip():
+            command(['ip',family,'route','flush','default'])
+    if routes(): raise RuntimeError('External default routes could not be removed for the offline install')
+    return True
 def serial():
     return P('/sys/class/block/vda/serial').read_text().strip()
 def disk_write_evidence():
     if serial()!='HUSK-DISPOSABLE': raise RuntimeError('Cancellation probe disk is not disposable')
     with open('/dev/vda','rb',buffering=0) as stream:
         first=stream.read(2*1024**2); stream.seek(32*1024**3-2*1024**2); last=stream.read(2*1024**2)
-    return dict(sectors_written=int(P('/sys/class/block/vda/stat').read_text().split()[6]),
+    counters=[int(value) for value in P('/sys/class/block/vda/stat').read_text().split()]
+    if len(counters)<17: raise RuntimeError('The guest kernel does not expose required disk operation counters')
+    return dict(writes_completed=counters[4],sectors_written=counters[6],
+                discards_completed=counters[11],sectors_discarded=counters[13],flushes_completed=counters[15],
                 partition_edges_sha256=hashlib.sha256(first+last).hexdigest())
 def inspect_target():
     devices = json.loads(command(['lsblk','--json','-b','-o','PATH,TYPE,FSTYPE,UUID,PARTTYPE,SIZE,SERIAL']).stdout)
@@ -258,9 +267,7 @@ try:
     state['live_medium_rejected']=protected.returncode!=0
     if not state['guard_target_accepted'] or not state['live_medium_rejected']:
         raise RuntimeError('The unmodified installation disk guard did not accept/reject the expected devices')
-    command(['ip','-4','route','flush','default']); command(['ip','-6','route','flush','default'])
-    state['offline']=not routes()
-    if not state['offline']: raise RuntimeError('External default routes could not be removed for the offline install')
+    state['offline']=disconnect_external_routes()
     P('/run/husk-v3-disposable-test').write_text('HUSK-DISPOSABLE\n')
     driver=P('/tmp/husk-v3-driver.so')
     urllib.request.urlretrieve(CONFIG['base']+'/driver.so',driver)

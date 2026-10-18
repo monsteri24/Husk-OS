@@ -186,6 +186,11 @@ if kind and directory:
                         labels=[item.get_label() for item in menu.get_children()
                                 if isinstance(item, Gtk.MenuItem) and not isinstance(item, Gtk.SeparatorMenuItem)]
                                if menu is not None else []))
+                pointer = Gdk.Display.get_default().get_default_seat().get_pointer()
+                pointer_window, _, _ = pointer.get_window_at_position()
+                top = pointer_window.get_toplevel() if pointer_window is not None else None
+                latest['pointer_window_title'] = next((window.get_title()
+                    for window in Gtk.Window.list_toplevels() if top is not None and window.get_window() == top), None)
             save(latest)
         except Exception as exc:
             save(dict(latest, observer_error=repr(exc)))

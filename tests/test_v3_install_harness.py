@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -107,6 +109,56 @@ class InstallHarnessTests(unittest.TestCase):
                 node.func.attr=='split' and node.args and isinstance(node.args[0],ast.Constant)
                 and isinstance(node.args[0].value,bytes)]
             self.assertIn(b'\0',separators)
+
+    def guest_functions(self, *names):
+        tree = ast.parse(self.harness.GUEST_SETUP)
+        definitions = [node for node in tree.body
+                       if isinstance(node, ast.FunctionDef) and node.name in names]
+        self.assertEqual({node.name for node in definitions}, set(names))
+        namespace = {}
+        exec(compile(ast.Module(body=definitions, type_ignores=[]), '<guest-functions>', 'exec'), namespace)
+        return namespace
+
+    def test_offline_setup_does_not_flush_an_absent_ipv6_default_route(self):
+        guest = self.guest_functions('routes', 'disconnect_external_routes')
+        route = ['default via 10.0.2.2 dev enp0s2\n', '', '', '', '']
+        command = Mock(side_effect=lambda *args, **kwargs: SimpleNamespace(stdout=route.pop(0)))
+        guest['command'] = command
+        self.assertTrue(guest['disconnect_external_routes']())
+        self.assertIn((['ip', '-4', 'route', 'flush', 'default'],),
+                      [call.args for call in command.call_args_list])
+        self.assertNotIn((['ip', '-6', 'route', 'flush', 'default'],),
+                         [call.args for call in command.call_args_list])
+
+    def test_offline_setup_rejects_routes_that_remain_after_flushing(self):
+        guest = self.guest_functions('routes', 'disconnect_external_routes')
+        guest['command'] = Mock(return_value=SimpleNamespace(stdout='default via 10.0.2.2\n'))
+        with self.assertRaisesRegex(RuntimeError, 'default routes'):
+            guest['disconnect_external_routes']()
+
+    def test_offline_setup_does_not_ignore_a_real_route_command_error(self):
+        guest = self.guest_functions('routes', 'disconnect_external_routes')
+        guest['command'] = Mock(side_effect=RuntimeError('route inspection failed'))
+        with self.assertRaisesRegex(RuntimeError, 'inspection failed'):
+            guest['disconnect_external_routes']()
+
+    def test_cancellation_evidence_includes_writes_discards_and_flushes(self):
+        guest = self.guest_functions('disk_write_evidence')
+        with tempfile.TemporaryDirectory() as temporary:
+            disk = Path(temporary) / 'disk'
+            with disk.open('wb') as stream:
+                stream.truncate(32 * 1024 ** 3)
+            import hashlib
+            import builtins
+            counters = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17'
+            guest.update(serial=lambda: 'HUSK-DISPOSABLE', hashlib=hashlib,
+                         P=lambda path: SimpleNamespace(read_text=lambda: counters),
+                         open=lambda *args, **kwargs: builtins.open(disk, *args[1:], **kwargs))
+            evidence = guest['disk_write_evidence']()
+            self.assertEqual({key: evidence[key] for key in
+                ('writes_completed', 'sectors_written', 'discards_completed', 'sectors_discarded', 'flushes_completed')},
+                dict(writes_completed=5, sectors_written=7, discards_completed=12,
+                     sectors_discarded=14, flushes_completed=16))
 
     def test_saved_text_redacts_generated_password_and_upstream_crypt_arguments(self):
         self.assertTrue(hasattr(self.harness,'redact_artifact_text'), 'Evidence redaction is missing')

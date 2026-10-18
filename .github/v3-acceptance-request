@@ -1,5 +1,5 @@
-image_run=39121558357
-attempt=2-read-protected-polkit-metadata-as-root
-image_source=c5ad77f045babfadacfef93ca0dc37d765a1263d
-image_sha256=d612e177df905d590f192fc4e2615eab925131f8dc46e29366559beee41b22a4
-request=Continue exact unverified image through read-only checks and disposable VM acceptance
+image_run=39123206803
+attempt=3-offline-route-inspection-and-disk-operation-evidence
+image_source=0ac564dbd141f00bcfd68503fbe75f9065041e51
+image_sha256=7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
+request=Reuse the updated immutable ISO; test real cancellation and offline UEFI installation
