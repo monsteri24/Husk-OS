@@ -1,97 +1,98 @@
-# Husk OS V3 Phase 2 — candidate status
+# Husk OS V3 Phase 2 — acceptance status
 
-This branch continues System 2 at `8a57d6c` and preserves both older releases.
-It is a development candidate, not a released or certified installer image.
+The development branch continues verified System 2 at `8a57d6c` without
+replacing Labwc/GTK or modifying the System 1 and System 2 releases. Main is
+unchanged. [Draft PR #1](https://github.com/monsteri24/Husk-OS/pull/1) is the
+reviewable candidate. No V3 release has been published.
 
-Implemented source includes the graphical curated-app install flow, explicit
-network/DNS/repository diagnostics, offline official Steam/Heroic artwork,
-libnm Wi-Fi controls, adapter-aware BlueZ/Blueman controls, correct tray
-ordering, yellow persistent accent/reset, desktop Trash and protected special
-icons, real file/context-menu actions, and foreign-toplevel-driven panel modes.
+The source implements an authenticated graphical application-install flow,
+separate network/DNS/repository diagnostics, official Steam/Heroic artwork,
+libnm Wi-Fi controls, adapter-aware BlueZ/Blueman controls, the requested tray
+order, persistent yellow accent/reset, desktop Trash with visibility control,
+protected special icons, real file/context-menu actions and distinct
+foreign-toplevel-driven maximized/fullscreen panel behavior. The wallpaper,
+Husk-native application artwork and existing architecture are preserved.
+English is the only active UI language.
 
-The installer extends pinned Calamares 3.3.14/KPMCore. Its first mode is UEFI
-whole-drive erase only, with no preselected drive, Live-device exclusion,
-kernel disk lifetime checks, repeated target verification, real change summary
-and a separate final confirmation. Installation clones the verified Live
-filesystem offline; initramfs and GRUB remain real required backend jobs.
-Checked filesystem flushing and non-lazy unmount must precede completion.
-Clock choices resolve to geographic IANA zones; real Qt tests cover DST and
-fractional offsets. Completion countdown and Later/Now logic also have Qt tests.
+The installer extends pinned Calamares 3.3.14/KPMCore. Its supported initial
+mode is UEFI whole-drive erase only: no preselected drive, protected Live
+media, kernel disk lifetime and topology checks, repeated verification, an
+actual disk-change summary and separate destructive confirmation. It clones
+the Live filesystem offline and requires real user, initramfs, GRUB, checked
+filesystem flush and non-lazy unmount jobs before completion. Clock selection
+resolves to IANA zones with DST; the installed keyboard layout/variant is
+retained. The completion view provides the requested decreasing 30-second
+countdown and Restart Later/Restart Now order.
 
-Fresh local verification on 2026-10-18: 419 tests completed with zero failures
-and 69 explicit environment/graphical skips; 173 source/configuration checks
-passed. Native Wayland code compiles with warnings treated as errors.
-Address/undefined sanitizer checks pass with leak detection disabled because
-this local environment cannot read the required process metadata. Real Gio
-Trash, real libnm profiles, compiled Qt clock/completion behavior and a
-test-only Qt input driver's host-refusal checks were exercised.
+## Completed evidence
 
-The first graphical Actions run at e551cee failed. It exposed a nullable GTK
-input-region call, gettext shadowing in two application-install callbacks,
-menu Escape delivery and an unallocated launcher-row race in the acceptance
-harness. These have regression fixes. The complete real Labwc acceptance run
-[39121908391](https://github.com/monsteri24/Husk-OS/actions/runs/39121908391)
-passed at `3f2a1b4`: native menu pointer/keyboard dismissal, maximized panel
-transparency and click-through, genuine fullscreen hide/restore, window
-controls, file navigation, missing-app Cancel/confirm and the new graphical
-installer's fail-closed preflight/Close behavior. The source/GTK workflow also
-passed without graphical skips at the previous checkpoint. The installer now
-retains the selected keyboard layout and
-variant in the installed user's Labwc defaults. Completion uses the requested
-exact title and decreasing countdown text.
+| Check | Observed result |
+| --- | --- |
+| Source/models/real GTK | [39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527) passed 423 tests with zero failures or skips in the actual GTK run at `6dd54d1`; 174 source/configuration checks also passed. |
+| Local checks | 419 tests, zero failures, 69 explicit environment skips before the latest four harness regressions; 174 current source/configuration checks pass. Real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation were exercised. |
+| Actual Labwc | [39122977898](https://github.com/monsteri24/Husk-OS/actions/runs/39122977898) passed at `1e2b159`, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. The same production code also passed the desktop job in [39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527), using the latest compositor focus evidence. |
+| Real application packages | [39123974007](https://github.com/monsteri24/Husk-OS/actions/runs/39123974007) passed: the shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. |
+| Full V3 build | [39123206803](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803) compiled the patched Calamares/backend, built signed packages and produced the actual ISO. Generic and V3 extracted-rootfs checks passed. |
+| Live UEFI boot | The same exact ISO passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. |
+| Disk guard in Live | The real guard accepted the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium. |
 
-Additional visual QA found that app-paintable panel windows suppressed the
-normal CSS background. GTK now paints it in desktop mode, with the existing
-transparent compact CSS and unmapping for fullscreen. A later parallel run
-also exposed GTK's four-argument clipboard target callback and its early
-outside-click popup grab. Both now have direct regressions. The updated full
-[Labwc run 39122977898](https://github.com/monsteri24/Husk-OS/actions/runs/39122977898)
-passed at `1e2b159`, including real normal-background pixels, compact
-click-through, fullscreen hide/restore and native menu keyboard/outside input.
-The accompanying source and actual GTK jobs passed as well.
+The latest ISO is preserved as an explicitly **unverified** Actions artifact:
 
-The local execution sandbox blocks Unix sockets, so Xvfb/Labwc interactions
-must run in GitHub Actions. Qt offscreen logic checks do not replace visible
-Calamares, ISO boot, real authorization or installed-system acceptance.
+- Source: `0ac564dbd141f00bcfd68503fbe75f9065041e51`
+- Size: **2,214,559,744 bytes**
+- SHA-256: `7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088`
+- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803/artifacts/12135396899)
+- [Build/rootfs/Live-boot evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803/artifacts/12135591545)
 
-The V3 candidate workflow builds signed packages and the full ISO in a
-disposable Arch container. It preserves the exact ISO/checksum as an explicitly
-unverified Actions artifact before VM tests. Its new installation harness can
-attach only a newly created 32 GiB qcow2 file and read-only Live media. Actual
-Qt input must review the target and separate confirmation, observe completion
-and choose Restart Later; it then waits beyond 30 seconds and boots the same
-disk through OVMF with no ISO or kernel override. It now first cancels from the
-reviewed summary and requires unchanged guest disk write counters and GPT-edge
-hashes before attempting installation. This harness has not yet run
-against a V3 ISO. Test-only root debug delivery does not verify graphical
-polkit authorization. Full installer cancellation also remains unverified in
-the VM. Guest passwords and password hashes are excluded from saved evidence.
+The completed image includes the normal panel painting, GTK clipboard callback
+and popup outside-click fixes, explicit os-prober dependency and nonexpiring
+public build certificate. Private signing material was confined to the
+disposable runner. The older `c5ad77f` image remains preserved but is not the
+current release candidate.
 
-The first package build failed because makepkg links local source assets into
-its source directory while the UI patch deliberately requires regular files.
-The recipe now uses the checksum-verified regular originals; a real prepare()
-regression reproduces makepkg's symlinks and exercises both patches. The second
-build produced a real ISO, with the full patched Calamares backend:
+## Active acceptance and blockers
 
-- Source: `c5ad77f045babfadacfef93ca0dc37d765a1263d`
-- Size: 2,214,559,744 bytes
-- SHA-256: `d612e177df905d590f192fc4e2615eab925131f8dc46e29366559beee41b22a4`
-- [Preserved unverified image artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39121558357/artifacts/12133754719)
+The first install attempt on this exact image stopped **before launching
+Calamares**: the test fixture tried to flush an absent IPv6 default route and
+iproute2 returned an error. The fixture now inspects each address family,
+flushes only existing default routes and still fails if inspection fails or
+external routes remain. Four regression tests cover this and stronger disk
+operation evidence. The current recovery workflow verifies the exact ISO
+hash/size and requires unchanged production sources before reusing it.
 
-The initial read-only V3 check incorrectly rejected the English C.UTF-8 locale.
-Recovery confirmed its actual value, preserved category checks, and required
-root access to inspect the correctly protected polkit rules directory. Both
-rootfs checks then passed in the recovery workflow; Live boot and installation
-results are still pending. This older image predates the latest desktop fixes
-and the explicit os-prober dependency. It is an acceptance input, not the final
-V3 release image. The next build also keeps the immutable repository's
-public signing certificate valid after the build day; private signing material
-remains confined to the disposable runner and is never shipped.
+[39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527)
+continues the same image through the corrected real VM test. It may attach
+only a newly created 32 GiB qcow2 without a backing file and read-only Live
+media. Actual Qt pointer/keyboard input must select the target, IANA zone and
+account, review and cancel before writes, then separately confirm a fresh
+installation. Cancellation compares write, discard and flush counters plus
+GPT-edge hashes. Success requires real backend completion, a decreasing
+countdown, Restart Later surviving beyond 30 seconds, target filesystem/job
+checks, safe shutdown and a second UEFI boot with **no ISO or kernel override**
+into the newly created user's SDDM/Wayland desktop. These installation and
+installed-boot gates have **not yet passed**.
 
-Remaining release gates: build the full pinned backend and V3 ISO; boot Live;
-install onto a newly created disposable
-virtual disk; remove the Live image and boot the installed UEFI system. Until
-those pass, do not publish this candidate as working. Wi-Fi scanning and real
-association, Bluetooth pairing, and physical GPU/firmware behavior still need
-compatible real hardware. Cross-filesystem Cut is deliberately refused;
-Copy remains available and existing files are never overwritten silently.
+A later parallel Labwc run exposed test input arriving before the compositor
+returned pointer focus after Escape destroyed a popup. The harness now moves
+the actual pointer and waits for observed GDK focus on Husk Desktop before
+reopening; production menu behavior and assertions are unchanged. The latest
+real Labwc run at `6dd54d1` passed with this focus check.
+
+## Coverage limits
+
+The VM input fixture uses a test-only root debug VT; it does not verify the
+normal graphical polkit/PAM authorization or Live password dialog. The signed
+package test also runs as an explicitly consented disposable root container;
+it does not launch Steam or games. Restart Now and automatic-zero behavior
+have real Qt logic tests, but their actual VM restart remains unverified.
+Wi-Fi scanning/association, Bluetooth pairing, physical GPU/firmware behavior
+and USB removal still need compatible hardware tests. Cross-filesystem Cut is
+deliberately refused; Copy remains available and existing files are not
+silently overwritten.
+
+The local sandbox prevents Unix sockets, so actual Xvfb/Labwc and VM acceptance
+runs in GitHub Actions. Local sanitizer checks disable leak detection because
+the required process metadata is unavailable. Offscreen Qt and source checks
+alone never imply ISO or installation success. Do not publish this candidate
+as a working installer unless essential installation and installed UEFI boot
+gates pass; report failures and hardware-dependent gaps explicitly.
