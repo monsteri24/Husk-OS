@@ -1,3 +1,4 @@
 request=V3 Phase 2 guarded installer candidate
+attempt=2-verified-regular-makepkg-assets
 acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI
 release=blocked-until-all-essential-acceptance-gates-pass

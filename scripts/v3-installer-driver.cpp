@@ -22,10 +22,12 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRadioButton>
+#include <QScrollArea>
 #include <QSet>
 #include <QStackedWidget>
 #include <QTest>
 #include <QTimer>
+#include <QTimeZone>
 #include <unistd.h>
 
 namespace {
@@ -57,6 +59,7 @@ class Driver : public QObject {
     qint64 confirmationAt = -1, finishAt = -1;
     bool stopped = false, diskInitial = false, diskSelected = false;
     bool eraseSelected = false, usersEntered = false, summarySeen = false;
+    bool zoneClockChosen = false, zoneSelected = false;
     bool confirmationSeen = false, confirmationClicked = false, finishSeen = false;
 
     void record(const QString& event, QJsonObject values = {}) {
@@ -221,6 +224,32 @@ class Driver : public QObject {
             fail(QString("The real ") + names[index] + " page did not become actionable"); return;
         }
         if (index == 3) { partition(page, next); return; }
+        if (index == 2 && !zoneSelected) {
+            const QByteArray zone("Europe/Helsinki");
+            const int offset = QTimeZone(zone).offsetFromUtc(QDateTime::currentDateTimeUtc());
+            if (!zoneClockChosen) {
+                if (next->isEnabled()) { fail("Time zone Next was enabled without a named region"); return; }
+                auto* clock = page->findChild<QPushButton*>(QString("husk-offset-%1").arg(offset));
+                if (!clock) { fail("The real Helsinki clock offset was unavailable"); return; }
+                for (auto* scroll : page->findChildren<QScrollArea*>())
+                    if (scroll->isAncestorOf(clock)) scroll->ensureWidgetVisible(clock);
+                zoneClockChosen = true; click(clock); return;
+            }
+            auto* regions = page->findChild<QComboBox*>("husk-region");
+            const int row = regions ? regions->findData(QString::fromLatin1(zone)) : -1;
+            if (!regions || row < 1) { fail("The chosen clock did not expose the proper IANA region"); return; }
+            QTest::mouseClick(regions, Qt::LeftButton);
+            auto* view = regions->view();
+            const QModelIndex item = regions->model()->index(row,0);
+            view->scrollTo(item);
+            QTest::mouseClick(view->viewport(),Qt::LeftButton,Qt::NoModifier,view->visualRect(item).center());
+            if (regions->currentData().toString() != QString::fromLatin1(zone)) {
+                fail("Actual pointer selection did not choose Europe/Helsinki"); return;
+            }
+            zoneSelected = true;
+            record("timezone-selected", {{"iana",QString::fromLatin1(zone)},{"current_offset",offset}});
+            return;
+        }
         if (index == 4 && !usersEntered) {
             auto* autologin = page->findChild<QCheckBox*>("checkBoxDoAutoLogin");
             if (!autologin || autologin->isChecked()) { fail("The acceptance account must require a real login"); return; }

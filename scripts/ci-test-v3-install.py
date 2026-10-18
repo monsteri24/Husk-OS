@@ -28,7 +28,7 @@ import traceback
 ROOT = Path(__file__).resolve().parents[1]
 DISK_SIZE = 32 * 1024 ** 3
 REQUIRED_DRIVER_EVENTS = (
-    'driver-started', 'page-welcome', 'page-keyboard', 'page-locale',
+    'driver-started', 'page-welcome', 'page-keyboard', 'page-locale', 'timezone-selected',
     'drive-no-selection', 'drive-selected', 'erase-selected', 'users-entered',
     'summary-reviewed', 'confirmation-shown', 'confirmation-click',
     'page-execution', 'installation-success', 'countdown-observed',
@@ -37,7 +37,7 @@ REQUIRED_DRIVER_EVENTS = (
 REQUIRED_TARGET_CHECKS = (
     'efi_partition', 'root_partition', 'fstab', 'user', 'kernel', 'initramfs',
     'grub', 'efi_fallback', 'version', 'live_cleanup', 'guard_job', 'copy_job',
-    'users_job', 'initramfs_job', 'bootloader_job',
+    'users_job', 'initramfs_job', 'bootloader_job', 'timezone', 'keyboard', 'english_locale',
 )
 
 
@@ -219,7 +219,11 @@ def inspect_target():
                 copy_job='Filling up filesystems' in joblines,
                 users_job=('Create user '+CONFIG['user']) in joblines,
                 initramfs_job='mkinitcpio' in joblines,
-                bootloader_job='Install bootloader' in joblines)
+                bootloader_job='Install bootloader' in joblines,
+                timezone=(mount/'etc/localtime').is_symlink() and
+                    str((mount/'etc/localtime').readlink()).endswith('/zoneinfo/Europe/Helsinki'),
+                keyboard=json.loads((mount/'etc/ownos/keyboard.json').read_text())==dict(layout='us',variant=''),
+                english_locale='LANG=en_US.UTF-8' in (mount/'etc/locale.conf').read_text())
             state['target_checks']=checks
             state['target_partitions']=devices
             state['target_fstab']=fstab
