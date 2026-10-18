@@ -24,6 +24,9 @@ class Panel:
         self.mode = 'desktop'
         self.controls = {}
         self.window = shell.make_window(_('Husk Taskbar'), 1000, 62, 'TOP', layout(shell.settings)['panel_anchors'])
+        # Let GTK paint the configured panel background in desktop mode. The
+        # compact CSS sets it transparent; true fullscreen unmaps the surface.
+        self.window.set_app_paintable(False)
         self.window.get_style_context().add_class('panel')
         self.provider = Gtk.CssProvider(); self.provider.load_from_data(COMPACT_STYLE)
         Gtk.StyleContext.add_provider_for_screen(self.window.get_screen(), self.provider,

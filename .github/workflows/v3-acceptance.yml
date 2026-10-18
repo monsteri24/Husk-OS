@@ -51,7 +51,7 @@ jobs:
           sudo unsquashfs -processors 2 -d .build/v3-iso-root .build/v3-rootfs.sfs > out/squashfs-extraction.log 2>&1
           cat .build/v3-iso-root/etc/locale.conf | tee out/live-locale.txt
           /usr/bin/python3 scripts/check-rootfs.py .build/v3-iso-root --boot .build/v3-iso-boot > out/iso-rootfs-check.json
-          /usr/bin/python3 scripts/check-v3-rootfs.py .build/v3-iso-root --boot .build/v3-iso-boot > out/v3-rootfs-check.json
+          sudo /usr/bin/python3 scripts/check-v3-rootfs.py .build/v3-iso-root --boot .build/v3-iso-boot > out/v3-rootfs-check.json
       - name: Compile only the current test driver against the candidate Qt runtime
         run: |
           set -euo pipefail

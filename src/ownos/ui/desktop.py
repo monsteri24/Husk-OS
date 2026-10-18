@@ -155,7 +155,7 @@ class DesktopSurface:
             except (UnicodeError, TypeError): text = ''
             self.clipboard_files = parse_file_clipboard(text, gnome=selection.get_target().name() == 'x-special/gnome-copied-files')
             paste_item.set_sensitive(self.clipboard_files is not None)
-        def targets(_, atoms, _data):
+        def targets(_, atoms, *_callback_data):
             if self.closed or serial != self.clipboard_serial: return
             available = {atom.name(): atom for atom in (atoms or [])}
             for target in ('x-special/gnome-copied-files', 'text/uri-list'):
@@ -174,6 +174,7 @@ class DesktopSurface:
         menu.connect('deactivate', self.menu_deactivated)
         menu.connect('unmap', self.menu_deactivated)
         menu.connect('key-press-event', self.menu_key_pressed)
+        menu.connect('button-press-event', self.menu_pointer_pressed)
         if self.shell.layer:
             # A BACKGROUND layer intentionally has no keyboard focus. Give the
             # native popup a short-lived OVERLAY parent instead of making the
@@ -224,6 +225,17 @@ class DesktopSurface:
         # GtkMenu's key bindings otherwise depend on the backend translating
         # the event's hardware keycode, even when its keyval is already Escape.
         if event.keyval == Gdk.KEY_Escape:
+            self.dismiss_menu()
+            return True
+        return False
+
+    def menu_pointer_pressed(self, menu, event):
+        # A Wayland popup grab can deliver the outside press to Gtk.Menu
+        # itself. Explicitly dismiss it even inside GTK's opening-click grace
+        # period; the layer parent does not receive that grabbed event.
+        if event.type == Gdk.EventType.BUTTON_PRESS and (
+                event.x < 0 or event.y < 0 or event.x >= menu.get_allocated_width()
+                or event.y >= menu.get_allocated_height()):
             self.dismiss_menu()
             return True
         return False

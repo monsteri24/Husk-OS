@@ -1,4 +1,5 @@
 image_run=39121558357
+attempt=2-read-protected-polkit-metadata-as-root
 image_source=c5ad77f045babfadacfef93ca0dc37d765a1263d
 image_sha256=d612e177df905d590f192fc4e2615eab925131f8dc46e29366559beee41b22a4
 request=Continue exact unverified image through read-only checks and disposable VM acceptance

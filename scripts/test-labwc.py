@@ -736,6 +736,13 @@ Gtk.main()
                   self.state().get('status', {}).get('panel_mapped'))
         self.record('wayland-desktop-started', status=self.healthy())
         self.wallpaper('01-desktop-wallpaper')
+        image = self.screenshot('desktop-normal-panel-background')
+        probes = [(10,image.height-4),(300,image.height-4)]
+        assert all(image.getpixel(point)[2]>image.getpixel(point)[0] and
+                   image.getpixel(point)[2]>image.getpixel(point)[1] for point in probes), (
+            'The normal desktop panel must paint its configured CSS background',
+            [(point,image.getpixel(point)) for point in probes])
+        self.record('desktop-normal-panel-background',pixels=[image.getpixel(point) for point in probes])
         self.desktop_context_menu()
         row = self.search_start('Husk Integration Terminal')
         self.screenshot('02-start-popup')
