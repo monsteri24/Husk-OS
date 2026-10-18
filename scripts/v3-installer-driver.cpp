@@ -48,6 +48,31 @@ QQuickItem* namedItem(QQuickItem* root, const QString& name) {
     return nullptr;
 }
 
+QJsonObject modalDetails(QWidget* widget) {
+    QStringList text;
+    if (auto* box = qobject_cast<QMessageBox*>(widget)) {
+        text << box->text() << box->informativeText() << box->detailedText();
+    } else {
+        for (auto* label : widget->findChildren<QLabel*>()) text << label->text();
+    }
+    // Never inspect editable controls, especially account/password fields.
+    return {{"title", widget->windowTitle()}, {"class", widget->metaObject()->className()},
+            {"text", text.join('\n').left(16384)}};
+}
+
+class ModalWatchdog {
+    QPointer<QWidget> current;
+    qint64 since = -1;
+public:
+    bool isCurrent(QWidget* widget) const { return current.data() == widget; }
+    void reset() { current.clear(); since = -1; }
+    bool observe(QWidget* widget, qint64 now) {
+        if (!widget) { reset(); return false; }
+        if (!isCurrent(widget) || since < 0) { current = widget; since = now; }
+        return now - since >= 30000;
+    }
+};
+
 class Driver : public QObject {
     QString logPath = qEnvironmentVariable("HUSK_INSTALL_DRIVER_LOG");
     QString user = qEnvironmentVariable("HUSK_INSTALL_TEST_USER");
@@ -55,6 +80,7 @@ class Driver : public QObject {
     bool cancelMode = qEnvironmentVariable("HUSK_INSTALL_TEST_MODE") == "cancel";
     QTimer timer;
     QElapsedTimer elapsed, pageTime;
+    ModalWatchdog unexpectedModal;
     QSet<int> advanced;
     int lastPage = -1, countdownStart = -1;
     qint64 confirmationAt = -1, finishAt = -1;
@@ -103,8 +129,19 @@ class Driver : public QObject {
     }
     bool modal() {
         auto* widget = QApplication::activeModalWidget();
-        if (!widget) return false;
+        if (!widget) { unexpectedModal.reset(); return false; }
         auto* box = qobject_cast<QMessageBox*>(widget);
+        const bool cancelling = box && cancelMode && box->windowTitle().contains("Cancel Installation");
+        const bool confirming = box && box->windowTitle().contains("Continue with Installation");
+        if (!cancelling && !confirming) {
+            const auto details = modalDetails(widget);
+            if (!unexpectedModal.isCurrent(widget)) record("unexpected-modal", details);
+            if (unexpectedModal.observe(widget, elapsed.elapsed()))
+                fail("Unhandled installer dialog: " + details.value("title").toString() + ": " +
+                     details.value("text").toString());
+            return true;
+        }
+        unexpectedModal.reset();
         if (box && cancelMode && box->windowTitle().contains("Cancel Installation")) {
             if (!summarySeen || !cancelRequested) {
                 fail("Cancellation confirmation appeared before the reviewed summary"); return true;
@@ -219,7 +256,15 @@ class Driver : public QObject {
             if (widget->objectName() == "view-button-next") next = qobject_cast<QPushButton*>(widget);
             if (widget->objectName() == "view-button-cancel") cancel = qobject_cast<QPushButton*>(widget);
         }
-        if (!stack || !next || !stack->isVisible()) return;
+        if (!stack || !next || !stack->isVisible()) {
+            if (elapsed.elapsed() > 180000) {
+                QStringList windows;
+                for (auto* window : QApplication::topLevelWidgets())
+                    if (window->isVisible()) windows << window->windowTitle();
+                fail("The expected Calamares navigation did not become visible: " + windows.join(", "));
+            }
+            return;
+        }
         if (stack->count() != 8) {
             if (elapsed.elapsed() > 180000)
                 fail("Unexpected Calamares page sequence; refusing to automate disk changes");
