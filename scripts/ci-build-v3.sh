@@ -11,7 +11,7 @@ pacman -Syu --noconfirm --needed base-devel archiso git gnupg python python-yaml
   wayland pkgconf gtk3 python-gobject python-cairo librsvg gettext gtk-layer-shell \
   networkmanager xorg-server-xvfb xorg-xauth dbus cmake ninja extra-cmake-modules \
   qt6-base qt6-declarative qt6-svg qt6-wayland qt6-tools kpmcore yaml-cpp icu \
-  libpwquality polkit polkit-qt6 kconfig kcoreaddons ki18n kservice kiconthemes solid kjobwidgets pybind11
+  libpwquality polkit polkit-qt6 kconfig kcoreaddons ki18n kservice kiconthemes solid kjobwidgets pybind11 os-prober
 useradd --create-home --user-group --uid "$HUSK_HOST_UID" builder
 install -d -m700 -o builder -g builder /husk-gnupg
 runuser -u builder -- env GNUPGHOME=/husk-gnupg bash -eu -o pipefail -c '
