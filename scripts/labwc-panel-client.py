@@ -42,6 +42,17 @@ def main():
             return True
         return False
 
+    def window_state(_, event):
+        # The nested X11 compositor renders its software pointer into grim's
+        # capture. Behave like a fullscreen game and hide only this client's
+        # cursor so the strict whole-frame check can detect every dock pixel.
+        native = window.get_window()
+        if native is not None:
+            cursor = (Gdk.Cursor.new_for_display(window.get_display(), Gdk.CursorType.BLANK_CURSOR)
+                      if event.new_window_state & Gdk.WindowState.FULLSCREEN else None)
+            native.set_cursor(cursor)
+        return False
+
     def report():
         native = window.get_window()
         state = native.get_state() if native else Gdk.WindowState(0)
@@ -57,6 +68,7 @@ def main():
     canvas.connect('draw', draw)
     canvas.connect('button-press-event', clicked)
     window.connect('key-press-event', key)
+    window.connect('window-state-event', window_state)
     window.connect('destroy', lambda *_: Gtk.main_quit())
     window.show_all()
     GLib.timeout_add(100, report)
