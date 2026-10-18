@@ -229,6 +229,22 @@ class DesktopTest:
         return next((window for window in self.state(kind).get('windows', [])
                      if window.get('mapped') and predicate(window)), None)
 
+    def wait_stable_window(self, kind, predicate, description):
+        sequence, previous, samples = -1, None, 0
+        def stable():
+            nonlocal sequence, previous, samples
+            state = self.state(kind)
+            if state.get('sequence', 0) <= sequence:
+                return None
+            sequence = state['sequence']
+            window = next((w for w in state.get('windows', []) if w.get('mapped') and predicate(w)),None)
+            signature = json.dumps((window.get('id'),window.get('size'),window.get('buttons')),
+                                   sort_keys=True) if window else None
+            samples = samples+1 if signature is not None and signature == previous else 1
+            previous = signature
+            return window if window and samples >= 3 else None
+        return self.wait(description,stable)
+
     def titlebar(self, name):
         # Exact project theme colors identify actual rendered decorations. Glyph
         # centers identify buttons without depending on version-specific sizes.
@@ -545,8 +561,10 @@ Gtk.main()
         self.wait('confirmation closes after deliberate OK', lambda: self.confirmation() is None)
         # This Ubuntu source runner has no Arch package manager. Real preflight
         # must report that failure graphically before requesting authorization.
-        window = self.wait('native preflight reports the missing repository tools',lambda:
-            installer() if installer() and installer()['app_install']['state'] == 'failed' else None)
+        window = self.wait_stable_window('desktop',lambda candidate:
+            candidate.get('app_install',{}).get('appid') == 'firefox' and
+            candidate['app_install']['state'] == 'failed',
+            'native preflight reports missing tools and its Close button finishes allocation')
         assert 'repository' in window['app_install']['status'].lower(), window
         assert not self.installer_terminals(), 'The graphical installer started a Foot password sequence'
         assert not any(entry['id'] not in before and 'foot' in entry['app_id'].lower()

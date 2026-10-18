@@ -111,6 +111,24 @@ class LabwcHarnessTests(unittest.TestCase):
         with patch.object(self.harness.time,'sleep'), self.assertRaisesRegex(AssertionError,'graphical'):
             test.assert_no_installer(set(),'Cancel')
 
+    def test_native_buttons_must_finish_reallocation_before_input(self):
+        test=self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        window=dict(id='installer',mapped=True,size=[640,470],buttons=[dict(label='Close',rect=[361,402,65,44])])
+        state=dict(sequence=1,windows=[window]); test.state=lambda kind='desktop':state
+        def wait(description,predicate):
+            self.assertIsNone(predicate())
+            state['sequence']=2; self.assertIsNone(predicate())
+            window['size']=[640,472]; window['buttons'][0]['rect']=[490,404,58,44]
+            for seq in (3,4):
+                state['sequence']=seq; self.assertIsNone(predicate())
+            # Rereading a sample does not count toward stable observations.
+            self.assertIsNone(predicate())
+            state['sequence']=5
+            return predicate()
+        test.wait=wait
+        result=test.wait_stable_window('desktop',lambda candidate:True,'actual Close allocation')
+        self.assertEqual(result['buttons'][0]['rect'],[490,404,58,44])
+
     def test_reopening_same_query_keeps_text_and_waits_for_fresh_stable_row(self):
         test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
         current = dict(sequence=40, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],
