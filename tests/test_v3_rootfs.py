@@ -194,6 +194,12 @@ class V3RootfsTests(unittest.TestCase):
         self.assertTrue(any('V3' in message and 'version' in message for message in errors))
         self.assertTrue(any('English' in message for message in errors))
 
+    def test_standard_c_utf8_live_locale_is_english_but_category_overrides_are_checked(self):
+        self.put('etc/locale.conf','LANG=C.UTF-8\n')
+        self.assertEqual(self.errors(),[])
+        self.put('etc/locale.conf','LANG=C.UTF-8\nLC_MESSAGES=fi_FI.UTF-8\n')
+        self.assertTrue(any('English' in message for message in self.errors()))
+
     def test_host_symlink_cannot_supply_a_missing_installer_and_guest_code_never_runs(self):
         marker = Path(self.tmp.name) / 'executed'
         host_program = Path(self.tmp.name) / 'host-installer'

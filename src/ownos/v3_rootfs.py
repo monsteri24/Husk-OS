@@ -287,8 +287,10 @@ def validate_v3_rootfs(root, boot=None):
         if release.get('NAME') != 'Husk OS' or release.get('ID') != 'huskos' or release.get('VERSION_ID') != V3_VERSION or release.get('BUILD_ID') != V3_VERSION:
             problems.append('Invalid Husk OS V3 product/version metadata in etc/os-release.')
         locale = _assignments(reader.text('etc/locale.conf'))
-        if locale.get('LANG') != 'en_US.UTF-8' or any(value not in ('en_US.UTF-8', 'en_US:en', 'en') for key, value in locale.items() if key == 'LANGUAGE' or key.startswith('LC_')):
-            problems.append('V3 Live locale must use the English en_US.UTF-8 interface.')
+        english = ('en_US.UTF-8','C.UTF-8','C.utf8','C','POSIX')
+        if locale.get('LANG') not in english or any(value not in (*english,'en_US:en','en')
+                for key,value in locale.items() if key == 'LANGUAGE' or key.startswith('LC_')):
+            problems.append('V3 Live locale must use an English interface without non-English category overrides.')
     except ValueError as exc:
         problems.append('Invalid V3 product/version or English locale metadata: ' + str(exc))
     _check_installer(reader)
