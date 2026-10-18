@@ -52,6 +52,16 @@ current release candidate.
 
 ## Active acceptance and blockers
 
+The current 2,214,559,744-byte image also exceeds GitHub's strictly-under-2-GiB
+release-file limit ([GitHub documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)).
+The next installer build uses zstd level 15 with the same bounded two compression
+workers and unchanged package selection, rather than the level-3 fast first-boot
+profile. The build report records actual size eligibility and fails publication
+eligibility when oversized, while preserving the candidate and diagnostics.
+All 32 profile/integration tests pass, including package-payload preservation.
+The smaller image has not yet been built; the current immutable image remains
+usable for the in-progress installation test.
+
 The first install attempt on this exact image stopped **before launching
 Calamares**: the test fixture tried to flush an absent IPv6 default route and
 iproute2 returned an error. The fixture now inspects each address family,

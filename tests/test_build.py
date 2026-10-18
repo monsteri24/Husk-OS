@@ -57,6 +57,22 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(json.loads((out / 'husk-profile.json').read_text())['edition'], 'desktop')
         self.assertNotIn('-processors 2', (out / 'profiledef.sh').read_text())
 
+    def test_installer_profile_uses_distribution_compression_without_dropping_payload(self):
+        basic = self.generate(self.root / 'basic', first_boot=True)
+        installer = self.generate(self.root / 'installer', first_boot=True, with_installer=True)
+        import shlex
+        definition = (installer / 'profiledef.sh').read_text()
+        options = definition.split('airootfs_image_tool_options=(', 1)[1].split(')', 1)[0]
+        options = shlex.split(options)
+        self.assertEqual(options[options.index('-comp') + 1], 'zstd')
+        self.assertEqual(options[options.index('-Xcompression-level') + 1], '15')
+        self.assertEqual(options[options.index('-processors') + 1], '2')
+        basic_packages = set((basic / 'packages.x86_64').read_text().splitlines())
+        installer_packages = set((installer / 'packages.x86_64').read_text().splitlines())
+        self.assertEqual(installer_packages, basic_packages | {'calamares'})
+        self.assertEqual((installer / 'airootfs/opt/ownos/repo-key.gpg').read_bytes(), self.key.read_bytes())
+        self.assertEqual(self.build.validate_profile(installer), [])
+
     def test_both_editions_remove_inherited_optional_apps_and_keep_boot_recovery_tools(self):
         optional = ('steam', 'proton', 'proton-ge-custom', 'wine', 'winetricks', 'lutris',
                     'discord', 'firefox', 'obs-studio', 'libreoffice-fresh', 'irssi', 'lynx')

@@ -171,10 +171,12 @@ iso_label="HUSK_$(date +%Y%m%d)"
 file_permissions+=( ["/etc/shadow"]="0:0:400" )
 ''')
         if first_boot:
-            stream.write('''
-# Fast, bounded compression for the first boot verification edition.
+            compression_level = 15 if with_installer else 3
+            stream.write(f'''
+# Keep installer images distributable without removing drivers or desktop tools.
+# The smaller first-boot-only verification image retains its fast compression.
 airootfs_image_type="squashfs"
-airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)
+airootfs_image_tool_options=(-comp zstd -Xcompression-level {compression_level} -b 1M -processors 2)
 ''')
     write(output, 'husk-profile.json', json.dumps({'edition': 'first-boot' if first_boot else 'desktop',
                                                   'version': VERSION,

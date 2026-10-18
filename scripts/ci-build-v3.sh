@@ -56,5 +56,9 @@ report = dict(source_commit=os.environ['HUSK_SOURCE_SHA'],
     iso_bytes=Path('out/HuskOS-v3-phase2.iso').stat().st_size,
     rootfs=json.loads(Path('out/iso-rootfs-check.json').read_text()),
     v3_rootfs=json.loads(Path('out/v3-rootfs-check.json').read_text()))
+report['release_file_limit_bytes'] = 2 * 1024 ** 3
+report['release_file_eligible'] = report['iso_bytes'] < report['release_file_limit_bytes']
 Path('out/v3-build.json').write_text(json.dumps(report,indent=2)+'\n')
+if not report['release_file_eligible']:
+    raise SystemExit('Completed candidate exceeds the GitHub release-file limit; preserve it as an unverified artifact only.')
 PY
