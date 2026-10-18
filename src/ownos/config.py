@@ -7,12 +7,13 @@ from pathlib import Path
 from ownos.i18n import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES
 
 KEYMAPS = ('fi', 'us', 'gb', 'se', 'de', 'fr')
+HUSK_YELLOW = '#f5cf3b'
 
 
 def defaults():
     return dict(gaming_mode=True, overlay=False, animations=True,
-                accent='#4d94ff', wallpaper='', keymap='fi', pointer_speed=0.0,
-                taskbar_position='bottom', language=DEFAULT_LANGUAGE)
+                accent=HUSK_YELLOW, wallpaper='', keymap='fi', pointer_speed=0.0,
+                taskbar_position='bottom', language=DEFAULT_LANGUAGE, show_trash=True)
 
 
 def validate(settings):
@@ -20,7 +21,7 @@ def validate(settings):
     for key in values:
         if key in settings:
             values[key] = settings[key]
-    for key in ('gaming_mode', 'overlay', 'animations'):
+    for key in ('gaming_mode', 'overlay', 'animations', 'show_trash'):
         if type(values[key]) is not bool:
             raise ValueError(key + ' must be a boolean')
     if not isinstance(values['accent'], str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', values['accent']):

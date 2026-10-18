@@ -11,6 +11,7 @@ from ownos.desktop_layout import layout
 from ownos.ui.panel import Panel
 from ownos.ui.launcher import Launcher
 from ownos.ui.wallpaper import Wallpaper
+from ownos.ui.desktop import DesktopSurface
 from ownos.i18n import _, configure_saved
 from ownos.notifications import NotificationStore
 from ownos.toplevel import ToplevelStore
@@ -33,7 +34,7 @@ class HuskDesktop:
         self.stopped = False; self.bridge = None; self.bridge_watch = None; self.bridge_reader = None
         self.bridge_connected = False
         self.window_store = ToplevelStore(); self.toplevels = self.window_store.entries
-        self.windows = []; self.backgrounds = []; self.tasks = None; self.status_busy = False
+        self.windows = []; self.backgrounds = []; self.desktop_surfaces = []; self.tasks = None; self.status_busy = False
         self.control_connection = None; self.control_registration = None
         self.layer = None
         if not preview:
@@ -82,6 +83,8 @@ class HuskDesktop:
         return window
 
     def build_desktop(self):
+        for surface in self.desktop_surfaces: surface.close()
+        self.desktop_surfaces = []
         for window in self.backgrounds:
             window.destroy()
             if window in self.windows: self.windows.remove(window)
@@ -95,23 +98,7 @@ class HuskDesktop:
             overlay = Gtk.Overlay(); window.add(overlay)
             background = Wallpaper(self.settings['wallpaper'])
             overlay.add(background)
-            if monitor == self.primary:
-                icons = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-                icons.set_margin_top(layout(self.settings)["desktop_margin_top"]); icons.set_margin_start(22)
-                icons.set_halign(Gtk.Align.START); icons.set_valign(Gtk.Align.START)
-                desktop = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP) or str(Path.home() / 'Desktop')
-                entries = [Path.home()]
-                try: entries += sorted(Path(desktop).iterdir(), key=lambda p: p.name.casefold())[:30]
-                except OSError: pass
-                for entry in entries:
-                    button = Gtk.Button(); button.get_style_context().add_class('desktop-icon')
-                    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-                    box.pack_start(icon('user-home' if entry == Path.home() else ('folder' if entry.is_dir() else 'text-x-generic'), 36), False, False, 0)
-                    label = Gtk.Label(label=_('Home') if entry == Path.home() else entry.stem[:24]); label.set_max_width_chars(24)
-                    box.pack_start(label, False, False, 0); button.add(box)
-                    button.connect('clicked', lambda _, p=entry: self.open_desktop_entry(p))
-                    icons.pack_start(button, False, False, 0)
-                overlay.add_overlay(icons)
+            self.desktop_surfaces.append(DesktopSurface(self, window, overlay, monitor, monitor == self.primary))
             window.show_all(); self.backgrounds.append(window)
 
     def open_desktop_entry(self, path):
@@ -128,6 +115,7 @@ class HuskDesktop:
         if self.layer:
             for window in (self.panel, self.start_window, self.notification_window):
                 self.layer.set_monitor(window, self.primary)
+        self.taskbar.refresh_visibility()
 
     def build_panel(self):
         self.taskbar = Panel(self)
@@ -245,6 +233,7 @@ class HuskDesktop:
                 self.windows.remove(window); window.destroy()
             self.build_panel(); self.build_start(); self.build_notifications()
             self.refresh_tasks(); self.refresh_notifications(); self.tick(); self.update_status()
+        self.refresh_tasks()
         self.show_style_warning()
 
     def show_style_warning(self):
@@ -276,7 +265,7 @@ class HuskDesktop:
                     keyring_ready=Path('/run/ownos-live-keyring-ready').is_file(),
                     backend='preview' if self.preview else 'wayland',
                     desktop_surfaces=sum(window.get_mapped() for window in self.backgrounds),
-                    panel_visible=self.panel.get_visible(), panel_mapped=self.panel.get_mapped(),
+                    panel_visible=self.panel.get_visible(), panel_mapped=self.panel.get_mapped(), panel_mode=self.taskbar.mode,
                     bridge_connected=self.bridge_connected and self.bridge is not None and self.bridge.poll() is None,
                     window_count=len(self.toplevels), renderer=os.environ.get('WLR_RENDERER','auto'))
 
@@ -327,6 +316,7 @@ class HuskDesktop:
         for source in (self.clock_timer, self.status_timer, self.bridge_watch):
             if source: GLib.source_remove(source)
         self.config_monitor.cancel(); self.service.stop()
+        for surface in self.desktop_surfaces: surface.close()
         if self.control_registration and self.control_connection: self.control_connection.unregister_object(self.control_registration)
         Gio.bus_unown_name(self.owner)
         if self.bridge:

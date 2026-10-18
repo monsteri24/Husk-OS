@@ -7,23 +7,39 @@ import sys
 from pathlib import Path
 sys.path.insert(0, '/usr/lib/ownos')
 from ownos.updates import admin_command
+from ownos.catalog import app_by_id
+from ownos.app_install import preflight_install, InstallProblem
 from ownos.i18n import _
 
 
 def main():
     if os.geteuid() != 0: raise PermissionError(_('Run through pkexec'))
     if not 2 <= len(sys.argv) <= 3: raise ValueError(_('Invalid arguments'))
-    command = admin_command(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)
+    action = sys.argv[1]
+    choice = sys.argv[2] if len(sys.argv) == 3 else None
+    # The graphical UI explicitly discloses a full system upgrade and asks for
+    # consent before invoking this action. Authorization is still auth_admin;
+    # the same root-owned catalogue is the only source of package targets.
+    graphical = action == 'install-confirmed'
+    command = admin_command('install' if graphical else action, choice)
+    if graphical:
+        command.append('--noconfirm')
     if Path('/var/lib/pacman/db.lck').exists():
         raise RuntimeError(_('Another pacman transaction is active. The lock will not be removed automatically.'))
     directory = Path('/var/lib/ownos'); directory.mkdir(mode=0o755, exist_ok=True)
     with (directory / 'admin.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if graphical:
+            print('OWNOS-STAGE:preflight', flush=True)
+            preflight_install(app_by_id(choice), report=lambda message: print(message, flush=True))
         print(_('Husk OS: verified full-system transaction: {command}').format(command=' '.join(command)), flush=True)
         return subprocess.call(command, env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})
 
 
 if __name__ == '__main__':
     try: raise SystemExit(main())
+    except InstallProblem as exc:
+        print('OWNOS-ERROR:' + exc.kind, file=sys.stderr, flush=True)
+        print('Husk OS:', exc.message, exc.detail, file=sys.stderr); raise SystemExit(1)
     except (OSError, ValueError, RuntimeError) as exc:
         print('Husk OS:', exc, file=sys.stderr); raise SystemExit(1)

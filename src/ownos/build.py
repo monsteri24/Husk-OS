@@ -232,6 +232,11 @@ Relogin=false
     write(root, 'etc/systemd/system/sddm.service.d/husk-live.conf',
           '[Unit]\nRequires=ownos-live-setup.service\nAfter=ownos-live-setup.service\n')
     write(root, 'etc/NetworkManager/conf.d/husk-wifi.conf', '[device]\nwifi.backend=wpa_supplicant\n')
+    # NetworkManager owns DHCP and resolver state. The inherited releng
+    # resolved symlink cannot survive when networkd/resolved are disabled.
+    write(root, 'etc/NetworkManager/conf.d/husk-network.conf',
+          '[main]\ndns=default\nrc-manager=symlink\ndhcp=internal\n')
+    overlay_link(root, 'etc/resolv.conf', '/run/NetworkManager/resolv.conf')
     for name, destination in [('display-manager.service', '/usr/lib/systemd/system/sddm.service'),
                               ('default.target', '/usr/lib/systemd/system/graphical.target')]:
         overlay_link(root, 'etc/systemd/system/' + name, destination)

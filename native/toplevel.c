@@ -10,14 +10,27 @@
 #include "foreign-toplevel-client-protocol.h"
 #include "json_escape.h"
 
+struct output_info {
+    uint32_t id;
+    struct wl_output *handle;
+    char *name;
+    int32_t x, y, width, height, scale, transform;
+    struct output_info *next;
+};
+struct membership {
+    struct output_info *output;
+    struct membership *next;
+};
 struct entry {
     uint32_t id;
     struct zwlr_foreign_toplevel_handle_v1 *handle;
     char *title, *app_id;
-    bool active, minimized;
+    bool active, minimized, maximized, fullscreen, ready;
+    struct membership *outputs;
     struct entry *next;
 };
 static struct entry *entries;
+static struct output_info *output_infos;
 static struct wl_seat *seat;
 static struct zwlr_foreign_toplevel_manager_v1 *manager;
 static uint32_t next_id = 1;
@@ -31,23 +44,54 @@ static void app_id(void *data, struct zwlr_foreign_toplevel_handle_v1 *h, const 
     (void)h; struct entry *e = data;
     free(e->app_id); e->app_id = strndup(text, 512);
 }
-static void output(void *data, struct zwlr_foreign_toplevel_handle_v1 *h, struct wl_output *o) {
-    (void)data; (void)h; (void)o;
+static void output_enter(void *data, struct zwlr_foreign_toplevel_handle_v1 *h, struct wl_output *o) {
+    (void)h; struct entry *e = data;
+    for (struct membership *member = e->outputs; member; member = member->next)
+        if (member->output->handle == o) return;
+    for (struct output_info *info = output_infos; info; info = info->next) if (info->handle == o) {
+        struct membership *member = calloc(1, sizeof(*member));
+        if (!member) { running = false; return; }
+        member->output = info; member->next = e->outputs; e->outputs = member;
+        return;
+    }
+}
+static void output_leave(void *data, struct zwlr_foreign_toplevel_handle_v1 *h, struct wl_output *o) {
+    (void)h; struct entry *e = data;
+    struct membership **p = &e->outputs;
+    while (*p && (*p)->output->handle != o) p = &(*p)->next;
+    if (*p) { struct membership *member = *p; *p = member->next; free(member); }
 }
 static void state(void *data, struct zwlr_foreign_toplevel_handle_v1 *h, struct wl_array *states) {
     (void)h; struct entry *e = data; uint32_t *s;
-    e->active = e->minimized = false;
+    e->active = e->minimized = e->maximized = e->fullscreen = false;
     wl_array_for_each(s, states) {
         if (*s == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_ACTIVATED) e->active = true;
         if (*s == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_MINIMIZED) e->minimized = true;
+        if (*s == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_MAXIMIZED) e->maximized = true;
+        if (*s == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_FULLSCREEN) e->fullscreen = true;
     }
 }
 static void done(void *data, struct zwlr_foreign_toplevel_handle_v1 *h) {
     (void)h; struct entry *e = data;
+    e->ready = true;
     char *t = json_escape(e->title), *a = json_escape(e->app_id);
     if (t && a) {
-        printf("{\"event\":\"upsert\",\"id\":%" PRIu32 ",\"title\":\"%s\",\"app_id\":\"%s\",\"active\":%s,\"minimized\":%s}\n",
-               e->id, t, a, e->active ? "true" : "false", e->minimized ? "true" : "false");
+        printf("{\"event\":\"upsert\",\"id\":%" PRIu32 ",\"title\":\"%s\",\"app_id\":\"%s\",\"active\":%s,\"minimized\":%s,\"maximized\":%s,\"fullscreen\":%s,\"outputs\":[",
+               e->id, t, a, e->active ? "true" : "false", e->minimized ? "true" : "false",
+               e->maximized ? "true" : "false", e->fullscreen ? "true" : "false");
+        unsigned count = 0;
+        for (struct membership *member = e->outputs; member && count < 32; member = member->next) {
+            struct output_info *info = member->output;
+            char *name = json_escape(info->name);
+            if (!name) continue;
+            int32_t width = info->width, height = info->height;
+            if (info->transform & 1) { int32_t swap = width; width = height; height = swap; }
+            int32_t scale = info->scale > 0 ? info->scale : 1;
+            printf("%s{\"name\":\"%s\",\"x\":%" PRIi32 ",\"y\":%" PRIi32 ",\"width\":%" PRIi32 ",\"height\":%" PRIi32 "}",
+                   count++ ? "," : "", name, info->x, info->y, width / scale, height / scale);
+            free(name);
+        }
+        printf("]}\n");
         fflush(stdout);
     }
     free(t); free(a);
@@ -58,12 +102,13 @@ static void closed(void *data, struct zwlr_foreign_toplevel_handle_v1 *h) {
     while (*p && *p != e) p = &(*p)->next;
     if (*p) *p = e->next;
     zwlr_foreign_toplevel_handle_v1_destroy(h);
+    while (e->outputs) { struct membership *member = e->outputs; e->outputs = member->next; free(member); }
     free(e->title); free(e->app_id); free(e);
 }
 static void parent(void *data, struct zwlr_foreign_toplevel_handle_v1 *h,
                    struct zwlr_foreign_toplevel_handle_v1 *p) { (void)data; (void)h; (void)p; }
 static const struct zwlr_foreign_toplevel_handle_v1_listener listener = {
-    .title=title, .app_id=app_id, .output_enter=output, .output_leave=output,
+    .title=title, .app_id=app_id, .output_enter=output_enter, .output_leave=output_leave,
     .state=state, .done=done, .closed=closed, .parent=parent
 };
 static void toplevel(void *data, struct zwlr_foreign_toplevel_manager_v1 *m,
@@ -79,6 +124,38 @@ static void finished(void *data, struct zwlr_foreign_toplevel_manager_v1 *m) {
 static const struct zwlr_foreign_toplevel_manager_v1_listener manager_listener = {
     .toplevel=toplevel, .finished=finished
 };
+static void output_geometry(void *data, struct wl_output *output, int32_t x, int32_t y,
+                            int32_t physical_width, int32_t physical_height, int32_t subpixel,
+                            const char *make, const char *model, int32_t transform) {
+    (void)output; (void)physical_width; (void)physical_height; (void)subpixel; (void)make; (void)model;
+    struct output_info *info = data; info->x = x; info->y = y; info->transform = transform;
+}
+static void output_mode(void *data, struct wl_output *output, uint32_t flags,
+                        int32_t width, int32_t height, int32_t refresh) {
+    (void)output; (void)refresh; struct output_info *info = data;
+    if (flags & WL_OUTPUT_MODE_CURRENT) { info->width = width; info->height = height; }
+}
+static void output_done(void *data, struct wl_output *output) {
+    (void)output; struct output_info *info = data;
+    /* A monitor rename, scale or resize must update existing memberships too. */
+    for (struct entry *e = entries; e; e = e->next) if (e->ready)
+        for (struct membership *member = e->outputs; member; member = member->next)
+            if (member->output == info) { done(e, e->handle); break; }
+}
+static void output_scale(void *data, struct wl_output *output, int32_t factor) {
+    (void)output; struct output_info *info = data; info->scale = factor;
+}
+static void output_name(void *data, struct wl_output *output, const char *name) {
+    (void)output; struct output_info *info = data;
+    free(info->name); info->name = strndup(name, 128);
+}
+static void output_description(void *data, struct wl_output *output, const char *description) {
+    (void)data; (void)output; (void)description;
+}
+static const struct wl_output_listener output_listener = {
+    .geometry=output_geometry, .mode=output_mode, .done=output_done, .scale=output_scale,
+    .name=output_name, .description=output_description
+};
 static void global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version) {
     (void)data;
     if (!strcmp(interface, zwlr_foreign_toplevel_manager_v1_interface.name)) {
@@ -86,9 +163,32 @@ static void global(void *data, struct wl_registry *registry, uint32_t name, cons
         zwlr_foreign_toplevel_manager_v1_add_listener(manager, &manager_listener, NULL);
     } else if (!strcmp(interface, wl_seat_interface.name) && !seat) {
         seat = wl_registry_bind(registry, name, &wl_seat_interface, 1);
+    } else if (!strcmp(interface, wl_output_interface.name)) {
+        struct output_info *info = calloc(1, sizeof(*info));
+        if (!info) { running = false; return; }
+        info->id = name; info->scale = 1;
+        info->handle = wl_registry_bind(registry, name, &wl_output_interface, version < 4 ? version : 4);
+        info->next = output_infos; output_infos = info;
+        wl_output_add_listener(info->handle, &output_listener, info);
     }
 }
-static void global_remove(void *data, struct wl_registry *registry, uint32_t name) { (void)data; (void)registry; (void)name; }
+static void destroy_output(struct output_info *info) {
+    if (wl_output_get_version(info->handle) >= WL_OUTPUT_RELEASE_SINCE_VERSION) wl_output_release(info->handle);
+    else wl_output_destroy(info->handle);
+    free(info->name); free(info);
+}
+static void global_remove(void *data, struct wl_registry *registry, uint32_t name) {
+    (void)data; (void)registry;
+    struct output_info **p = &output_infos;
+    while (*p && (*p)->id != name) p = &(*p)->next;
+    if (!*p) return;
+    struct output_info *info = *p;
+    for (struct entry *e = entries; e; e = e->next) {
+        output_leave(e, e->handle, info->handle);
+        if (e->ready) done(e, e->handle);
+    }
+    *p = info->next; destroy_output(info);
+}
 static const struct wl_registry_listener registry_listener = { .global=global, .global_remove=global_remove };
 
 static void command(const char *line) {
@@ -132,8 +232,10 @@ int main(void) {
     }
     while (entries) {
         struct entry *e = entries; entries = e->next;
+        while (e->outputs) { struct membership *member = e->outputs; e->outputs = member->next; free(member); }
         zwlr_foreign_toplevel_handle_v1_destroy(e->handle); free(e->title); free(e->app_id); free(e);
     }
+    while (output_infos) { struct output_info *info = output_infos; output_infos = info->next; destroy_output(info); }
     if (seat) wl_seat_destroy(seat);
     zwlr_foreign_toplevel_manager_v1_destroy(manager); wl_registry_destroy(registry); wl_display_disconnect(display);
     return 0;

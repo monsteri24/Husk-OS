@@ -3,19 +3,17 @@ import subprocess
 import sys
 sys.path.insert(0, '/usr/lib/ownos')
 import libcalamares
-from ownos.provisioning import configure_target
+from ownos.provisioning import configure_cloned_target
 from ownos.i18n import _
 
 
 def pretty_name():
-    return _('Husk OS: install the selected desktop and drivers')
+    return 'Configure the installed Husk OS system'
 
 
 def run():
     try:
-        configure_target(libcalamares.globalstorage.value('rootMountPoint'),
-                         libcalamares.globalstorage.value('packagechooser_desktop'),
-                         libcalamares.globalstorage.value('packagechooser_graphics'))
+        configure_cloned_target(libcalamares.globalstorage.value('rootMountPoint'))
         return None
     except (OSError, ValueError, TypeError, subprocess.CalledProcessError) as exc:
         detail = str(exc)

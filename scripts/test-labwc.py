@@ -578,6 +578,68 @@ Gtk.main()
         self.record(name + '-close-minimize-maximize', application=title,
                     before=before['bounds'], maximized=maximum['bounds'], desktop=self.healthy())
 
+    def panel_window_states(self):
+        destination = self.runtime / 'panel-client.json'
+        client = self.launch([sys.executable, str(ROOT / 'scripts/labwc-panel-client.py'),
+                              str(destination)], 'panel-client')
+        def state():
+            try:
+                return json.loads(destination.read_text())
+            except (OSError, ValueError):
+                return {}
+        entry = self.wait('real panel state client in the compositor bridge', lambda:
+            next((entry for entry in self.entries() if entry['title'] == 'Husk Panel State Test'), None))
+        identifier = entry['id']
+        self.wait('panel client output identity from actual wl_output membership', lambda:
+                  self.entry(identifier).get('outputs'))
+        outputs = self.entry(identifier)['outputs']
+        assert outputs[0]['name'] or outputs[0]['width'] > 0, outputs
+        self.key('F10')
+        self.wait('native maximize removes the reserved panel strip', lambda:
+                  state().get('maximized') and self.entry(identifier).get('maximized') and
+                  self.state().get('status', {}).get('panel_mode') == 'maximized' and
+                  state().get('height', 0) >= outputs[0]['height'] - 40)
+        image = self.screenshot('panel-maximized-transparent')
+        panel = self.state()['panel']
+        for point in [(20, image.height - 2), (20, panel[1] + 4)]:
+            assert image.getpixel(point) == (36, 80, 74), (point, image.getpixel(point))
+        clicks = len(state().get('clicks', []))
+        self.click([20, image.height - 16, 1, 1])
+        self.wait('a click through the transparent panel gap reaches the real maximized client', lambda:
+                  len(state().get('clicks', [])) > clicks)
+        start = next(button for button in self.state()['panel_buttons']
+                     if (button.get('tooltip') or '').startswith('Start'))
+        self.click(start['rect'])
+        self.wait('centered Start remains clickable above the maximized client', lambda:
+                  self.state().get('start_mapped'))
+        self.click(start['rect'])
+        self.wait('Start dismissed above the maximized client', lambda: not self.state().get('start_mapped'))
+        self.record('panel-maximized-transparent-click-through-and-launcher', outputs=outputs,
+                    panel=panel, native=state())
+        self.click([20, image.height - 16, 1, 1])
+        self.key('F11')
+        self.wait('true fullscreen unmaps every panel icon', lambda:
+                  state().get('fullscreen') and self.entry(identifier).get('fullscreen') and
+                  not self.state().get('status', {}).get('panel_mapped') and
+                  self.state().get('status', {}).get('panel_mode') == 'fullscreen' and
+                  (state().get('width'), state().get('height')) == (image.width, image.height))
+        image = self.screenshot('panel-fullscreen-no-icons')
+        assert image.getcolors(maxcolors=2) == [(image.width * image.height, (36, 80, 74))], (
+            'Fullscreen must contain only the native client canvas; panel/wallpaper pixels remain')
+        self.key('F11')
+        self.wait('exiting fullscreen restores the compact panel', lambda:
+                  not state().get('fullscreen') and self.state().get('status', {}).get('panel_mapped') and
+                  self.state().get('status', {}).get('panel_mode') == 'maximized')
+        self.key('F10')
+        self.wait('restoring the window restores the desktop panel reservation', lambda:
+                  not state().get('maximized') and
+                  self.state().get('status', {}).get('panel_mode') == 'desktop')
+        self.screenshot('panel-restored-desktop')
+        self.key('alt+F4')
+        self.wait('panel test client closed by actual keyboard input', lambda:
+                  client.poll() is not None and self.entry(identifier) is None)
+        self.record('panel-true-fullscreen-hide-and-restore', native=state(), desktop=self.healthy())
+
     def run(self):
         self.compositor = self.launch(['labwc', '-C', str(self.config), '--debug'], 'labwc')
         def wayland_socket():
@@ -653,6 +715,7 @@ Gtk.main()
             if entry['id'] not in before and 'foot' in entry['app_id'].lower()), None))
         self.terminal_roundtrip(terminal)
         self.exercise(terminal['id'], '06-foot')
+        self.panel_window_states()
         for kind, shortcut in (('files', 'super+e'), ('control', 'super+i')):
             before = {entry['id'] for entry in self.entries()}
             self.key(shortcut)

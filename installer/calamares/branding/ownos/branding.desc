@@ -3,9 +3,9 @@ componentName: ownos
 strings:
   productName: Husk OS
   shortProductName: Husk OS
-  version: system-1
-  shortVersion: system-1
-  versionedName: Husk OS system-1 (Experimental)
+  version: V3 Phase 2
+  shortVersion: V3
+  versionedName: Husk OS V3 Phase 2 (Experimental)
   shortVersionedName: Husk OS Experimental
   bootloaderEntryName: Husk OS
   productUrl: https://archlinux.org
@@ -14,8 +14,8 @@ strings:
 style:
   SidebarBackground: "#0b1321"
   SidebarText: "#eaf1ff"
-  SidebarBackgroundCurrent: "#284e80"
-  SidebarTextCurrent: "#ffffff"
+  SidebarBackgroundCurrent: "#f5cf3b"
+  SidebarTextCurrent: "#151710"
 slideshow: show.qml
 slideshowAPI: 1
 uploadServer:
