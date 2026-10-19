@@ -8,7 +8,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: husk-v3-recovered-acceptance-39123206803
+  group: husk-v3-recovered-acceptance-39250972954
   cancel-in-progress: true
 jobs:
   source:
@@ -19,41 +19,53 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     env:
-      HUSK_IMAGE_SOURCE: 0ac564dbd141f00bcfd68503fbe75f9065041e51
+      HUSK_IMAGE_SOURCE: 65b20855fa919a447989cd932134f63493d2f18f
+      HUSK_BOOT_EVIDENCE_RUN: '39250972954'
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 0
       - name: Recover the exact completed ISO and verify its digest
+        id: recover
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/39123206803" --jq .head_sha)" = "$HUSK_IMAGE_SOURCE"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/39250972954" --jq .head_sha)" = "$HUSK_IMAGE_SOURCE"
           mkdir -p out
-          gh run download 39123206803 --repo "$GITHUB_REPOSITORY" \
-            --name HuskOS-v3-UNVERIFIED-candidate-39123206803 --dir out
-          test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2214559744
-          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
+          gh run download 39250972954 --repo "$GITHUB_REPOSITORY" \
+            --name HuskOS-v3-UNVERIFIED-candidate-39250972954 --dir out
+          test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2147778560
+          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 1228919a759373a40aec227b24517264219450842bf290914a4c4727cb0af604
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
           mkdir -p .build/prior-evidence
-          gh run download 39123206803 --repo "$GITHUB_REPOSITORY" \
-            --name v3-candidate-evidence-39123206803 --dir .build/prior-evidence
+          gh run download 39250972954 --repo "$GITHUB_REPOSITORY" \
+            --name v3-candidate-evidence-39250972954 --dir .build/prior-evidence
+          if [ "$HUSK_BOOT_EVIDENCE_RUN" != 39250972954 ]; then
+            mkdir -p .build/prior-boot
+            gh run download "$HUSK_BOOT_EVIDENCE_RUN" --repo "$GITHUB_REPOSITORY" \
+              --name "v3-recovered-acceptance-$HUSK_BOOT_EVIDENCE_RUN" --dir .build/prior-boot
+          fi
           python3 - <<'PY'
-          import json, os
+          import importlib.util, json, os
           from pathlib import Path
           prior = Path('.build/prior-evidence')
           build = json.loads((prior/'v3-build.json').read_text())
-          boot = json.loads((prior/'boot-v3/result.json').read_text())
-          assert build['source_commit'] == os.environ['HUSK_IMAGE_SOURCE']
-          assert boot['iso_sha256'] == '7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088'
-          assert boot['iso_bytes'] == 2214559744
-          assert all(boot[name] == 'PASSED' for name in ('boot','terminal','shutdown'))
-          assert boot['desktop_status']['version'] == 'v3-phase2'
-          boot['proof_reused_from_run'] = 39123206803
-          boot['proof_scope'] = 'Prior real Live UEFI boot of this exact immutable image; not rerun in this workflow'
-          Path('out/reused-live-boot.json').write_text(json.dumps(boot,indent=2)+'\n')
+          directory = prior if os.environ['HUSK_BOOT_EVIDENCE_RUN'] == '39250972954' else Path('.build/prior-boot')
+          boot_file = directory/'boot-v3/result.json'
+          if not boot_file.exists(): boot_file = directory/'reused-live-boot.json'
+          boot = json.loads(boot_file.read_text()) if boot_file.exists() else None
+          spec = importlib.util.spec_from_file_location('boot_proof', 'scripts/ci-test-system1.py')
+          verifier = importlib.util.module_from_spec(spec); spec.loader.exec_module(verifier)
+          proof = verifier.verified_recovered_boot(build, boot, os.environ['HUSK_IMAGE_SOURCE'],
+              '1228919a759373a40aec227b24517264219450842bf290914a4c4727cb0af604', 2147778560)
+          if proof is not None:
+              proof['proof_reused_from_run'] = int(os.environ['HUSK_BOOT_EVIDENCE_RUN'])
+              proof['proof_scope'] = 'Prior real Live UEFI boot of this exact immutable image; not rerun in this workflow'
+              Path('out/reused-live-boot.json').write_text(json.dumps(proof,indent=2)+'\n')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as stream:
+              stream.write('boot_proof_reused='+str(proof is not None).lower()+'\n')
           PY
           printf 'image_source=%s\nacceptance_source=%s\n' "$HUSK_IMAGE_SOURCE" "$GITHUB_SHA" > out/recovered-image-source.txt
           git diff --stat "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging > out/changes-since-image.txt
@@ -93,6 +105,11 @@ jobs:
                 $(pkg-config --cflags --libs Qt6Widgets Qt6Test Qt6Quick)
               chown "$HUSK_HOST_UID:$HUSK_HOST_GID" out/v3-installer-driver.so
             '
+      - name: Boot the exact recovered ISO when no matching Live proof exists
+        if: steps.recover.outputs.boot_proof_reused != 'true'
+        run: |
+          timeout 780 /usr/bin/python3 scripts/ci-test-system1.py \
+            --iso out/HuskOS-v3-phase2.iso --artifacts out/boot-v3 --expected-version v3-phase2
       - name: Cancel without writes, install offline and boot the installed UEFI disk
         run: timeout 3000 /usr/bin/python3 scripts/ci-test-v3-install.py --artifacts out/install-v3 --expected-version v3-phase2 --timeout 1800 --boot-timeout 600
       - name: Preserve bounded evidence for this exact image, without publishing a release

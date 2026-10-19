@@ -65,7 +65,7 @@ class ProfileTests(unittest.TestCase):
         options = definition.split('airootfs_image_tool_options=(', 1)[1].split(')', 1)[0]
         options = shlex.split(options)
         self.assertEqual(options[options.index('-comp') + 1], 'zstd')
-        self.assertEqual(options[options.index('-Xcompression-level') + 1], '15')
+        self.assertEqual(options[options.index('-Xcompression-level') + 1], '19')
         self.assertEqual(options[options.index('-processors') + 1], '2')
         basic_packages = set((basic / 'packages.x86_64').read_text().splitlines())
         installer_packages = set((installer / 'packages.x86_64').read_text().splitlines())

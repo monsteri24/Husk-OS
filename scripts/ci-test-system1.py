@@ -18,6 +18,28 @@ sys.path.insert(0, str(ROOT / 'src'))
 from ownos.live import validate_live_status
 
 OUT = ROOT / 'out/boot-system1'
+
+
+def verified_recovered_boot(build, boot, source, sha256, size, version='v3-phase2'):
+    """Reuse only successful Live proof for the identical inspected image.
+
+    A missing prior boot is a request to run it, never evidence of success.
+    Release size eligibility is a separate gate from diagnostic VM testing.
+    """
+    if (not isinstance(build,dict) or build.get('source_commit') != source or build.get('iso_bytes') != size or
+            any(not isinstance(build.get(name),dict) or build[name].get('status') != 'PASS'
+                for name in ('rootfs','v3_rootfs'))):
+        raise ValueError('Recovered image build/payload evidence does not match the expected source and size')
+    if boot is None: return None
+    if (not isinstance(boot,dict) or boot.get('iso_sha256') != sha256 or boot.get('iso_bytes') != size or
+            any(boot.get(name) != 'PASSED' for name in ('boot','terminal','shutdown')) or boot.get('problems')):
+        raise ValueError('Prior Live boot evidence does not prove this exact image booted successfully')
+    status=boot.get('desktop_status')
+    if validate_live_status(status) or status.get('version') != version:
+        raise ValueError('Prior Live boot evidence does not prove the expected Live Wayland desktop/version')
+    return dict(boot)
+
+
 PROBE = r'''import json, os, pathlib, subprocess, urllib.request
 info = {'uid': os.getuid(), 'live': pathlib.Path('/run/archiso').is_dir(), 'terminals': []}
 env = os.environ.copy()

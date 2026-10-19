@@ -171,7 +171,7 @@ iso_label="HUSK_$(date +%Y%m%d)"
 file_permissions+=( ["/etc/shadow"]="0:0:400" )
 ''')
         if first_boot:
-            compression_level = 15 if with_installer else 3
+            compression_level = 19 if with_installer else 3
             stream.write(f'''
 # Keep installer images distributable without removing drivers or desktop tools.
 # The smaller first-boot-only verification image retains its fast compression.

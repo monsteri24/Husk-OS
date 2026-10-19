@@ -28,44 +28,47 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39250972954](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954) passed its separate source/GTK job at `65b2085`: 444 tests with zero failures or skips in the actual GTK run, including a real X SECURITY credential opening a GTK window; 176 source/configuration checks also passed. ISO/VM acceptance is separate. |
-| Local checks | Current source: 444 tests, zero failures, 70 explicit graphical/environment skips; 176 source/configuration checks and the native sanitizer check pass. Local leak detection is disabled as described below. New display tests cover private files, normal/error cleanup, symlink/hardlink rejection, secret-free failures and fixed-helper invocation; their actual GTK/X SECURITY test is deferred to Actions. |
-| Actual Labwc | [39250980117](https://github.com/monsteri24/Husk-OS/actions/runs/39250980117) passed at `65b2085`, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. A parallel run timed out restoring Files and exposed the observer problem described below; it is not silently counted as passing. |
+| Source/models/real GTK | [39252514418](https://github.com/monsteri24/Husk-OS/actions/runs/39252514418) passed at `9b9f424`: 447 tests with zero failures or skips in the actual GTK run, including a real X SECURITY credential opening a GTK window and native-widget observer ownership; 176 source/configuration checks also passed. ISO/VM acceptance is separate. |
+| Local checks | The last full local run passed 444 tests with 70 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Current focused boot-proof/profile tests pass all 37 cases; Labwc harness tests pass with one explicit real-GTK skip. All 176 source/configuration checks pass. |
+| Actual Labwc | [39252514315](https://github.com/monsteri24/Husk-OS/actions/runs/39252514315) passed after the observer correction, including taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. The earlier parallel taskbar timeout is documented below. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
-| Full V3 build | [39123206803](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803) compiled the patched Calamares/backend, built signed packages and produced the actual ISO. Generic and V3 extracted-rootfs checks passed. |
-| Live UEFI boot | The same exact ISO passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. |
-| Disk guard in Live | The real guard accepted the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium. |
+| Full V3 build | [39250972954](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954) compiled the patched Calamares/backend, built signed packages and produced the startup-fixed ISO. Generic and stricter V3 extracted-rootfs checks passed. The job then correctly failed its release-size gate and preserved the image/evidence. |
+| Live UEFI boot | The older `0ac564d` image passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. The new `65b2085` image still requires its own boot test; old-image proof cannot substitute for it. |
+| Disk guard in Live | Earlier real tests accepted only the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium; this must also pass on the rebuilt image. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
-It predates the installer startup fixes below and must not be published as a
-working installer:
+It contains the startup fixes below, but still needs real boot/installation
+acceptance and is too large for a release file:
 
-- Source: `0ac564dbd141f00bcfd68503fbe75f9065041e51`
-- Size: **2,214,559,744 bytes**
-- SHA-256: `7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088`
-- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803/artifacts/12135396899)
-- [Build/rootfs/Live-boot evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803/artifacts/12135591545)
+- Source: `65b20855fa919a447989cd932134f63493d2f18f`
+- Size: **2,147,778,560 bytes**
+- SHA-256: `1228919a759373a40aec227b24517264219450842bf290914a4c4727cb0af604`
+- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954/artifacts/12185574285)
+- [Build/rootfs evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954/artifacts/12185589502)
 
 The completed image includes the normal panel painting, GTK clipboard callback
-and popup outside-click fixes, explicit os-prober dependency and nonexpiring
+and popup outside-click fixes, installer display/startup corrections, explicit os-prober dependency and nonexpiring
 public build certificate. Private signing material was confined to the
 disposable runner. The older `c5ad77f` image remains preserved but is not the
-current release candidate.
+current release candidate. The previous `0ac564d` image and its
+[successful Live-boot evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803/artifacts/12135591545)
+remain preserved for diagnostic history.
 
 ## Active acceptance and blockers
 
-The current 2,214,559,744-byte image also exceeds GitHub's strictly-under-2-GiB
+The current 2,147,778,560-byte image exceeds GitHub's strictly-under-2-GiB
 release-file limit ([GitHub documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)).
-The next installer build uses zstd level 15 with the same bounded two compression
-workers and unchanged package selection, rather than the level-3 fast first-boot
-profile. The build report records actual size eligibility and fails publication
-eligibility when oversized, while preserving the candidate and diagnostics.
-All 32 profile/integration tests pass, including package-payload preservation.
-The smaller image has not yet been built. Build request attempt 4 includes the
-startup fixes below and the same package selection. The earlier immutable
-image remains useful as diagnostic evidence but cannot prove the new source.
+Zstd level 15 reduced the previous image by 66,781,184 bytes, but this is still
+288 KiB above the cap. The next build is configured for level 19 with the same
+two compression workers and unchanged package selection; all 32 profile tests
+pass, including payload preservation. Level 19 has not yet been built. The
+build report correctly blocked publication and preserved the completed image.
+The recovery workflow now pins this new exact image and runs its first Live
+UEFI and disposable installation tests before another lengthy build. Missing
+prior boot evidence requires a fresh real boot; mismatched/failed evidence is
+rejected. Three new regressions cover that proof-reuse decision.
 
-Installation attempts on this exact image have stopped **before reaching
+Earlier installation attempts on the `0ac564d` image stopped **before reaching
 Calamares navigation**. [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460)
 successfully reached the acknowledged root setup over the separate UART under
 KVM and verified offline mode with no IPv4/IPv6 default routes. This resolves
@@ -98,15 +101,17 @@ pkexec helper, keeps it until that process exits and cleans it on success,
 cancel or error. Administrator authorization remains required. This work runs
 in a worker thread. Packaging and payload checks now require Xauth, the display
 helper and installed Calamares QML, and reject the known incorrect startup
-override. These source fixes require the new ISO build and real VM verification;
+override. These source fixes are included in the new `65b2085` ISO but still
+require real VM verification;
 normal polkit/PAM authorization is still unverified.
 
-The earlier recovery workflow verifies the exact ISO
+The recovery workflow verifies the exact ISO
 hash/size and requires unchanged runtime sources before reusing it. The only
 excluded source file is the build-only profile generator `ownos/build.py`;
 its new compression is recorded separately and is not claimed to be present
-in the reused image. Its strict runtime-source comparison correctly prevents
-reusing that image as acceptance for the new installer startup source.
+in the reused image. Its strict runtime-source comparison requires identical
+installer/desktop sources; only the build-only level-19 profile change is
+excluded and separately recorded when testing the level-15 image.
 
 The older TCG run [39122974054](https://github.com/monsteri24/Husk-OS/actions/runs/39122974054)
 expired without any guest setup report. Its captured screen showed boot still
@@ -157,8 +162,8 @@ now tracks the native GObject identity until destroy without retaining dead
 wrappers, and records real button activation separately. The taskbar test
 waits for a fresh compositor pointer enter and actual GTK button hover before
 its single click, retaining the original restore/active assertions. Focused
-harness checks pass; a real GTK ownership regression and the real Labwc run
-must verify this correction. No production desktop code or current ISO
+harness checks pass; the real GTK ownership regression and subsequent real Labwc
+run passed with this correction. No production desktop code or current ISO
 payload changed for this test-harness correction.
 
 ## Coverage limits

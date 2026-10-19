@@ -13,6 +13,36 @@ class BootHarnessTests(unittest.TestCase):
         spec.loader.exec_module(module)
         return module
 
+    def prior_evidence(self):
+        build=dict(source_commit='candidate-source',iso_bytes=2147778560,
+                   rootfs=dict(status='PASS'),v3_rootfs=dict(status='PASS'),release_file_eligible=False)
+        boot=dict(iso_sha256='a'*64,iso_bytes=2147778560,boot='PASSED',terminal='PASSED',shutdown='PASSED',
+                  problems=[],desktop_status=dict(os='Husk OS',desktop='Husk Desktop',backend='wayland',
+                      version='v3-phase2',live=True,panel_visible=True,panel_mapped=True,
+                      bridge_connected=True,desktop_surfaces=1))
+        return build,boot
+
+    def test_missing_prior_live_boot_requires_a_real_new_boot_even_when_payload_checks_pass(self):
+        module=self.load_harness(); build,_=self.prior_evidence()
+        self.assertIsNone(module.verified_recovered_boot(build,None,'candidate-source','a'*64,2147778560))
+
+    def test_only_matching_successful_live_boot_evidence_can_be_reused(self):
+        module=self.load_harness(); build,boot=self.prior_evidence()
+        self.assertEqual(module.verified_recovered_boot(build,boot,'candidate-source','a'*64,2147778560),boot)
+        for change in (dict(iso_sha256='b'*64),dict(iso_bytes=2147778561),dict(boot='FAILED'),
+                       dict(terminal='NOT TESTED'),dict(shutdown='FAILED'),dict(problems=['failed']),
+                       dict(desktop_status=dict(boot['desktop_status'],live=False)),
+                       dict(desktop_status=dict(boot['desktop_status'],version='system-2'))):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                module.verified_recovered_boot(build,dict(boot,**change),'candidate-source','a'*64,2147778560)
+
+    def test_a_wrong_build_or_failed_payload_never_authorizes_evidence_reuse(self):
+        module=self.load_harness(); build,boot=self.prior_evidence()
+        for change in (dict(source_commit='other-source'),dict(iso_bytes=1),dict(rootfs=dict(status='FAIL')),
+                       dict(v3_rootfs=dict(status='FAIL'))):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                module.verified_recovered_boot(dict(build,**change),boot,'candidate-source','a'*64,2147778560)
+
     def test_diagnostic_query_returns_to_the_compositor_vt(self):
         module = self.load_harness()
         self.assertTrue(hasattr(module, 'request_guest_evidence'))

@@ -1,5 +1,6 @@
-image_run=39123206803
-attempt=7-private-live-user-display-authority
-image_source=0ac564dbd141f00bcfd68503fbe75f9065041e51
-image_sha256=7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
-request=Offline routes now verified; provide the root-only test fixture an expiring Live-user Xauthority and continue actual Calamares tests without changing the ISO
+image_run=39250972954
+attempt=8-startup-fixed-iso-and-first-exact-image-live-boot
+image_source=65b20855fa919a447989cd932134f63493d2f18f
+image_sha256=1228919a759373a40aec227b24517264219450842bf290914a4c4727cb0af604
+image_bytes=2147778560
+request=Reuse the startup-fixed ISO for first Live UEFI and disposable-install acceptance; publication remains blocked by size and unpassed installation gates
