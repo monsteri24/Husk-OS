@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 import sys
 import time
-import weakref
 
 name = Path(sys.argv[0]).name
 kind = {'husk-desktop': 'desktop', 'husk-files': 'files',
@@ -26,8 +25,20 @@ if kind and directory:
     destination = Path(directory) / (kind + '.json')
     shell = None
     latest = {'pid': os.getpid(), 'kind': kind, 'exited': False}
-    observed = weakref.WeakSet()
+    observed = set()
     sequence = 0
+
+    def observe_widget(widget, window_id):
+        # PyGObject may recreate a Python wrapper while its native widget is
+        # still owned by GTK. A weak wrapper set reconnects every poll and can
+        # turn one input event into hundreds of synchronous log writes. The
+        # GObject hash identifies the native object until its destroy signal.
+        token = hash(widget)
+        if token in observed: return False
+        observed.add(token)
+        widget.connect('event', observe_input, window_id)
+        widget.connect('destroy', lambda _current: observed.discard(token))
+        return True
 
     def observe_input(widget, event, window_id):
         """Record delivered GTK events without consuming or synthesizing them."""
@@ -35,6 +46,8 @@ if kind and directory:
                      event=event.type.value_nick, time=time.monotonic())
         if isinstance(widget, Gtk.Button):
             value['label'] = widget.get_label()
+            value['tooltip'] = widget.get_tooltip_text()
+            value['identity'] = str(hash(widget))
         if event.type in (Gdk.EventType.BUTTON_PRESS, Gdk.EventType.BUTTON_RELEASE):
             value['button'] = event.get_button()[1]
         elif event.type in (Gdk.EventType.KEY_PRESS, Gdk.EventType.KEY_RELEASE):
@@ -44,6 +57,13 @@ if kind and directory:
         with (Path(directory) / (kind + '-input.jsonl')).open('a') as stream:
             stream.write(json.dumps(value) + '\n')
         return False
+
+    def observe_activation(widget, window_id):
+        value = dict(window=window_id, widget=type(widget).__name__, event='button-activated',
+                     time=time.monotonic(), label=widget.get_label(), tooltip=widget.get_tooltip_text(),
+                     identity=str(hash(widget)))
+        with (Path(directory) / (kind + '-input.jsonl')).open('a') as stream:
+            stream.write(json.dumps(value) + '\n')
 
     def save(value):
         temporary = destination.with_suffix('.' + str(os.getpid()) + '.tmp')
@@ -100,10 +120,10 @@ if kind and directory:
                 identifier = str(id(window))
                 widgets = list(descendants(window))
                 for widget in widgets:
-                    if widget not in observed and isinstance(widget, (
+                    if isinstance(widget, (
                             Gtk.Window, Gtk.Button, Gtk.Entry, Gtk.ListBoxRow, Gtk.ComboBox, Gtk.Menu, Gtk.MenuItem)):
-                        widget.connect('event', observe_input, identifier)
-                        observed.add(widget)
+                        if observe_widget(widget, identifier) and isinstance(widget, Gtk.Button):
+                            widget.connect('clicked', observe_activation, identifier)
                 value = dict(id=identifier, type=type(window).__name__, title=window.get_title(),
                              mapped=window.get_mapped(), visible=window.get_visible(),
                              maximized=bool(state & Gdk.WindowState.MAXIMIZED),
@@ -152,6 +172,8 @@ if kind and directory:
                                                 rect=rectangle(w, shell.panel, panel))
                                            for w in descendants(shell.panel) if isinstance(w, Gtk.Button)]
                 latest['task_buttons'] = [dict(label=w.get_label(), tooltip=w.get_tooltip_text(),
+                                               identity=str(hash(w)), mapped=w.get_mapped(),
+                                               hovered=bool(w.get_state_flags() & Gtk.StateFlags.PRELIGHT),
                                                rect=rectangle(w, shell.panel, panel))
                                           for w in shell.tasks.get_children() if isinstance(w, Gtk.Button)]
                 latest['search'] = rectangle(shell.search, shell.start_window, start)
@@ -173,9 +195,8 @@ if kind and directory:
                     selected = menu.get_selected_item() if menu is not None else None
                     if menu is not None:
                         for widget in descendants(menu):
-                            if widget not in observed and isinstance(widget, (Gtk.Menu, Gtk.MenuItem)):
-                                widget.connect('event', observe_input, 'desktop-menu-' + str(id(menu)))
-                                observed.add(widget)
+                            if isinstance(widget, (Gtk.Menu, Gtk.MenuItem)):
+                                observe_widget(widget, 'desktop-menu-' + str(id(menu)))
                     latest['desktop_menus'].append(dict(
                         active=menu is not None, type=type(menu).__name__ if menu is not None else None,
                         mapped=bool(menu is not None and menu.get_mapped()),

@@ -28,9 +28,9 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39249438444](https://github.com/monsteri24/Husk-OS/actions/runs/39249438444) passed its separate source/GTK job: 433 tests with zero failures or skips in the actual GTK run; 174 source/configuration checks also passed. The VM job in that run failed separately, as described below. |
+| Source/models/real GTK | [39250972954](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954) passed its separate source/GTK job at `65b2085`: 444 tests with zero failures or skips in the actual GTK run, including a real X SECURITY credential opening a GTK window; 176 source/configuration checks also passed. ISO/VM acceptance is separate. |
 | Local checks | Current source: 444 tests, zero failures, 70 explicit graphical/environment skips; 176 source/configuration checks and the native sanitizer check pass. Local leak detection is disabled as described below. New display tests cover private files, normal/error cleanup, symlink/hardlink rejection, secret-free failures and fixed-helper invocation; their actual GTK/X SECURITY test is deferred to Actions. |
-| Actual Labwc | [39249438444](https://github.com/monsteri24/Husk-OS/actions/runs/39249438444) passed its separate desktop job, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Actual Labwc | [39250980117](https://github.com/monsteri24/Husk-OS/actions/runs/39250980117) passed at `65b2085`, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. A parallel run timed out restoring Files and exposed the observer problem described below; it is not silently counted as passing. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
 | Full V3 build | [39123206803](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803) compiled the patched Calamares/backend, built signed packages and produced the actual ISO. Generic and V3 extracted-rootfs checks passed. |
 | Live UEFI boot | The same exact ISO passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. |
@@ -148,6 +148,18 @@ returned pointer focus after Escape destroyed a popup. The harness now moves
 the actual pointer and waits for observed GDK focus on Husk Desktop before
 reopening; production menu behavior and assertions are unchanged. Subsequent
 real Labwc runs, including `9b488ff`, passed with this focus check.
+
+At `65b2085`, the standalone Labwc run passed while the build workflow's
+parallel desktop job timed out on one taskbar restore. Its captured GTK log
+showed 257 copies of one release callback: weak Python-wrapper tracking had
+reconnected observers while GTK still owned the native widget. The observer
+now tracks the native GObject identity until destroy without retaining dead
+wrappers, and records real button activation separately. The taskbar test
+waits for a fresh compositor pointer enter and actual GTK button hover before
+its single click, retaining the original restore/active assertions. Focused
+harness checks pass; a real GTK ownership regression and the real Labwc run
+must verify this correction. No production desktop code or current ISO
+payload changed for this test-harness correction.
 
 ## Coverage limits
 

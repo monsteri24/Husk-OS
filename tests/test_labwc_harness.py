@@ -1,8 +1,12 @@
 import importlib.util
+import ast
+import gc
+import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+import weakref
 
 
 class LabwcHarnessTests(unittest.TestCase):
@@ -13,6 +17,69 @@ class LabwcHarnessTests(unittest.TestCase):
         harness = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(harness)
         cls.harness = harness
+
+    def observer_registration(self):
+        path = Path(__file__).resolve().parents[1] / 'scripts/labwc-test-observer/sitecustomize.py'
+        functions = [node for node in ast.walk(ast.parse(path.read_text()))
+                     if isinstance(node,ast.FunctionDef) and node.name == 'observe_widget']
+        self.assertEqual(len(functions),1,'The observer must track native GTK identities until destroy')
+        namespace=dict(observed=set(),observe_input=Mock(return_value=False))
+        exec(compile(ast.Module(body=functions,type_ignores=[]),'<observer-registration>','exec'),namespace)
+        return namespace
+
+    def test_native_observer_identity_survives_wrapper_gc_without_duplicate_handlers(self):
+        observer = self.observer_registration()
+        class Native:
+            def __init__(self): self.handlers={}
+        class Widget:
+            def __init__(self,native): self.native=native
+            def __hash__(self): return 17429
+            def connect(self,signal,callback,*args): self.native.handlers.setdefault(signal,[]).append((callback,args))
+            def destroy(self):
+                for callback,args in self.native.handlers.get('destroy',[]): callback(self,*args)
+        native=Native(); widget=Widget(native); reference=weakref.ref(widget)
+        self.assertTrue(observer['observe_widget'](widget,'test-window'))
+        del widget; gc.collect()
+        self.assertIsNone(reference(),'Passive observation must not retain a dead Python wrapper')
+        replacement=Widget(native)
+        self.assertFalse(observer['observe_widget'](replacement,'test-window'))
+        self.assertEqual(len(native.handlers['event']),1)
+        replacement.destroy()
+        self.assertEqual(observer['observed'],set())
+
+    @unittest.skipUnless(os.environ.get('OWNOS_UI_TESTS') == '1','Needs real GTK widget ownership')
+    def test_real_gtk_owned_widget_is_observed_once_and_released_at_destroy(self):
+        from ownos.ui.common import Gtk,Gdk
+        observer=self.observer_registration()
+        box=Gtk.Box(); widget=Gtk.Button(label='Task observation test'); box.add(widget)
+        self.assertTrue(observer['observe_widget'](widget,'test-window'))
+        identity=hash(widget); del widget; gc.collect()
+        widget=box.get_children()[0]
+        self.assertEqual(hash(widget),identity)
+        self.assertFalse(observer['observe_widget'](widget,'test-window'))
+        widget.emit('event',Gdk.Event.new(Gdk.EventType.BUTTON_RELEASE))
+        self.assertEqual(observer['observe_input'].call_count,1)
+        widget.destroy(); box.destroy()
+        self.assertEqual(observer['observed'],set())
+
+    def test_task_click_waits_for_fresh_actual_panel_focus_and_button_hover(self):
+        test=self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        button=dict(tooltip='Husk Files',rect=[743,746,43,54],mapped=True,hovered=False)
+        state=dict(sequence=1,pointer_window_title='Husk Files',task_buttons=[button])
+        test.state=lambda:state
+        test.pointer_event=Mock()
+        def wait(description,predicate):
+            if description.endswith('mapped task button'): return predicate()
+            self.assertIsNone(predicate())
+            state['sequence']=2; button['hovered']=True
+            self.assertIsNone(predicate(),'A different focused surface must not receive a task click')
+            state['sequence']=3; state['pointer_window_title']='Husk Taskbar'; button['hovered']=False
+            self.assertIsNone(predicate(),'A panel enter alone does not mean the target GTK button has hover')
+            state['sequence']=4; button['hovered']=True
+            return predicate()
+        test.wait=wait
+        self.assertEqual(test.wait_task_hover('Husk Files','files'),button)
+        test.pointer_event.assert_called_once_with('move',button['rect'])
 
     def test_output_discovery_accepts_a_visible_window_without_name_or_class(self):
         tree = '''xwininfo: Window id: 0x50d (the root window) (has no name)

@@ -618,6 +618,21 @@ Gtk.main()
         self.deliberate_installer_confirmation()
         self.deliberate_installer_confirmation(keyboard=True)
 
+    def wait_task_hover(self, title, description):
+        def candidate(state):
+            return next((button for button in state.get('task_buttons', [])
+                         if button.get('tooltip') == title and button.get('mapped') and
+                         button.get('rect') and min(button['rect'][2:]) > 1), None)
+        task = self.wait(description + ' mapped task button', lambda: candidate(self.state()))
+        sequence = self.state().get('sequence', 0)
+        self.pointer_event('move', task['rect'])
+        def hovered():
+            state = self.state()
+            if state.get('sequence',0) <= sequence or state.get('pointer_window_title') != 'Husk Taskbar': return None
+            button = candidate(state)
+            return button if button and button.get('hovered') else None
+        return self.wait(description + ' actual GTK task button hover', hovered)
+
     def exercise(self, identifier, name, kind=None):
         before = self.titlebar(name + '-normal')
         self.click(before['buttons']['maximize'])
@@ -639,8 +654,7 @@ Gtk.main()
                   and self.entry(identifier)['minimized'])
         self.screenshot(name + '-minimized')
         title = self.entry(identifier)['title']
-        task = self.wait(name + ' taskbar button', lambda: next((button for button in
-            self.state().get('task_buttons', []) if button.get('tooltip') == title), None))
+        task = self.wait_task_hover(title, name)
         self.click(task['rect'])
         self.wait(name + ' restored by taskbar click', lambda: self.entry(identifier)
                   and not self.entry(identifier)['minimized'] and self.entry(identifier)['active'])
