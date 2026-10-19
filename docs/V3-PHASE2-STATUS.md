@@ -28,9 +28,9 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39246589719](https://github.com/monsteri24/Husk-OS/actions/runs/39246589719) passed its separate source/GTK job: 427 tests with zero failures or skips in the actual GTK run; 174 source/configuration checks also passed. The VM job in that run failed separately, as described below. |
-| Local checks | All 17 current installation-harness tests and 174 source/configuration checks pass. Earlier checks exercised real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation. Local graphical environment skips remain explicit. |
-| Actual Labwc | [39246822238](https://github.com/monsteri24/Husk-OS/actions/runs/39246822238) passed on the current branch, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Source/models/real GTK | [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460) passed its separate source/GTK job: 431 tests with zero failures or skips in the actual GTK run; 174 source/configuration checks also passed. The VM job in that run failed separately, as described below. |
+| Local checks | All 19 current installation-harness tests and 174 source/configuration checks pass. Earlier checks exercised real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation. Local graphical environment skips remain explicit. |
+| Actual Labwc | [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460) passed its separate desktop job, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
 | Full V3 build | [39123206803](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803) compiled the patched Calamares/backend, built signed packages and produced the actual ISO. Generic and V3 extracted-rootfs checks passed. |
 | Live UEFI boot | The same exact ISO passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. |
@@ -62,17 +62,30 @@ All 32 profile/integration tests pass, including package-payload preservation.
 The smaller image has not yet been built; the current immutable image remains
 usable for the in-progress installation test.
 
-Installation attempts on this exact image have stopped **before launching
-Calamares**. The latest [39246589719](https://github.com/monsteri24/Husk-OS/actions/runs/39246589719)
+Installation attempts on this exact image have stopped **before reaching
+Calamares navigation**. [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460)
 successfully reached the acknowledged root setup over the separate UART under
-KVM, then failed on `ip -6 route flush default` with `Invalid argument`.
-The fixture now inspects exact default routes as structured JSON and temporarily
+KVM and verified offline mode with no IPv4/IPv6 default routes. This resolves
+the prior test-only `ip -6 route flush default` error. The fixture inspects
+exact default routes as structured JSON and temporarily
 sets NetworkManager's active device configuration to never provide IPv4/IPv6
 defaults. It does not alter saved connection profiles or remove the connected
 route to the evidence server. It independently requires no remaining external
 unicast defaults, records before/after routes and propagates inspection or
 NetworkManager errors. Regression tests cover absent IPv6 defaults, dual-stack
 device deduplication, unreachable/link routes, malformed data and real failures.
+
+The next blocker was Qt's X11 display authorization: the isolated root fixture
+could not connect to the Live user's XWayland display. The disk still had zero
+writes/discards/flushes and identical GPT-edge hashes, but reviewed GUI
+cancellation did not occur. The next test supplies a private, user-owned
+Xauthority generated through X SECURITY with a 120-second unused timeout,
+without changing the X server ACL or the ISO. Its permission/owner and local
+display checks have unit coverage. This is test-fixture evidence only; normal
+graphical authorization remains unverified. The wrapper also requested an
+unavailable `en_US.UTF-8` Live locale and Qt fell back to `C.UTF-8`; this needs
+a source fix and rebuilt-image verification.
+
 The current recovery workflow verifies the exact ISO
 hash/size and requires unchanged runtime sources before reusing it. The only
 excluded source file is the build-only profile generator `ownos/build.py`;
@@ -94,7 +107,7 @@ transport fault: boot/Plymouth traffic and the debug shell shared ttyS0, and
 the captured log contains truncated shell input and a continuation prompt.
 The test now leaves boot output on ttyS0 and uses a separate ttyS1 UART/socket
 for setup, paces UART writes and can reset only the harmless readiness probe.
-All 17 focused harness tests pass, including real socket I/O, port isolation,
+All 19 focused harness tests pass, including real socket I/O, port isolation,
 input pacing, target isolation and installed-boot argument checks. Compatible
 hosted runners also grant their own test account access to an existing KVM
 device with mode 0600; runners without it retain TCG. These changes affect

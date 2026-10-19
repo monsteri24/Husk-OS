@@ -1,5 +1,5 @@
 image_run=39123206803
-attempt=6-temporary-networkmanager-default-route-removal
+attempt=7-private-live-user-display-authority
 image_source=0ac564dbd141f00bcfd68503fbe75f9065041e51
 image_sha256=7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
-request=Reuse the exact ISO and successful serial setup; verify offline routes through temporary NetworkManager settings and continue disposable installation
+request=Offline routes now verified; provide the root-only test fixture an expiring Live-user Xauthority and continue actual Calamares tests without changing the ISO

@@ -4,6 +4,7 @@ import ast
 import json
 from pathlib import Path
 import re
+import stat
 import shutil
 import subprocess
 import socket
@@ -224,6 +225,39 @@ class InstallHarnessTests(unittest.TestCase):
         guest['command'] = Mock(side_effect=RuntimeError('route inspection failed'))
         with self.assertRaisesRegex(RuntimeError, 'inspection failed'):
             guest['disconnect_external_routes']()
+
+    def test_root_fixture_obtains_private_expiring_xauthority_as_the_live_user(self):
+        guest = self.guest_functions('authorize_x11')
+        runtime = Path('/run/user/1000')
+        directory = runtime / 'husk-installer-test.123456'
+        def metadata(path):
+            regular = path.name == 'Xauthority'
+            return SimpleNamespace(st_uid=1000, st_mode=(stat.S_IFREG | 0o600) if regular else
+                                   (stat.S_IFDIR | 0o700), st_nlink=1, st_size=120)
+        guest.update(P=Path, stat=stat, pwd=SimpleNamespace(getpwuid=lambda uid: SimpleNamespace(pw_name='live')))
+        guest['command'] = Mock(side_effect=[SimpleNamespace(stdout=str(directory)+'\n'), SimpleNamespace(stdout='')])
+        with patch.object(Path, 'lstat', metadata):
+            authority = guest['authorize_x11'](dict(DISPLAY=':0', XDG_RUNTIME_DIR=str(runtime)), 1000)
+        self.assertEqual(authority, str(directory/'Xauthority'))
+        calls = guest['command'].call_args_list
+        self.assertEqual(calls[0].args[0][:4], ['runuser', '-u', 'live', '--'])
+        self.assertEqual(calls[1].args[0], ['runuser', '-u', 'live', '--', '/usr/bin/xauth',
+                         '-f', authority, 'generate', ':0', '.', 'trusted', 'timeout', '120'])
+        self.assertEqual(calls[1].kwargs['env']['LANG'], 'C.UTF-8')
+
+    def test_root_fixture_refuses_remote_display_or_nonprivate_authority(self):
+        guest = self.guest_functions('authorize_x11')
+        guest.update(P=Path, stat=stat, pwd=SimpleNamespace(getpwuid=lambda uid: SimpleNamespace(pw_name='live')))
+        guest['command'] = Mock()
+        for display, uid in [('remote.example:0', 1000), (':0', 0)]:
+            with self.subTest(display=display, uid=uid), self.assertRaises(ValueError):
+                guest['authorize_x11'](dict(DISPLAY=display, XDG_RUNTIME_DIR='/run/user/1000'), uid)
+        self.assertFalse(guest['command'].called)
+        for mode in (stat.S_IFDIR | 0o755, stat.S_IFLNK | 0o700):
+            with self.subTest(mode=mode), patch.object(Path, 'lstat',
+                    return_value=SimpleNamespace(st_uid=1000, st_mode=mode)), self.assertRaises(ValueError):
+                guest['authorize_x11'](dict(DISPLAY=':0', XDG_RUNTIME_DIR='/run/user/1000'), 1000)
+        self.assertFalse(guest['command'].called)
 
     def test_cancellation_evidence_includes_writes_discards_and_flushes(self):
         guest = self.guest_functions('disk_write_evidence')
