@@ -1,7 +1,9 @@
 """Acceptance orchestration contracts; these tests never boot or install a VM."""
 import importlib.util
 import ast
+import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import socket
@@ -155,25 +157,66 @@ class InstallHarnessTests(unittest.TestCase):
         definitions = [node for node in tree.body
                        if isinstance(node, ast.FunctionDef) and node.name in names]
         self.assertEqual({node.name for node in definitions}, set(names))
-        namespace = {}
+        namespace = dict(json=json, re=re)
         exec(compile(ast.Module(body=definitions, type_ignores=[]), '<guest-functions>', 'exec'), namespace)
         return namespace
 
-    def test_offline_setup_does_not_flush_an_absent_ipv6_default_route(self):
+    def test_offline_setup_temporarily_updates_networkmanager_without_an_ipv6_default(self):
         guest = self.guest_functions('routes', 'disconnect_external_routes')
-        route = ['default via 10.0.2.2 dev enp0s2\n', '', '', '', '']
+        route = [json.dumps([dict(dst='default', gateway='10.0.2.2', dev='enp0s2')]), '[]', '', '[]', '[]']
         command = Mock(side_effect=lambda *args, **kwargs: SimpleNamespace(stdout=route.pop(0)))
         guest['command'] = command
         self.assertTrue(guest['disconnect_external_routes']())
-        self.assertIn((['ip', '-4', 'route', 'flush', 'default'],),
-                      [call.args for call in command.call_args_list])
-        self.assertNotIn((['ip', '-6', 'route', 'flush', 'default'],),
-                         [call.args for call in command.call_args_list])
+        calls = [call.args[0] for call in command.call_args_list]
+        self.assertEqual(calls, [
+            ['ip', '-j', '-4', 'route', 'show', 'exact', 'default'],
+            ['ip', '-j', '-6', 'route', 'show', 'exact', 'default'],
+            ['nmcli', '--wait', '20', 'device', 'modify', 'enp0s2',
+             'ipv4.never-default', 'yes', 'ipv6.never-default', 'yes'],
+            ['ip', '-j', '-4', 'route', 'show', 'exact', 'default'],
+            ['ip', '-j', '-6', 'route', 'show', 'exact', 'default']])
+        self.assertEqual(route, [])
 
-    def test_offline_setup_rejects_routes_that_remain_after_flushing(self):
+    def test_offline_setup_updates_a_dual_stack_device_once(self):
         guest = self.guest_functions('routes', 'disconnect_external_routes')
-        guest['command'] = Mock(return_value=SimpleNamespace(stdout='default via 10.0.2.2\n'))
+        route = [json.dumps([dict(dst='default', dev='enp0s2')]),
+                 json.dumps([dict(dst='default', dev='enp0s2', gateway='fe80::2')]), '', '[]', '[]']
+        guest['command'] = Mock(side_effect=lambda *args, **kwargs: SimpleNamespace(stdout=route.pop(0)))
+        self.assertTrue(guest['disconnect_external_routes']())
+        changes = [call.args[0] for call in guest['command'].call_args_list if call.args[0][0] == 'nmcli']
+        self.assertEqual(len(changes), 1)
+        self.assertEqual(changes[0][5], 'enp0s2')
+
+    def test_offline_route_detection_ignores_link_routes_and_unreachable_defaults(self):
+        guest = self.guest_functions('routes')
+        route = [json.dumps([dict(dst='10.0.2.0/24', dev='enp0s2')]),
+                 json.dumps([dict(dst='default', type='unreachable'), dict(dst='fe80::/64', dev='enp0s2')])]
+        guest['command'] = Mock(side_effect=lambda *args, **kwargs: SimpleNamespace(stdout=route.pop(0)))
+        self.assertEqual(guest['routes'](), [])
+
+    def test_offline_route_detection_rejects_malformed_or_ambiguous_routes(self):
+        for route in ('not-json', '{}', '[null]', '[{"dst":"default"}]',
+                      '[{"dst":"default","dev":"unsafe/name"}]',
+                      '[{"dst":"default","dev":"enp0s2","type":"unknown"}]'):
+            with self.subTest(route=route):
+                guest = self.guest_functions('routes')
+                guest['command'] = Mock(return_value=SimpleNamespace(stdout=route))
+                with self.assertRaisesRegex(RuntimeError, 'route'):
+                    guest['routes']()
+
+    def test_offline_setup_rejects_routes_that_remain_after_networkmanager_update(self):
+        guest = self.guest_functions('routes', 'disconnect_external_routes')
+        guest['command'] = Mock(return_value=SimpleNamespace(stdout='[{"dst":"default","dev":"enp0s2"}]'))
         with self.assertRaisesRegex(RuntimeError, 'default routes'):
+            guest['disconnect_external_routes']()
+
+    def test_offline_setup_propagates_a_networkmanager_failure(self):
+        guest = self.guest_functions('routes', 'disconnect_external_routes')
+        def command(argv, **kwargs):
+            if argv[0] == 'nmcli': raise RuntimeError('NetworkManager rejected the temporary change')
+            return SimpleNamespace(stdout='[{"dst":"default","dev":"enp0s2"}]')
+        guest['command'] = command
+        with self.assertRaisesRegex(RuntimeError, 'NetworkManager rejected'):
             guest['disconnect_external_routes']()
 
     def test_offline_setup_does_not_ignore_a_real_route_command_error(self):

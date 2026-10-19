@@ -28,10 +28,10 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39126898288](https://github.com/monsteri24/Husk-OS/actions/runs/39126898288) passed 426 tests with zero failures or skips in the actual GTK run at `808da74`; 174 source/configuration checks also passed. |
-| Local checks | 419 tests, zero failures, 69 explicit environment skips before the latest four harness regressions; 174 current source/configuration checks pass. Real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation were exercised. |
-| Actual Labwc | [39122977898](https://github.com/monsteri24/Husk-OS/actions/runs/39122977898) passed at `1e2b159`, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. The same production code also passed the desktop job in [39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527), using the latest compositor focus evidence. |
-| Real application packages | [39123974007](https://github.com/monsteri24/Husk-OS/actions/runs/39123974007) passed: the shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. |
+| Source/models/real GTK | [39246589719](https://github.com/monsteri24/Husk-OS/actions/runs/39246589719) passed its separate source/GTK job: 427 tests with zero failures or skips in the actual GTK run; 174 source/configuration checks also passed. The VM job in that run failed separately, as described below. |
+| Local checks | All 17 current installation-harness tests and 174 source/configuration checks pass. Earlier checks exercised real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation. Local graphical environment skips remain explicit. |
+| Actual Labwc | [39246822238](https://github.com/monsteri24/Husk-OS/actions/runs/39246822238) passed on the current branch, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
 | Full V3 build | [39123206803](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803) compiled the patched Calamares/backend, built signed packages and produced the actual ISO. Generic and V3 extracted-rootfs checks passed. |
 | Live UEFI boot | The same exact ISO passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. |
 | Disk guard in Live | The real guard accepted the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium. |
@@ -62,12 +62,18 @@ All 32 profile/integration tests pass, including package-payload preservation.
 The smaller image has not yet been built; the current immutable image remains
 usable for the in-progress installation test.
 
-The first install attempt on this exact image stopped **before launching
-Calamares**: the test fixture tried to flush an absent IPv6 default route and
-iproute2 returned an error. The fixture now inspects each address family,
-flushes only existing default routes and still fails if inspection fails or
-external routes remain. Four regression tests cover this and stronger disk
-operation evidence. The current recovery workflow verifies the exact ISO
+Installation attempts on this exact image have stopped **before launching
+Calamares**. The latest [39246589719](https://github.com/monsteri24/Husk-OS/actions/runs/39246589719)
+successfully reached the acknowledged root setup over the separate UART under
+KVM, then failed on `ip -6 route flush default` with `Invalid argument`.
+The fixture now inspects exact default routes as structured JSON and temporarily
+sets NetworkManager's active device configuration to never provide IPv4/IPv6
+defaults. It does not alter saved connection profiles or remove the connected
+route to the evidence server. It independently requires no remaining external
+unicast defaults, records before/after routes and propagates inspection or
+NetworkManager errors. Regression tests cover absent IPv6 defaults, dual-stack
+device deduplication, unreachable/link routes, malformed data and real failures.
+The current recovery workflow verifies the exact ISO
 hash/size and requires unchanged runtime sources before reusing it. The only
 excluded source file is the build-only profile generator `ownos/build.py`;
 its new compression is recorded separately and is not claimed to be present
@@ -88,7 +94,7 @@ transport fault: boot/Plymouth traffic and the debug shell shared ttyS0, and
 the captured log contains truncated shell input and a continuation prompt.
 The test now leaves boot output on ttyS0 and uses a separate ttyS1 UART/socket
 for setup, paces UART writes and can reset only the harmless readiness probe.
-All 13 focused harness tests pass, including real socket I/O, port isolation,
+All 17 focused harness tests pass, including real socket I/O, port isolation,
 input pacing, target isolation and installed-boot argument checks. Compatible
 hosted runners also grant their own test account access to an existing KVM
 device with mode 0600; runners without it retain TCG. These changes affect
@@ -111,8 +117,8 @@ installed-boot gates have **not yet passed**.
 A later parallel Labwc run exposed test input arriving before the compositor
 returned pointer focus after Escape destroyed a popup. The harness now moves
 the actual pointer and waits for observed GDK focus on Husk Desktop before
-reopening; production menu behavior and assertions are unchanged. The latest
-real Labwc run at `6dd54d1` passed with this focus check.
+reopening; production menu behavior and assertions are unchanged. Subsequent
+real Labwc runs, including `9b488ff`, passed with this focus check.
 
 ## Coverage limits
 

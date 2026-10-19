@@ -180,11 +180,30 @@ def post():
         urllib.request.urlopen(urllib.request.Request(CONFIG['base']+'/report',data=data,method='POST'),timeout=15).read()
     except Exception: pass
 def routes():
-    return command(['ip','-4','route','show','default']).stdout.strip() + command(['ip','-6','route','show','default']).stdout.strip()
-def disconnect_external_routes():
+    defaults=[]
     for family in ('-4','-6'):
-        if command(['ip',family,'route','show','default']).stdout.strip():
-            command(['ip',family,'route','flush','default'])
+        raw=command(['ip','-j',family,'route','show','exact','default']).stdout
+        try: entries=json.loads(raw)
+        except (ValueError,TypeError) as error: raise RuntimeError('Invalid route inspection JSON') from error
+        if not isinstance(entries,list): raise RuntimeError('Invalid route inspection list')
+        for entry in entries:
+            if not isinstance(entry,dict) or not isinstance(entry.get('dst'),str):
+                raise RuntimeError('Invalid route inspection entry')
+            if entry['dst'] not in ('default','0.0.0.0/0','::/0'): continue
+            kind=entry.get('type','unicast')
+            if kind in ('unreachable','blackhole','prohibit','throw'): continue
+            if kind!='unicast': raise RuntimeError('Unsupported default route type')
+            device=entry.get('dev')
+            if not isinstance(device,str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,14}',device):
+                raise RuntimeError('The default route has no unambiguous network device')
+            defaults.append(dict(family=family,device=device,gateway=entry.get('gateway')))
+    return defaults
+def disconnect_external_routes():
+    # Change only the VM's active configuration, never a profile copied to the
+    # installed system. Keep the directly connected evidence-server route.
+    for device in sorted({route['device'] for route in routes()}):
+        command(['nmcli','--wait','20','device','modify',device,
+                 'ipv4.never-default','yes','ipv6.never-default','yes'])
     if routes(): raise RuntimeError('External default routes could not be removed for the offline install')
     return True
 def serial():
@@ -270,7 +289,10 @@ try:
     state['live_medium_rejected']=protected.returncode!=0
     if not state['guard_target_accepted'] or not state['live_medium_rejected']:
         raise RuntimeError('The unmodified installation disk guard did not accept/reject the expected devices')
+    state['routes_before']=routes()
     state['offline']=disconnect_external_routes()
+    state['routes_after']=routes()
+    post()
     P('/run/husk-v3-disposable-test').write_text('HUSK-DISPOSABLE\n')
     driver=P('/tmp/husk-v3-driver.so')
     urllib.request.urlretrieve(CONFIG['base']+'/driver.so',driver)
