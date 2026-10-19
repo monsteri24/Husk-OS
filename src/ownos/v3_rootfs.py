@@ -148,6 +148,19 @@ def _check_installer(reader):
 def _check_policy_and_launcher(reader):
     problems = reader.problems
     try:
+        wrapper = reader.text('usr/lib/ownos/husk-installer-root')
+        commands = [shlex.split(line) for line in wrapper.splitlines()
+                    if line.strip().startswith('exec ')]
+        if (len(commands) != 1 or commands[0][:2] != ['exec','/usr/bin/calamares'] or
+                any(value == '-c' or value.startswith('--config') for value in commands[0][2:])):
+            raise ValueError('Use the standard Calamares settings/data directories; a test config override hides installed QML.')
+        exports = dict(token.split('=',1) for line in wrapper.splitlines() if line.strip().startswith('export ')
+                       for token in shlex.split(line)[1:] if '=' in token)
+        if any(exports.get(name) not in ('C.UTF-8','C.utf8') for name in ('LANG','LC_ALL')):
+            raise ValueError('Use the built-in English UTF-8 locale without requiring generated Live locale data.')
+    except ValueError as exc:
+        problems.append('Invalid V3 installer startup/data directories: ' + str(exc))
+    try:
         policy = ET.fromstring(reader.text('usr/share/polkit-1/actions/org.ownos.install.policy'))
         actions = policy.findall("action[@id='org.ownos.install']")
         if len(actions) != 1:
@@ -268,18 +281,19 @@ def validate_v3_rootfs(root, boot=None):
     for name in ('calamares', 'husk-install', 'pkexec', 'lsblk', 'findmnt', 'arch-chroot',
                  'mkinitcpio', 'grub-install', 'grub-mkconfig', 'efibootmgr', 'rsync',
                  'sync', 'pacman', 'pacman-key', 'passwd', 'systemctl', 'wpa_supplicant',
-                 'nm-connection-editor', 'blueman-manager', 'bluetoothctl'):
+                 'nm-connection-editor', 'blueman-manager', 'bluetoothctl', 'xauth'):
         reader.required('usr/bin/' + name, executable=True)
     for relative in ('usr/lib/ownos/husk-installer-root', 'usr/lib/ownos/husk-install-guard',
                      'usr/lib/bluetooth/bluetoothd'):
         reader.required(relative, executable=True)
-    for name in ('installer_safety', 'provisioning', 'live_password', 'network', 'bluetooth'):
+    for name in ('installer_safety', 'installer_display', 'provisioning', 'live_password', 'network', 'bluetooth'):
         reader.required('usr/lib/ownos/ownos/' + name + '.py')
     for name in ('installer', 'network', 'bluetooth'):
         reader.required('usr/lib/ownos/ownos/ui/' + name + '.py')
     for relative in ('usr/lib/libcalamares.so', 'usr/lib/libcalamaresui.so', 'usr/lib/libnm.so.0',
                      'usr/lib/qt6/plugins/platforms/libqxcb.so',
                      'usr/lib/girepository-1.0/NM-1.0.typelib', 'etc/calamares/husk.qss',
+                     'usr/share/calamares/qml/calamares/slideshow/qmldir',
                      'etc/polkit-1/rules.d/49-ownos-live.rules'):
         reader.required(relative)
     try:

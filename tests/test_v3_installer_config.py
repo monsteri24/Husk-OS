@@ -1,5 +1,9 @@
 import unittest
+import os
 from pathlib import Path
+import shlex
+import subprocess
+import sys
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,7 +39,14 @@ class V3InstallerConfiguration(unittest.TestCase):
         self.assertFalse(locale['adjustLiveTimezone'])
         self.assertEqual(locale['geoip']['style'], 'none')
         wrapper = (ROOT/'bin/husk-installer-root').read_text()
-        self.assertIn('LC_ALL=en_US.UTF-8', wrapper)
+        exports = dict(token.split('=',1) for line in wrapper.splitlines() if line.startswith('export ')
+                       for token in shlex.split(line)[1:] if '=' in token)
+        self.assertIn(exports['LC_ALL'], ('C.UTF-8','C.utf8'))
+        result = subprocess.run([sys.executable,'-c',
+            'import locale; locale.setlocale(locale.LC_ALL, ""); print(locale.getencoding())'],
+            env=dict(os.environ,LANG=exports['LANG'],LC_ALL=exports['LC_ALL']),
+            capture_output=True,text=True,check=True,timeout=10)
+        self.assertEqual(result.stdout.strip().upper(),'UTF-8')
         self.assertIn('[ -d /sys/firmware/efi ]', wrapper)
 
 

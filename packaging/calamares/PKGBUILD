@@ -38,4 +38,5 @@ package() {
     test -s "$pkgdir/usr/lib/calamares/modules/$module/libcalamares_viewmodule_$module.so"
   done
   test -f "$pkgdir/usr/lib/calamares/modules/unpackfs/main.py"
+  test -s "$pkgdir/usr/share/calamares/qml/calamares/slideshow/qmldir"
 }

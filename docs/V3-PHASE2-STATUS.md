@@ -28,15 +28,17 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460) passed its separate source/GTK job: 431 tests with zero failures or skips in the actual GTK run; 174 source/configuration checks also passed. The VM job in that run failed separately, as described below. |
-| Local checks | All 19 current installation-harness tests and 174 source/configuration checks pass. Earlier checks exercised real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation. Local graphical environment skips remain explicit. |
-| Actual Labwc | [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460) passed its separate desktop job, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Source/models/real GTK | [39249438444](https://github.com/monsteri24/Husk-OS/actions/runs/39249438444) passed its separate source/GTK job: 433 tests with zero failures or skips in the actual GTK run; 174 source/configuration checks also passed. The VM job in that run failed separately, as described below. |
+| Local checks | Current source: 444 tests, zero failures, 70 explicit graphical/environment skips; 176 source/configuration checks and the native sanitizer check pass. Local leak detection is disabled as described below. New display tests cover private files, normal/error cleanup, symlink/hardlink rejection, secret-free failures and fixed-helper invocation; their actual GTK/X SECURITY test is deferred to Actions. |
+| Actual Labwc | [39249438444](https://github.com/monsteri24/Husk-OS/actions/runs/39249438444) passed its separate desktop job, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
 | Full V3 build | [39123206803](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803) compiled the patched Calamares/backend, built signed packages and produced the actual ISO. Generic and V3 extracted-rootfs checks passed. |
 | Live UEFI boot | The same exact ISO passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. |
 | Disk guard in Live | The real guard accepted the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium. |
 
-The latest ISO is preserved as an explicitly **unverified** Actions artifact:
+The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
+It predates the installer startup fixes below and must not be published as a
+working installer:
 
 - Source: `0ac564dbd141f00bcfd68503fbe75f9065041e51`
 - Size: **2,214,559,744 bytes**
@@ -59,8 +61,9 @@ workers and unchanged package selection, rather than the level-3 fast first-boot
 profile. The build report records actual size eligibility and fails publication
 eligibility when oversized, while preserving the candidate and diagnostics.
 All 32 profile/integration tests pass, including package-payload preservation.
-The smaller image has not yet been built; the current immutable image remains
-usable for the in-progress installation test.
+The smaller image has not yet been built. Build request attempt 4 includes the
+startup fixes below and the same package selection. The earlier immutable
+image remains useful as diagnostic evidence but cannot prove the new source.
 
 Installation attempts on this exact image have stopped **before reaching
 Calamares navigation**. [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460)
@@ -78,19 +81,32 @@ device deduplication, unreachable/link routes, malformed data and real failures.
 The next blocker was Qt's X11 display authorization: the isolated root fixture
 could not connect to the Live user's XWayland display. The disk still had zero
 writes/discards/flushes and identical GPT-edge hashes, but reviewed GUI
-cancellation did not occur. The next test supplies a private, user-owned
-Xauthority generated through X SECURITY with a 120-second unused timeout,
-without changing the X server ACL or the ISO. Its permission/owner and local
-display checks have unit coverage. This is test-fixture evidence only; normal
-graphical authorization remains unverified. The wrapper also requested an
-unavailable `en_US.UTF-8` Live locale and Qt fell back to `C.UTF-8`; this needs
-a source fix and rebuilt-image verification.
+cancellation did not occur. [39249438444](https://github.com/monsteri24/Husk-OS/actions/runs/39249438444)
+then successfully supplied a private, user-owned Xauthority generated through
+X SECURITY with a 120-second unused timeout, without changing the X server ACL
+or the ISO. Calamares progressed past display initialization and exposed the
+production startup-path error: `-c /etc/calamares` overrides the application
+data root, so it fatally searched for `/etc/calamares/qml`. The pinned upstream
+source normally reads `/etc/calamares/settings.conf` while loading QML from
+`/usr/share/calamares/qml`. The wrapper also requested an unavailable
+`en_US.UTF-8` Live locale and Qt fell back to `C.UTF-8`.
 
-The current recovery workflow verifies the exact ISO
+The new source removes the test-only `-c` override and explicitly uses the
+built-in English `C.UTF-8` locale. The normal unprivileged GTK launcher now
+prepares a private temporary Xauthority before calling the same restricted
+pkexec helper, keeps it until that process exits and cleans it on success,
+cancel or error. Administrator authorization remains required. This work runs
+in a worker thread. Packaging and payload checks now require Xauth, the display
+helper and installed Calamares QML, and reject the known incorrect startup
+override. These source fixes require the new ISO build and real VM verification;
+normal polkit/PAM authorization is still unverified.
+
+The earlier recovery workflow verifies the exact ISO
 hash/size and requires unchanged runtime sources before reusing it. The only
 excluded source file is the build-only profile generator `ownos/build.py`;
 its new compression is recorded separately and is not claimed to be present
-in the reused image.
+in the reused image. Its strict runtime-source comparison correctly prevents
+reusing that image as acceptance for the new installer startup source.
 
 The older TCG run [39122974054](https://github.com/monsteri24/Husk-OS/actions/runs/39122974054)
 expired without any guest setup report. Its captured screen showed boot still

@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import threading
 from ownos.app_install import InstallProblem, live_authentication_state
+from ownos.installer_display import DisplayAuthorizationError, installer_display_environment
 from ownos.ui.app_install import LivePasswordDialog, set_live_password
 from ownos.ui.common import Gtk, GLib, error, load_style, remove_style, require_display
 
@@ -74,12 +75,16 @@ class InstallerLauncher(Gtk.Window):
         if self.closed: return False
         self.busy=True; self.open.set_sensitive(False); self.cancel.set_sensitive(False)
         self.status.set_text('Authorize the installer in the system dialog. Disk selection and final confirmation follow.')
-        try:
-            self.process = subprocess.Popen(['/usr/bin/pkexec','/usr/lib/ownos/husk-installer-root'])
-        except OSError:
-            return self.failed('The system authorization service could not start.')
         def wait():
-            code = self.process.wait()
+            try:
+                with installer_display_environment() as environment:
+                    self.process = subprocess.Popen(['/usr/bin/pkexec','/usr/lib/ownos/husk-installer-root'],
+                                                    env=environment)
+                    code = self.process.wait()
+            except DisplayAuthorizationError as exc:
+                GLib.idle_add(self.failed,str(exc)); return
+            except (OSError,subprocess.SubprocessError):
+                GLib.idle_add(self.failed,'The system authorization service could not start.'); return
             GLib.idle_add(self.finished,code)
         threading.Thread(target=wait,daemon=True).start()
         return False

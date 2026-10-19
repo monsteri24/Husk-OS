@@ -82,7 +82,7 @@ package_ownos-keyring() {
 }
 
 package_ownos-live() {
-  depends=('ownos-desktop' 'sddm' 'networkmanager' 'sudo' 'arch-install-scripts')
+  depends=('ownos-desktop' 'sddm' 'networkmanager' 'sudo' 'arch-install-scripts' 'xorg-xauth')
   optdepends=('calamares: experimental graphical installer')
   install -Dm755 ownos/iso/live-setup "$pkgdir/usr/lib/ownos/live-setup"
   install -Dm755 ownos/iso/live-keyring "$pkgdir/usr/lib/ownos/live-keyring"

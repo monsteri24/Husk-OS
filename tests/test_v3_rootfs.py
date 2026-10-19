@@ -36,12 +36,13 @@ class V3RootfsTests(unittest.TestCase):
                      'arch-chroot', 'mkinitcpio', 'grub-install', 'grub-mkconfig',
                      'efibootmgr', 'rsync', 'sync', 'pacman', 'pacman-key',
                      'passwd', 'systemctl', 'wpa_supplicant', 'nm-connection-editor',
-                     'blueman-manager', 'bluetoothctl'):
+                     'blueman-manager', 'bluetoothctl', 'xauth'):
             self.put('usr/bin/' + name, '#!/bin/sh\nexit 0\n', 0o755)
         for name in ('husk-install-guard', 'husk-installer-root'):
             self.put('usr/lib/ownos/' + name, '#!/bin/sh\nexit 0\n', 0o755)
+        self.put('usr/lib/ownos/husk-installer-root', (ROOT/'bin/husk-installer-root').read_text(), 0o755)
         self.put('usr/lib/bluetooth/bluetoothd', '#!/bin/sh\nexit 0\n', 0o755)
-        for name in ('installer_safety', 'provisioning', 'live_password', 'network', 'bluetooth'):
+        for name in ('installer_safety', 'installer_display', 'provisioning', 'live_password', 'network', 'bluetooth'):
             self.put('usr/lib/ownos/ownos/' + name + '.py', '# installed fixture module\n')
         for name in ('installer', 'network', 'bluetooth'):
             self.put('usr/lib/ownos/ownos/ui/' + name + '.py', '# installed GTK fixture module\n')
@@ -49,6 +50,7 @@ class V3RootfsTests(unittest.TestCase):
             self.put('usr/lib/' + name + '.1', 'shared library fixture')
             (self.root / 'usr/lib' / name).symlink_to(name + '.1')
         self.put('usr/lib/qt6/plugins/platforms/libqxcb.so', 'Qt platform fixture')
+        self.put('usr/share/calamares/qml/calamares/slideshow/qmldir', 'module calamares.slideshow\n')
         self.put('usr/lib/girepository-1.0/NM-1.0.typelib', 'NM introspection fixture')
         self.put('etc/os-release', 'NAME="Husk OS"\nID=huskos\nVERSION_ID=v3-phase2\nBUILD_ID=v3-phase2\n')
         self.put('etc/locale.conf', 'LANG=en_US.UTF-8\n')
@@ -140,6 +142,23 @@ class V3RootfsTests(unittest.TestCase):
                 path.unlink()
                 self.assertTrue(any(relative in message for message in self.errors()))
                 path.write_bytes(data)
+
+    def test_missing_qml_or_secure_display_support_is_an_error(self):
+        for relative in ('usr/share/calamares/qml/calamares/slideshow/qmldir',
+                         'usr/lib/ownos/ownos/installer_display.py', 'usr/bin/xauth'):
+            with self.subTest(relative=relative):
+                path = self.put(relative, 'present fixture', 0o755 if relative.endswith('/xauth') else 0o644)
+                path.unlink()
+                self.assertTrue(any(relative in message for message in self.errors()))
+
+    def test_test_only_config_override_that_hides_installed_qml_is_rejected(self):
+        self.put('usr/lib/ownos/husk-installer-root', '#!/bin/sh\nexec /usr/bin/calamares -c /etc/calamares\n', 0o755)
+        self.assertTrue(any('data directories' in message for message in self.errors()))
+
+    def test_installer_cannot_assume_a_generated_live_english_locale(self):
+        wrapper=(ROOT/'bin/husk-installer-root').read_text().replace('C.UTF-8','en_US.UTF-8')
+        self.put('usr/lib/ownos/husk-installer-root',wrapper,0o755)
+        self.assertTrue(any('built-in English UTF-8' in message for message in self.errors()))
 
     def test_changed_nonempty_installer_icon_is_rejected(self):
         self.put('usr/share/icons/hicolor/128x128/apps/husk-install.png', 'different image bytes')
