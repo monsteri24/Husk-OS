@@ -1,5 +1,5 @@
 request=V3 Phase 2 guarded installer candidate
-attempt=4-secure-display-standard-calamares-paths-and-compact-iso
+attempt=5-required-branding-images-and-compact-iso
 acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI
-changes=private-Xauthority,English-C.UTF-8,standard-QML-data-paths,zstd15
-release=blocked-until-all-essential-acceptance-gates-pass
+changes=required-branding-maps,existing-Husk-artwork,guest-asset-validation,zstd19
+release=forbidden-by-user-no-publish-no-merge-no-main-changes

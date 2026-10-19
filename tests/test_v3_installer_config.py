@@ -10,6 +10,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class V3InstallerConfiguration(unittest.TestCase):
+    def test_branding_supplies_the_maps_and_images_required_by_the_real_loader(self):
+        branding = yaml.safe_load((ROOT / 'installer/calamares/branding/ownos/branding.desc').read_text())
+        for section in ('strings', 'images', 'style', 'uploadServer'):
+            self.assertIsInstance(branding.get(section), dict,
+                                  'Calamares loadStrings requires the ' + section + ' map')
+        for key in ('productIcon', 'productLogo', 'productWelcome'):
+            self.assertTrue(branding['images'].get(key), 'Missing installer branding image: ' + key)
+        self.assertEqual(branding['uploadServer']['type'], 'none')
+
     def test_installer_is_erase_only_and_requires_separate_confirmation(self):
         settings = yaml.safe_load((ROOT/'installer/calamares/settings.conf').read_text())
         self.assertTrue(settings['prompt-install'])

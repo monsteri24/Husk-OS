@@ -140,9 +140,45 @@ def _check_installer(reader):
     locale = reader.mapping('etc/calamares/modules/locale.conf')
     if locale.get('adjustLiveTimezone') is not False or locale.get('geoip', {}).get('style') != 'none':
         problems.append('Invalid V3 explicit timezone/disabled GeoIP configuration.')
-    branding = reader.mapping('etc/calamares/branding/ownos/branding.desc')
-    if branding.get('componentName') != 'ownos' or branding.get('strings', {}).get('productName') != 'Husk OS' or branding.get('strings', {}).get('version') != 'V3 Phase 2':
+    _check_branding(reader)
+
+
+def _check_branding(reader):
+    """Check the maps required by Calamares 3.3.14's actual Branding loader.
+
+    Resolve image paths inside the extracted guest, never against host files
+    or the build user's icon theme. This is a payload check, not a Qt UI test.
+    """
+    problems = reader.problems
+    directory = 'etc/calamares/branding/ownos/'
+    branding = reader.mapping(directory + 'branding.desc')
+    sections = {}
+    for key in ('strings', 'images', 'style', 'uploadServer'):
+        value = branding.get(key)
+        if not isinstance(value, dict):
+            problems.append('Invalid V3 installer branding: required mapping ' + key)
+            value = {}
+        sections[key] = value
+    strings = sections['strings']
+    if (branding.get('componentName') != 'ownos'
+            or strings.get('productName') != 'Husk OS'
+            or strings.get('version') != 'V3 Phase 2'):
         problems.append('Invalid V3 installer product/version branding.')
+    for key in ('productIcon', 'productLogo', 'productWelcome'):
+        value = sections['images'].get(key)
+        if (not isinstance(value, str) or not value.startswith('/usr/share/')
+                or '..' in PurePosixPath(value).parts):
+            problems.append('Invalid V3 installer branding image path: ' + key)
+        else:
+            reader.required(value.lstrip('/'))
+    if sections['uploadServer'].get('type') != 'none':
+        problems.append('Invalid V3 installer branding: diagnostic uploads must remain disabled.')
+    slideshow = branding.get('slideshow')
+    if (not isinstance(slideshow, str) or PurePosixPath(slideshow).name != slideshow
+            or not slideshow.endswith('.qml') or branding.get('slideshowAPI') not in (1, 2)):
+        problems.append('Invalid V3 installer branding slideshow configuration.')
+    else:
+        reader.required(directory + slideshow)
 
 
 def _check_policy_and_launcher(reader):

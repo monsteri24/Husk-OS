@@ -96,9 +96,11 @@ class V3RootfsTests(unittest.TestCase):
         })
         self.put_yaml('etc/calamares/modules/welcome.conf', {'requirements': {'required': ['storage', 'ram', 'root']}})
         self.put_yaml('etc/calamares/modules/locale.conf', {'adjustLiveTimezone': False, 'geoip': {'style': 'none'}})
-        self.put_yaml('etc/calamares/branding/ownos/branding.desc', {
-            'componentName': 'ownos', 'strings': {'productName': 'Husk OS', 'version': 'V3 Phase 2'},
-        })
+        for name in ('branding.desc', 'show.qml'):
+            self.put('etc/calamares/branding/ownos/' + name,
+                     (ROOT / 'installer/calamares/branding/ownos' / name).read_text())
+        wallpaper = self.put('usr/share/ownos/wallpapers/husk-desert.jpg', 'wallpaper fixture')
+        wallpaper.write_bytes((ROOT / 'data/wallpapers/husk-desert.jpg').read_bytes())
         self.put('etc/calamares/husk.qss', 'QWidget { color: white; }')
         self.policy = self.put('usr/share/polkit-1/actions/org.ownos.install.policy', '''<policyconfig>
 <action id="org.ownos.install"><defaults><allow_any>no</allow_any><allow_inactive>no</allow_inactive><allow_active>auth_admin</allow_active></defaults>
@@ -150,6 +152,40 @@ class V3RootfsTests(unittest.TestCase):
                 path = self.put(relative, 'present fixture', 0o755 if relative.endswith('/xauth') else 0o644)
                 path.unlink()
                 self.assertTrue(any(relative in message for message in self.errors()))
+
+    def test_missing_or_malformed_required_branding_sections_are_rejected(self):
+        relative = 'etc/calamares/branding/ownos/branding.desc'
+        original = yaml.safe_load((self.root / relative).read_text())
+        for key in ('strings', 'images', 'style', 'uploadServer'):
+            for value in (None, [], 'invalid'):
+                with self.subTest(key=key, value=value):
+                    changed = dict(original)
+                    if value is None:
+                        changed.pop(key, None)
+                    else:
+                        changed[key] = value
+                    self.put_yaml(relative, changed)
+                    self.assertTrue(any('branding' in message.lower() for message in self.errors()))
+        self.put_yaml(relative, original)
+
+    def test_branding_images_and_slideshow_must_exist_in_the_guest(self):
+        for relative in ('usr/share/ownos/wallpapers/husk-desert.jpg',
+                         'etc/calamares/branding/ownos/show.qml'):
+            with self.subTest(relative=relative):
+                path = self.root / relative
+                original = path.read_bytes()
+                path.unlink()
+                self.assertTrue(any(relative in message for message in self.errors()))
+                path.write_bytes(original)
+
+    def test_branding_image_cannot_escape_to_a_host_file_or_theme(self):
+        relative = 'etc/calamares/branding/ownos/branding.desc'
+        branding = yaml.safe_load((self.root / relative).read_text())
+        for value in ('/etc/passwd', '/usr/share/../../etc/passwd', 'installer-icon', None):
+            with self.subTest(value=value):
+                branding['images']['productIcon'] = value
+                self.put_yaml(relative, branding)
+                self.assertTrue(any('branding image path' in message for message in self.errors()))
 
     def test_test_only_config_override_that_hides_installed_qml_is_rejected(self):
         self.put('usr/lib/ownos/husk-installer-root', '#!/bin/sh\nexec /usr/bin/calamares -c /etc/calamares\n', 0o755)

@@ -4,6 +4,9 @@ The development branch continues verified System 2 at `8a57d6c` without
 replacing Labwc/GTK or modifying the System 1 and System 2 releases. Main is
 unchanged. [Draft PR #1](https://github.com/monsteri24/Husk-OS/pull/1) is the
 reviewable candidate. No V3 release has been published.
+The current user instruction explicitly forbids publication, merging the PR,
+changing main or deleting old releases. Passing acceptance does not authorize
+a release.
 
 The source implements an authenticated graphical application-install flow,
 separate network/DNS/repository diagnostics, official Steam/Heroic artwork,
@@ -33,12 +36,12 @@ countdown and Restart Later/Restart Now order.
 | Actual Labwc | [39252514315](https://github.com/monsteri24/Husk-OS/actions/runs/39252514315) passed after the observer correction, including taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. The earlier parallel taskbar timeout is documented below. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
 | Full V3 build | [39250972954](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954) compiled the patched Calamares/backend, built signed packages and produced the startup-fixed ISO. Generic and stricter V3 extracted-rootfs checks passed. The job then correctly failed its release-size gate and preserved the image/evidence. |
-| Live UEFI boot | The older `0ac564d` image passed real OVMF Live startup, desktop evidence, terminal shortcut and safe ACPI shutdown. The new `65b2085` image still requires its own boot test; old-image proof cannot substitute for it. |
-| Disk guard in Live | Earlier real tests accepted only the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium; this must also pass on the rebuilt image. |
+| Live UEFI boot | [39253873845](https://github.com/monsteri24/Husk-OS/actions/runs/39253873845) passed real OVMF Live startup of the exact `65b2085` ISO, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
+| Disk guard in Live | That same run accepted the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium. The target retained zero write/discard/flush counters and unchanged GPT-edge hashes after the startup failure. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
-It contains the startup fixes below, but still needs real boot/installation
-acceptance and is too large for a release file:
+It contains the startup fixes below and passed Live boot. Installation
+acceptance is still blocked, and it is too large for a release file:
 
 - Source: `65b20855fa919a447989cd932134f63493d2f18f`
 - Size: **2,147,778,560 bytes**
@@ -63,10 +66,12 @@ Zstd level 15 reduced the previous image by 66,781,184 bytes, but this is still
 two compression workers and unchanged package selection; all 32 profile tests
 pass, including payload preservation. Level 19 has not yet been built. The
 build report correctly blocked publication and preserved the completed image.
-The recovery workflow now pins this new exact image and runs its first Live
-UEFI and disposable installation tests before another lengthy build. Missing
-prior boot evidence requires a fresh real boot; mismatched/failed evidence is
-rejected. Three new regressions cover that proof-reuse decision.
+The recovery workflow pinned and reused this exact image. Missing prior boot
+evidence required a fresh real boot; mismatched/failed evidence is rejected.
+Three regressions cover that proof-reuse decision. The completed recovery run
+proved Live boot but exposed a missing required branding map before the
+installer event loop. The next build is necessary to include the production
+branding correction; the immutable old ISO cannot establish that correction.
 
 Earlier installation attempts on the `0ac564d` image stopped **before reaching
 Calamares navigation**. [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460)
@@ -101,9 +106,21 @@ pkexec helper, keeps it until that process exits and cleans it on success,
 cancel or error. Administrator authorization remains required. This work runs
 in a worker thread. Packaging and payload checks now require Xauth, the display
 helper and installed Calamares QML, and reject the known incorrect startup
-override. These source fixes are included in the new `65b2085` ISO but still
-require real VM verification;
-normal polkit/PAM authorization is still unverified.
+override. These source fixes are included in the `65b2085` ISO. Its actual VM
+run passed XWayland display authorization, UTF-8 startup and standard QML-path
+initialization without the previous errors. Normal polkit/PAM authorization
+is still unverified.
+
+The next actual startup error in [39253873845](https://github.com/monsteri24/Husk-OS/actions/runs/39253873845)
+was `invalid node; first invalid key: "images"` in `branding.desc`. Inspection
+of the pinned upstream `Branding.cpp` confirmed that `strings`, `images` and
+`style` are required mappings, even when optional image entries are absent.
+The corrected configuration supplies the existing installer artwork and Husk
+wallpaper as absolute installed asset paths. Read-only payload validation now
+rejects missing/malformed branding maps, absent guest image/slideshow files,
+host paths and theme-dependent image names. Regression tests first reproduced
+the missing-map failure and then passed with the correction. Actual Qt
+navigation remains unverified until the rebuilt ISO reaches its event loop.
 
 The recovery workflow verifies the exact ISO
 hash/size and requires unchanged runtime sources before reusing it. The only
