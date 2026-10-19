@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
-      HUSK_IMAGE_SOURCE: c5ad77f045babfadacfef93ca0dc37d765a1263d
+      HUSK_IMAGE_SOURCE: 0ac564dbd141f00bcfd68503fbe75f9065041e51
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,10 +27,10 @@ jobs:
             src/ownos/catalog.py src/ownos/updates.py src/ownos/live_password.py \
             src/ownos/ui/app_install.py src/ownos/ui/common.py bin/own-admin data/org.ownos.admin.policy
           mkdir -p out
-          gh run download 39121558357 --repo "$GITHUB_REPOSITORY" \
-            --name HuskOS-v3-UNVERIFIED-candidate-39121558357 --dir out
+          gh run download 39123206803 --repo "$GITHUB_REPOSITORY" \
+            --name HuskOS-v3-UNVERIFIED-candidate-39123206803 --dir out
           test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2214559744
-          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = d612e177df905d590f192fc4e2615eab925131f8dc46e29366559beee41b22a4
+          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
       - name: Extract only signed packages, public keys and repository configuration
         run: |

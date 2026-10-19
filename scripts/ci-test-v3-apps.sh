@@ -45,6 +45,7 @@ python - <<'PY'
 import json, os
 from pathlib import Path
 report=dict(status='PASSED', image_source=os.environ['HUSK_IMAGE_SOURCE'],
+    image_sha256=Path('out/HuskOS-v3-phase2-SHA256.txt').read_text().split()[0],
     scope='Actual shipped root helper, repository/DNS preflight and signed full-system transactions',
     authentication='NOT TESTED: explicitly consented disposable root container',
     steam_client_and_games='NOT TESTED', packages={})
