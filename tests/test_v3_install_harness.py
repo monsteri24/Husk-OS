@@ -8,7 +8,7 @@ import socket
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,8 +61,11 @@ class InstallHarnessTests(unittest.TestCase):
             live = self.harness.make_qemu_command('live', **values)
             installed = self.harness.make_qemu_command('installed', **values)
             self.assertIn('-kernel', live)
-            self.assertIn('systemd.debug_shell=ttyS0', live[live.index('-append') + 1])
-            self.assertIn('systemd.mask=serial-getty@ttyS0.service', live[live.index('-append') + 1])
+            self.assertIn('systemd.debug_shell=ttyS1', live[live.index('-append') + 1])
+            self.assertIn('systemd.mask=serial-getty@ttyS1.service', live[live.index('-append') + 1])
+            self.assertNotIn('console=ttyS1', live[live.index('-append') + 1])
+            serial_ports = [live[i + 1] for i, value in enumerate(live[:-1]) if value == '-serial']
+            self.assertEqual(serial_ports, ['file:'+str(directory/'live-serial.log'), 'chardev:setup'])
             self.assertIn('-chardev', live)
             self.assertNotIn('-chardev', installed)
             for argument in ('-cdrom', '-kernel', '-initrd', '-append'):
@@ -91,6 +94,19 @@ class InstallHarnessTests(unittest.TestCase):
         guest.close()
         with self.assertRaisesRegex(RuntimeError,'serial console'):
             console.read()
+
+    def test_uart_commands_are_paced_and_only_probe_input_can_be_reset(self):
+        connection = Mock()
+        console = self.harness.SerialConsole(connection=connection)
+        command = 'printf readiness-' + 'a' * 80
+        with patch.object(self.harness.time,'sleep') as pause:
+            console.sendline(command)
+        chunks = [call.args[0] for call in connection.sendall.call_args_list]
+        self.assertEqual(b''.join(chunks),command.encode()+b'\n')
+        self.assertTrue(all(0 < len(chunk) <= 16 for chunk in chunks), 'Do not flood an emulated UART FIFO')
+        self.assertGreater(pause.call_count,0)
+        console.interrupt()
+        self.assertEqual(connection.sendall.call_args.args,(b'\x03',))
 
     def test_installed_evidence_requires_real_user_disk_session_and_version(self):
         valid = dict(phase='installed', uid=1001, user='huskcheck', live=False, uefi=True,

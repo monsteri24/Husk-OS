@@ -1,5 +1,5 @@
 image_run=39123206803
-attempt=4-acknowledged-serial-root-and-network-delivery
+attempt=5-isolated-second-UART-and-paced-readiness
 image_source=0ac564dbd141f00bcfd68503fbe75f9065041e51
 image_sha256=7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
 request=Reuse prior exact-image Live boot evidence; drive the disposable install through an acknowledged serial channel

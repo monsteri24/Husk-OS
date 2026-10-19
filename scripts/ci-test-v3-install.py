@@ -92,11 +92,12 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
     if stage == 'live':
         if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', iso_label):
             raise ValueError('The ISO label is not suitable for an unquoted archisolabel argument')
-        command += ['-chardev', 'socket,id=setup,path=' + str(artifacts/'live-setup.sock') +
-            ',server=on,wait=off,logfile=' + str(artifacts/'live-serial.log'),
+        command += ['-serial', 'file:' + str(artifacts/'live-serial.log'),
+            '-chardev', 'socket,id=setup,path=' + str(artifacts/'live-setup.sock') +
+            ',server=on,wait=off,logfile=' + str(artifacts/'live-setup.log'),
             '-serial', 'chardev:setup', '-cdrom', str(iso), '-boot', 'order=d', '-kernel', str(kernel),
             '-initrd', str(initrd), '-append', 'archisobasedir=arch archisolabel=' + iso_label +
-            ' systemd.debug_shell=ttyS0 systemd.mask=serial-getty@ttyS0.service console=tty0 console=ttyS0,115200n8']
+            ' systemd.debug_shell=ttyS1 systemd.mask=serial-getty@ttyS1.service console=tty0 console=ttyS0,115200n8']
     else:
         command += ['-serial', 'file:' + str(artifacts/(stage + '-serial.log')), '-boot', 'order=c']
     return command
@@ -397,7 +398,20 @@ class SerialConsole:
         if any(value in command for value in ('\r','\n','\0')):
             raise ValueError('A serial test command must contain exactly one line')
         self.socket.settimeout(10)
-        try: self.socket.sendall(command.encode('ascii') + b'\n')
+        payload=command.encode('ascii') + b'\n'
+        try:
+            # Slow TCG guests must drain an emulated 16-byte UART FIFO.
+            for position in range(0,len(payload),16):
+                self.socket.sendall(payload[position:position+16])
+                if position+16<len(payload): time.sleep(0.05)
+        finally: self.socket.setblocking(False)
+
+    def interrupt(self):
+        """Reset a partial readiness command; never used after setup starts."""
+        self.socket.settimeout(10)
+        try:
+            self.socket.sendall(b'\x03')
+            time.sleep(0.2)  # Let the guest flush its interrupted terminal line.
         finally: self.socket.setblocking(False)
 
     def close(self):
@@ -547,6 +561,7 @@ class Acceptance:
                 elif elapsed >= next_ready:
                     # The random response is not present in this echoed command.
                     # Repeating this read-only probe cannot start an installer.
+                    self.serial.interrupt()
                     self.serial.sendline('[ "$(id -u)" = 0 ] && curl -fsS --connect-timeout 3 --max-time 10 '+self.base+'/ready')
                     next_ready=elapsed+20
             report=self.latest('installation')

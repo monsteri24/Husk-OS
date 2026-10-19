@@ -28,7 +28,7 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527) passed 423 tests with zero failures or skips in the actual GTK run at `6dd54d1`; 174 source/configuration checks also passed. |
+| Source/models/real GTK | [39126898288](https://github.com/monsteri24/Husk-OS/actions/runs/39126898288) passed 426 tests with zero failures or skips in the actual GTK run at `808da74`; 174 source/configuration checks also passed. |
 | Local checks | 419 tests, zero failures, 69 explicit environment skips before the latest four harness regressions; 174 current source/configuration checks pass. Real Gio Trash, libnm profiles, compiled Qt clock/DST/completion behavior and strict native compilation were exercised. |
 | Actual Labwc | [39122977898](https://github.com/monsteri24/Husk-OS/actions/runs/39122977898) passed at `1e2b159`, including normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. The same production code also passed the desktop job in [39124770527](https://github.com/monsteri24/Husk-OS/actions/runs/39124770527), using the latest compositor focus evidence. |
 | Real application packages | [39123974007](https://github.com/monsteri24/Husk-OS/actions/runs/39123974007) passed: the shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. |
@@ -82,6 +82,17 @@ acknowledgement or execution now has a separate bounded failure. No test debug
 options are passed to the second installed-system boot. The QEMU serial
 transport has a real socket-pair regression; the Qt driver also records and
 times out unexpected dialogs without inspecting password controls.
+
+The first acknowledged-serial attempt at `808da74` then isolated another test
+transport fault: boot/Plymouth traffic and the debug shell shared ttyS0, and
+the captured log contains truncated shell input and a continuation prompt.
+The test now leaves boot output on ttyS0 and uses a separate ttyS1 UART/socket
+for setup, paces UART writes and can reset only the harmless readiness probe.
+All 13 focused harness tests pass, including real socket I/O, port isolation,
+input pacing, target isolation and installed-boot argument checks. Compatible
+hosted runners also grant their own test account access to an existing KVM
+device with mode 0600; runners without it retain TCG. These changes affect
+only the disposable test environment, not the ISO or installed system.
 
 The recovery workflow reuses the already-passed Live UEFI evidence for the
 verified identical ISO instead of repeating that separate boot. The new

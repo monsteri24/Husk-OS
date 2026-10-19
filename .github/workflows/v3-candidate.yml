@@ -29,6 +29,10 @@ jobs:
           test "$(df -B1 --output=avail . | tail -1 | tr -d ' ')" -ge 34359738368
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 qemu-utils ovmf python3-pil xorriso
+          if [ -c /dev/kvm ]; then
+            sudo chown "$(id -u):$(id -g)" /dev/kvm
+            sudo chmod 0600 /dev/kvm
+          fi
       - name: Build signed packages and inspect the completed ISO
         run: |
           set -euo pipefail
