@@ -1,5 +1,5 @@
 request=V3 Phase 2 guarded installer candidate
-attempt=6-readable-summary-and-loadable-completion
+attempt=7-first-installed-login-defaults-to-husk
 acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI
-changes=scrollable-summary,readable-partition-legend,separate-Qt-styles,correct-ViewManager-import,real-navigation-bounds
+changes=first-login-SDDM-state-seed,preserve-remembered-session,VM-login-must-use-default
 release=forbidden-by-user-no-publish-no-merge-no-main-changes

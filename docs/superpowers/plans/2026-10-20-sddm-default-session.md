@@ -31,7 +31,7 @@
 - [x] Reproduce: upstream SDDM initializes `lastIndex=0` without saved state; actual VM selected stock Labwc.
 - [x] Add real package staging/tmpfiles tests and observe failure because no default is packaged.
 - [x] Install a non-truncating `f` rule, and run both tests successfully.
-- [ ] Run the repository check/native suite and save tested source remotely.
+- [x] Run the repository check/native suite and save tested source remotely (`0d7dda6`, 471 tests / 71 explicit local skips, 178 syntax checks).
 
 ## Task 2: Verify the default in the installed VM
 

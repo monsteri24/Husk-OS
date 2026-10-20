@@ -372,11 +372,12 @@ payload changed for this test-harness correction.
 
 ## Coverage limits
 
-For this candidate's first installed login, select **Husk Desktop (Experimental)**
+For the preserved `812d74c` image's first installed login, select **Husk Desktop (Experimental)**
 in SDDM. The stock labwc entry remains present and was initially selected in
 the real greeter; default-session refinement remains incomplete. The VM input
-test explicitly chose Husk and proved the real user session. Automatic default
-selection of Husk remains future refinement.
+test explicitly chose Husk and proved the real user session. The current source
+adds a missing-state seed for automatic Husk selection; its new-image acceptance
+is pending and is not implied by the earlier result.
 
 The VM input fixture uses a test-only root debug console; it does not verify the
 normal Live graphical polkit/PAM authorization or Live password dialog. The
