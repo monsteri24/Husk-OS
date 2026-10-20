@@ -24,6 +24,7 @@
 #include <QRadioButton>
 #include <QScrollArea>
 #include <QSet>
+#include <QStandardPaths>
 #include <QStackedWidget>
 #include <QTest>
 #include <QTimer>
@@ -31,6 +32,20 @@
 #include <unistd.h>
 
 namespace {
+bool selectComboRowWithKeys(QComboBox* combo, int row) {
+    if (!combo || !combo->isVisible() || !combo->isEnabled() || row<0 || row>=combo->count()) return false;
+    // A tall, styled popup can place its row rectangle outside the actual
+    // screen even after scrollTo(). Use real native keyboard navigation;
+    // never mutate its model/current index or invoke installer decisions.
+    QTest::mouseClick(combo, Qt::LeftButton);
+    auto* view=combo->view();
+    if (!view->isVisible()) return false;
+    QTest::keyClick(view, Qt::Key_Home);
+    for (int index=0; index<row; ++index) QTest::keyClick(view, Qt::Key_Down);
+    QTest::keyClick(view, Qt::Key_Return);
+    return combo->currentIndex()==row;
+}
+
 QString readFile(const QString& path) {
     QFile file(path);
     return file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll()).trimmed() : QString();
@@ -192,11 +207,7 @@ class Driver : public QObject {
             }
             diskInitial = true;
             record("drive-no-selection", {{"devices", devices}, {"next_enabled", false}});
-            QTest::mouseClick(drive, Qt::LeftButton);
-            auto* view = drive->view();
-            const QRect row = view->visualRect(drive->model()->index(0, 0));
-            if (!view->isVisible() || row.isEmpty()) { fail("The actual drive popup was not visible"); return; }
-            QTest::mouseClick(view->viewport(), Qt::LeftButton, Qt::NoModifier, row.center());
+            if (!selectComboRowWithKeys(drive, 0)) { fail("The actual drive choice could not be selected"); return; }
             return;
         }
         if (!diskSelected && drive->currentIndex() == 0) {
@@ -278,6 +289,9 @@ class Driver : public QObject {
             lastPage = index; pageTime.restart();
             record(QString("page-") + names[index], {{"class", page->metaObject()->className()}, {"object", page->objectName()}});
         }
+        // Leave each decision page on screen long enough for the independent
+        // VM monitor to capture it. Readiness/selection checks still apply.
+        if (index < 6 && pageTime.elapsed() < 1800) return;
         if (index != 6 && index != 7 && pageTime.elapsed() > 180000) {
             fail(QString("The real ") + names[index] + " page did not become actionable"); return;
         }
@@ -296,13 +310,8 @@ class Driver : public QObject {
             auto* regions = page->findChild<QComboBox*>("husk-region");
             const int row = regions ? regions->findData(QString::fromLatin1(zone)) : -1;
             if (!regions || row < 1) { fail("The chosen clock did not expose the proper IANA region"); return; }
-            QTest::mouseClick(regions, Qt::LeftButton);
-            auto* view = regions->view();
-            const QModelIndex item = regions->model()->index(row,0);
-            view->scrollTo(item);
-            QTest::mouseClick(view->viewport(),Qt::LeftButton,Qt::NoModifier,view->visualRect(item).center());
-            if (regions->currentData().toString() != QString::fromLatin1(zone)) {
-                fail("Actual pointer selection did not choose Europe/Helsinki"); return;
+            if (!selectComboRowWithKeys(regions,row) || regions->currentData().toString() != QString::fromLatin1(zone)) {
+                fail("Actual keyboard selection did not choose Europe/Helsinki"); return;
             }
             zoneSelected = true;
             record("timezone-selected", {{"iana",QString::fromLatin1(zone)},{"current_offset",offset}});
@@ -373,7 +382,8 @@ public:
             serial != "HUSK-DISPOSABLE" || user.isEmpty() || password.size() < 16 || logPath.isEmpty()) {
             fail("The test driver requires the explicitly marked disposable UEFI Live guest"); return;
         }
-        record("driver-started", {{"qt", qVersion()}, {"serial", serial}});
+        record("driver-started", {{"qt", qVersion()}, {"serial", serial},
+            {"calamares_log", QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/session.log"}});
         connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { record("application-quit"); });
         connect(&timer, &QTimer::timeout, this, [this] { tick(); }); timer.start(500);
     }

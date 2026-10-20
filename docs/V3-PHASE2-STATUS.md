@@ -31,23 +31,25 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39252514418](https://github.com/monsteri24/Husk-OS/actions/runs/39252514418) passed at `9b9f424`: 447 tests with zero failures or skips in the actual GTK run, including a real X SECURITY credential opening a GTK window and native-widget observer ownership; 176 source/configuration checks also passed. ISO/VM acceptance is separate. |
-| Local checks | The last full local run passed 444 tests with 70 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Current focused boot-proof/profile tests pass all 37 cases; Labwc harness tests pass with one explicit real-GTK skip. All 176 source/configuration checks pass. |
-| Actual Labwc | [39252514315](https://github.com/monsteri24/Husk-OS/actions/runs/39252514315) passed after the observer correction, including taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. The earlier parallel taskbar timeout is documented below. |
-| Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the current `0ac564d` ISO, on the day after its build. The shipped root helper, real DNS/repository preflight and signed full-system transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3` in a fresh disposable Arch container. Pacman confirmed both packages; Firefox executed its version command and Steam executable/official desktop artwork were checked. [Result/log artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254/artifacts/12183189690) records the exact image digest and the authentication/game-testing limits. |
-| Full V3 build | [39250972954](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954) compiled the patched Calamares/backend, built signed packages and produced the startup-fixed ISO. Generic and stricter V3 extracted-rootfs checks passed. The job then correctly failed its release-size gate and preserved the image/evidence. |
-| Live UEFI boot | [39253873845](https://github.com/monsteri24/Husk-OS/actions/runs/39253873845) passed real OVMF Live startup of the exact `65b2085` ISO, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
-| Disk guard in Live | That same run accepted the new `HUSK-DISPOSABLE` virtual disk and rejected the mounted Live optical medium. The target retained zero write/discard/flush counters and unchanged GPT-edge hashes after the startup failure. |
+| Source/models/real GTK | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) passed at `8bf2df4`: 454 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
+| Local checks | The last full local run passed 454 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current focused installer-input/orchestration suite passes all 25 tests, including a real styled Qt combo popup regression. All 176 source/configuration checks pass. |
+| Actual Labwc | The same `8bf2df4` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
+| Full V3 build | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) compiled patched Calamares, built signed packages and produced the branding-fixed ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. The later installation test failed as described below. |
+| Live UEFI boot | That exact `8bf2df4` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
+| Calamares UI | Actual Qt navigation reached Welcome, English (US) keyboard selection and the clock-based location page. The real screenshot shows the Husk installer window. The input driver then failed to select the regional combo row; no installer job queue ran. |
+| Disk guard in Live | The new run accepted the disposable target and rejected the Live optical medium. Written/discarded sectors remained zero and GPT-edge hashes matched. A zero-sector flush incremented raw write/flush operation counters; those are recorded rather than described as all-zero. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
-It contains the startup fixes below and passed Live boot. Installation
-acceptance is still blocked, and it is too large for a release file:
+It includes the required branding maps and existing artwork, passed payload
+validation and Live UEFI boot, and fits the file-size limit. Installation and
+independent installed boot remain unaccepted:
 
-- Source: `65b20855fa919a447989cd932134f63493d2f18f`
-- Size: **2,147,778,560 bytes**
-- SHA-256: `1228919a759373a40aec227b24517264219450842bf290914a4c4727cb0af604`
-- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954/artifacts/12185574285)
-- [Build/rootfs evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39250972954/artifacts/12185589502)
+- Source: `8bf2df4eaa297747b30de5aa34c41d682e512843`
+- Size: **2,079,227,904 bytes**
+- SHA-256: `8d06e8f62e55d8157c703cdd9b103e9e0d12b12bccc892a9ed05ce5088068ed2`
+- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428/artifacts/12189701056)
+- [Build/Live/installer evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428/artifacts/12189785495)
 
 The completed image includes the normal panel painting, GTK clipboard callback
 and popup outside-click fixes, installer display/startup corrections, explicit os-prober dependency and nonexpiring
@@ -59,19 +61,37 @@ remain preserved for diagnostic history.
 
 ## Active acceptance and blockers
 
-The current 2,147,778,560-byte image exceeds GitHub's strictly-under-2-GiB
-release-file limit ([GitHub documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)).
-Zstd level 15 reduced the previous image by 66,781,184 bytes, but this is still
-288 KiB above the cap. The next build is configured for level 19 with the same
-two compression workers and unchanged package selection; all 32 profile tests
-pass, including payload preservation. Level 19 has not yet been built. The
-build report correctly blocked publication and preserved the completed image.
-The recovery workflow pinned and reused this exact image. Missing prior boot
-evidence required a fresh real boot; mismatched/failed evidence is rejected.
-Three regressions cover that proof-reuse decision. The completed recovery run
-proved Live boot but exposed a missing required branding map before the
-installer event loop. The next build is necessary to include the production
-branding correction; the immutable old ISO cannot establish that correction.
+The `8bf2df4` build now passes the size gate. Zstd19 reduced the previous
+2,147,778,560-byte image by 68,550,656 bytes with the same package selection
+and preserved wallpaper digest. The previous `65b2085` ISO and its successful
+[Live evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39253873845)
+remain preserved; only the required production branding correction justified
+this rebuild. Publication remains forbidden by the user's current instruction.
+
+The actual remaining failure in `39256344428` was the test driver's immediate
+pointer selection of a row in a large styled region popup. The same failure
+was reproduced locally with the actual Qt popup and Husk stylesheet: pointer
+input left the placeholder selected, while native Home/Down/Enter events
+selected Europe/Helsinki. The driver now uses those real keyboard events,
+checks the resulting selection and refuses unavailable/invalid rows. A compiled
+Qt regression covers an initially off-screen item and disabled controls.
+
+The recovery run reuses this immutable ISO and its matching, already-passed
+Live proof. It also collects the correctly capitalized Calamares log path
+(`/root/.cache/Calamares/session.log`), confirmed by the pinned upstream
+application name. The old lowercase path missed the real diagnostic log.
+
+Cancellation retains actual GUI confirmation, zero guest written/discarded
+sectors, monotonic raw counters and identical GPT-edge hashes. Before the
+second installer process can start, the guest now waits for an explicit test
+host acknowledgement. The host independently queries the exact `target`
+backend through [QMP block statistics](https://www.qemu.org/docs/master/interop/qemu-qmp-ref.html)
+and requires zero write/unmap bytes, operations and failed/invalid requests
+since the fresh disk was attached. Flush counts are recorded separately.
+Missing, ambiguous or nonzero evidence stops the VM before installation.
+Focused regressions pass; a real QMP-over-stdio check on a fresh local qcow2
+confirmed the response schema without booting an OS or opening listener sockets.
+The strengthened cancellation/installation gates still require the recovery VM.
 
 Earlier installation attempts on the `0ac564d` image stopped **before reaching
 Calamares navigation**. [39248059460](https://github.com/monsteri24/Husk-OS/actions/runs/39248059460)
@@ -119,8 +139,8 @@ The corrected configuration supplies the existing installer artwork and Husk
 wallpaper as absolute installed asset paths. Read-only payload validation now
 rejects missing/malformed branding maps, absent guest image/slideshow files,
 host paths and theme-dependent image names. Regression tests first reproduced
-the missing-map failure and then passed with the correction. Actual Qt
-navigation remains unverified until the rebuilt ISO reaches its event loop.
+the missing-map failure and then passed with the correction. The rebuilt `8bf2df4` image reached its actual Qt event loop and the first
+three pages; disk review and the installation job queue remain unverified.
 
 The recovery workflow verifies the exact ISO
 hash/size and requires unchanged runtime sources before reusing it. The only
@@ -158,8 +178,8 @@ The replaced fixed-delay run was superseded by this acknowledged test. It may at
 only a newly created 32 GiB qcow2 without a backing file and read-only Live
 media. Actual Qt pointer/keyboard input must select the target, IANA zone and
 account, review and cancel before writes, then separately confirm a fresh
-installation. Cancellation compares write, discard and flush counters plus
-GPT-edge hashes. Success requires real backend completion, a decreasing
+installation. Cancellation retains guest data counters/GPT-edge hashes and now requires
+independent QEMU zero-write/unmap acknowledgement before the next process. Success requires real backend completion, a decreasing
 countdown, Restart Later surviving beyond 30 seconds, target filesystem/job
 checks, safe shutdown and a second UEFI boot with **no ISO or kernel override**
 into the newly created user's SDDM/Wayland desktop. These installation and

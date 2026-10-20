@@ -16,6 +16,47 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallerDriverSafetyTests(unittest.TestCase):
+    def test_real_combo_selection_reaches_a_scrolled_item_using_actual_keys(self):
+        flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Widgets', 'Qt6Test', 'Qt6Quick'],
+                               capture_output=True, text=True)
+        if flags.returncode:
+            self.skipTest('Qt6 development packages are unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / 'combo.cpp'
+            source.write_text('#include ' + json.dumps(str(ROOT / 'scripts/v3-installer-driver.cpp')) + '\n' + r'''
+int main(int argc, char** argv) {
+    QApplication app(argc, argv);
+    QFile style(QString::fromLocal8Bit(argv[1]));
+    if (!style.open(QIODevice::ReadOnly)) return 1;
+    app.setStyleSheet(QString::fromUtf8(style.readAll()));
+    QWidget window; QComboBox combo(&window); combo.resize(400,50);
+    combo.addItem("Choose a region / city", "");
+    for (int index=1; index<100; ++index) combo.addItem(QString("Region %1").arg(index), index);
+    combo.setMaxVisibleItems(6); window.resize(420,80); window.show();
+    QTest::qWait(50);
+    if (selectComboRowWithKeys(&combo, -1) || selectComboRowWithKeys(&combo, 100)) return 2;
+    if (combo.currentIndex()!=0) return 3;
+    if (!selectComboRowWithKeys(&combo,72) || combo.currentData().toInt()!=72) return 4;
+    combo.setEnabled(false);
+    if (selectComboRowWithKeys(&combo,3) || combo.currentIndex()!=72) return 5;
+    combo.setEnabled(true); combo.setCurrentIndex(-1);
+    if (!selectComboRowWithKeys(&combo,0) || combo.currentIndex()!=0) return 6;
+    return 0;
+}
+''')
+            executable = directory / 'combo'
+            result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-fPIC',
+                str(source), '-o', str(executable), *shlex.split(flags.stdout)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE', None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                environment['QT_PLUGIN_PATH'] = str(Path(environment['HUSK_TEST_SYSROOT']) / 'usr/lib/x86_64-linux-gnu/qt6/plugins')
+            result = subprocess.run([str(executable), str(ROOT / 'installer/calamares/husk.qss')],
+                                    env=environment, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_unexpected_dialog_is_bounded_and_diagnostics_exclude_password_inputs(self):
         if not shutil.which('pkg-config') or not shutil.which('c++'):
             self.skipTest('Qt6 C++ development tools are unavailable')

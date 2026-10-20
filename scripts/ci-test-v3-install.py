@@ -106,7 +106,7 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
 def validate_install_report(report):
     problems = []
     if not isinstance(report, dict): return ['No installation report was received']
-    for key in ('success', 'restart_postponed', 'offline', 'guard_target_accepted', 'live_medium_rejected', 'cancellation'):
+    for key in ('success', 'restart_postponed', 'offline', 'guard_target_accepted', 'live_medium_rejected', 'cancellation', 'cancellation_host_confirmed'):
         if report.get(key) is not True: problems.append('Installation evidence is missing: ' + key)
     if report.get('process_exit') != 0: problems.append('The real Calamares process did not exit successfully')
     events = {value.get('event') for value in report.get('events', []) if isinstance(value, dict)}
@@ -119,6 +119,30 @@ def validate_install_report(report):
         if report.get('target_checks', {}).get(name) is not True:
             problems.append('Installed target evidence is missing: ' + name)
     return problems
+
+
+def cancellation_blockstats(response):
+    """Independent QEMU backend proof before authorizing the second UI run.
+
+    QMP reports writes, unmaps and cache flushes separately. Require no data
+    or discard requests, including failed/invalid ones, since this fresh disk
+    was attached; retain flush counts as diagnostics rather than data writes.
+    https://www.qemu.org/docs/master/interop/qemu-qmp-ref.html
+    """
+    if not isinstance(response, list):
+        raise ValueError('Malformed QEMU block statistics')
+    matches = [item for item in response if isinstance(item, dict) and item.get('device') == 'target']
+    if len(matches) != 1 or not isinstance(matches[0].get('stats'), dict):
+        raise ValueError('No unambiguous disposable target block statistics')
+    stats = matches[0]['stats']
+    for key in ('wr_bytes', 'wr_operations', 'unmap_bytes', 'unmap_operations',
+                'failed_wr_operations', 'invalid_wr_operations',
+                'failed_unmap_operations', 'invalid_unmap_operations'):
+        if type(stats.get(key)) is not int or stats[key] != 0:
+            raise ValueError('The cancellation target has missing/nonzero QEMU data I/O: ' + key)
+    if type(stats.get('flush_operations')) is not int or stats['flush_operations'] < 0:
+        raise ValueError('The cancellation target has invalid QEMU flush evidence')
+    return stats
 
 
 def validate_installed_report(report, version, username):
@@ -170,7 +194,8 @@ def events():
 def post():
     state['events'] = events()
     state['calamares_output'] = tail(output)
-    state['calamares_log'] = tail('/root/.cache/calamares/session.log')
+    state['calamares_log_path'] = '/root/.cache/Calamares/session.log'
+    state['calamares_log'] = tail(state['calamares_log_path'])
     state['uptime'] = P('/proc/uptime').read_text().split()[0]
     state['boot_id'] = P('/proc/sys/kernel/random/boot_id').read_text().strip()
     try:
@@ -243,6 +268,15 @@ def disk_write_evidence():
     return dict(writes_completed=counters[4],sectors_written=counters[6],
                 discards_completed=counters[11],sectors_discarded=counters[13],flushes_completed=counters[15],
                 partition_edges_sha256=hashlib.sha256(first+last).hexdigest())
+def unchanged_cancellation_data(before, after):
+    for key in ('writes_completed','sectors_written','discards_completed','sectors_discarded','flushes_completed'):
+        if (type(before.get(key)) is not int or type(after.get(key)) is not int
+                or before[key]<0 or after[key]<before[key]): return False
+    # The host independently requires zero QEMU write/unmap requests before
+    # allowing installation. Keep raw Linux write/flush counters in evidence.
+    return (all(after[key]==before[key] for key in ('sectors_written','discards_completed','sectors_discarded'))
+            and bool(before.get('partition_edges_sha256'))
+            and before['partition_edges_sha256']==after.get('partition_edges_sha256'))
 def inspect_target():
     devices = json.loads(command(['lsblk','--json','-b','-o','PATH,TYPE,FSTYPE,UUID,PARTTYPE,SIZE,SERIAL']).stdout)
     disk = next(device for device in devices['blockdevices'] if device['path']=='/dev/vda')
@@ -363,9 +397,21 @@ try:
     cancel_events={event.get('event') for event in events()}
     state['cancellation']=(cancelled.returncode==0 and {'cancel-click','cancel-confirmed','application-quit'}<=cancel_events
         and 'page-execution' not in cancel_events and 'driver-failed' not in cancel_events
-        and state['cancellation_disk_before']==state['cancellation_disk_after'])
+        and unchanged_cancellation_data(state['cancellation_disk_before'],state['cancellation_disk_after']))
     post()
     if not state['cancellation']: raise RuntimeError('Reviewed GUI cancellation and unchanged disk evidence did not both pass')
+    state['cancellation_ready']=True; post()
+    deadline=time.monotonic()+90
+    while time.monotonic()<deadline:
+        try:
+            reply=urllib.request.urlopen(CONFIG['base']+'/cancellation-reviewed',timeout=10).read()
+            if reply==b'REVIEWED\n':
+                state['cancellation_host_confirmed']=True; break
+        except Exception: pass
+        post(); time.sleep(1)
+    if not state.get('cancellation_host_confirmed'):
+        raise RuntimeError('The host did not confirm zero QEMU writes/discards; installation was not started')
+    post()
     process=run_installer('install')
     state['process_exit']=process.returncode; post()
     if process.returncode!=0: raise RuntimeError('Calamares or the input driver failed; inspect its real event/log evidence')
@@ -521,6 +567,7 @@ class Acceptance:
         self.kvm = os.access('/dev/kvm', os.R_OK | os.W_OK)
         self.process = None; self.monitor = None; self.qemu_log = None; self.serial = None
         self.auth_started = False
+        self.cancellation_verified = False
         self.result = dict(installation='FAILED', installed_boot='NOT TESTED',
             live_shutdown='NOT TESTED', installed_shutdown='NOT TESTED', problems=[],
             polkit='NOT TESTED: test-only root serial console delivered the input fixture',
@@ -531,6 +578,12 @@ class Acceptance:
         class Handler(http.server.BaseHTTPRequestHandler):
             def do_GET(self):
                 name = self.path.removeprefix('/'+acceptance.token+'/')
+                if self.path == '/'+acceptance.token+'/cancellation-reviewed':
+                    if not acceptance.cancellation_verified:
+                        self.send_error(503); return
+                    data=b'REVIEWED\n'
+                    self.send_response(200); self.send_header('Content-Length',str(len(data)))
+                    self.end_headers(); self.wfile.write(data); return
                 if self.path != '/'+acceptance.token+'/'+name or name not in acceptance.resources:
                     self.send_error(404); return
                 data = acceptance.resources[name]
@@ -618,6 +671,13 @@ class Acceptance:
             if bootstrapped and not report and time.monotonic()-setup_sent > (90 if self.kvm else 180):
                 raise RuntimeError('The guest setup did not acknowledge execution after serial delivery')
             if report:
+                if report.get('cancellation_ready') is True and not self.cancellation_verified:
+                    if report.get('cancellation') is not True:
+                        raise RuntimeError('The guest did not provide accepted GUI cancellation evidence')
+                    stats=cancellation_blockstats(self.monitor.command('query-blockstats'))
+                    self.result['cancellation_qemu_blockstats']=stats
+                    self.cancellation_verified=True
+                    print('QEMU independently confirms zero target writes/unmaps before installation',flush=True)
                 events=report.get('events',[])
                 event=events[-1].get('event') if events else 'setup'
                 if event!=last_event:

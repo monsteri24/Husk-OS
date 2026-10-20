@@ -2,6 +2,7 @@
 import importlib.util
 import ast
 import json
+import io
 from pathlib import Path
 import re
 import stat
@@ -132,13 +133,14 @@ class InstallHarnessTests(unittest.TestCase):
         events += [dict(event='cancel-click'),dict(event='cancel-confirmed')]
         valid = dict(phase='installation', success=True, events=events, process_exit=0,
                      restart_postponed=True, offline=True, guard_target_accepted=True,
-                     live_medium_rejected=True,cancellation=True,
+                     live_medium_rejected=True,cancellation=True,cancellation_host_confirmed=True,
                      target_checks={name:True for name in self.harness.REQUIRED_TARGET_CHECKS})
         self.assertEqual(self.harness.validate_install_report(valid), [])
         missing = [event for event in events if event['event'] != 'confirmation-click']
         self.assertTrue(self.harness.validate_install_report(dict(valid, events=missing)))
         self.assertTrue(self.harness.validate_install_report(dict(valid, restart_postponed=False)))
         self.assertTrue(self.harness.validate_install_report(dict(valid,cancellation=False)))
+        self.assertTrue(self.harness.validate_install_report(dict(valid,cancellation_host_confirmed=False)))
         self.assertTrue(self.harness.validate_install_report(dict(valid,
             target_checks=dict(valid['target_checks'], initramfs=False))))
 
@@ -276,6 +278,57 @@ class InstallHarnessTests(unittest.TestCase):
                 ('writes_completed', 'sectors_written', 'discards_completed', 'sectors_discarded', 'flushes_completed')},
                 dict(writes_completed=5, sectors_written=7, discards_completed=12,
                      sectors_discarded=14, flushes_completed=16))
+
+    def test_host_blockstats_require_zero_data_writes_and_discards_but_record_flushes(self):
+        stats = dict(wr_bytes=0, wr_operations=0, unmap_bytes=0, unmap_operations=0,
+                     failed_wr_operations=0, invalid_wr_operations=0,
+                     failed_unmap_operations=0, invalid_unmap_operations=0, flush_operations=1)
+        valid = [dict(device='optical', stats={}), dict(device='target', stats=stats)]
+        self.assertEqual(self.harness.cancellation_blockstats(valid), stats)
+        for field in stats.keys() - {'flush_operations'}:
+            for value in (1, -1, None, True):
+                with self.subTest(field=field, value=value):
+                    changed = dict(stats, **{field: value})
+                    with self.assertRaises(ValueError):
+                        self.harness.cancellation_blockstats([dict(device='target', stats=changed)])
+        for value in ([], [dict(device='other', stats=stats)],
+                      [dict(device='target', stats=stats)] * 2):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.harness.cancellation_blockstats(value)
+
+    def test_guest_cancellation_requires_unchanged_data_counters_and_partition_edges(self):
+        guest = self.guest_functions('unchanged_cancellation_data')
+        before = dict(writes_completed=0, sectors_written=0, discards_completed=0,
+                      sectors_discarded=0, flushes_completed=0, partition_edges_sha256='a' * 64)
+        # Linux may count a zero-sector flush as a completed write. The host's
+        # independent QMP check must additionally accept before installation.
+        after = dict(before, writes_completed=1, flushes_completed=1)
+        self.assertTrue(guest['unchanged_cancellation_data'](before, after))
+        for change in (dict(sectors_written=1), dict(discards_completed=1), dict(sectors_discarded=1),
+                       dict(partition_edges_sha256='b' * 64), dict(writes_completed=-1)):
+            with self.subTest(change=change):
+                self.assertFalse(guest['unchanged_cancellation_data'](before, dict(after, **change)))
+
+    def test_cancellation_acknowledgement_is_withheld_until_independent_host_proof(self):
+        acceptance = SimpleNamespace(token='test-token', resources={}, cancellation_verified=False)
+        handler = self.harness.Acceptance.handler(acceptance)
+        request = handler.__new__(handler)
+        request.path = '/test-token/cancellation-reviewed'
+        request.wfile = io.BytesIO()
+        for method in ('send_error', 'send_response', 'send_header', 'end_headers'):
+            setattr(request, method, Mock())
+        request.do_GET()
+        request.send_error.assert_called_once_with(503)
+        self.assertEqual(request.wfile.getvalue(), b'')
+        request.send_response.assert_not_called()
+        acceptance.cancellation_verified = True
+        request.do_GET()
+        request.send_response.assert_called_once_with(200)
+        self.assertEqual(request.wfile.getvalue(), b'REVIEWED\n')
+        request.send_error.reset_mock()
+        request.path = '/wrong-token/cancellation-reviewed'
+        request.do_GET()
+        request.send_error.assert_called_once_with(404)
 
     def test_saved_text_redacts_generated_password_and_upstream_crypt_arguments(self):
         self.assertTrue(hasattr(self.harness,'redact_artifact_text'), 'Evidence redaction is missing')

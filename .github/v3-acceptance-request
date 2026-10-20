@@ -1,6 +1,6 @@
-image_run=39250972954
-attempt=8-startup-fixed-iso-and-first-exact-image-live-boot
-image_source=65b20855fa919a447989cd932134f63493d2f18f
-image_sha256=1228919a759373a40aec227b24517264219450842bf290914a4c4727cb0af604
-image_bytes=2147778560
-request=Reuse the startup-fixed ISO for first Live UEFI and disposable-install acceptance; publication remains blocked by size and unpassed installation gates
+image_run=39256344428
+attempt=9-native-combo-keys-and-independent-cancellation-proof
+image_source=8bf2df4eaa297747b30de5aa34c41d682e512843
+image_sha256=8d06e8f62e55d8157c703cdd9b103e9e0d12b12bccc892a9ed05ce5088068ed2
+image_bytes=2079227904
+request=Reuse the branding-fixed ISO and its passed Live UEFI proof; actual native input and independent QEMU cancellation counters; no release or merge
