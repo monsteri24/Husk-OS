@@ -31,28 +31,32 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39381173228](https://github.com/monsteri24/Husk-OS/actions/runs/39381173228) passed at `7132783`: 466 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
+| Source/models/real GTK | [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078) passed at `22ed589`: 469 tests with zero failures or skips in the actual GTK run; 177 source/configuration checks and native sanitizer checks also passed. |
 | Local checks | The current full local run passed 469 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and input against the actual SDDM theme in Basic/Fusion styles. All 177 source/configuration checks pass. |
-| Actual Labwc | The same `7132783` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Actual Labwc | The same `22ed589` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |
 | Live UEFI boot | That exact `812d74c` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
-| Calamares UI/jobs | Actual selection, readable scrollable disk review, separate irreversible confirmation, all 30 offline jobs, Installation Complete, real countdown 30 to 26 and pointer activation of Restart Later passed. The process exited 0 and the Live boot ID remained unchanged beyond 35 seconds. Target-file and independent installed-boot validation are still pending. |
+| Calamares UI/jobs | Actual selection, readable scrollable disk review, separate irreversible confirmation, all 30 offline jobs, Installation Complete, real countdown 30 to 26 and pointer activation of Restart Later passed. The process exited 0 and the Live boot ID remained unchanged beyond 35 seconds. Target-file and independent installed-boot validation also passed. |
 | Disk guard/cancellation | The current VM accepted only the disposable target and rejected the Live medium. Actual summary cancellation exited 0, guest written/discard sectors and GPT-edge hashes were unchanged, and independent QMP counters showed zero target writes/unmaps before installation was authorized. |
-| Installed target | Recovery `39381173228` passed all 19 target checks: GPT/ESP/ext4, fstab, user/password presence, kernel/initramfs, GRUB/fallback, version, Live cleanup, actual job starts, IANA timezone, keyboard, English locale and hostname. Installation and Live ACPI shutdown were PASSED. |
-| Independent UEFI boot | The same run booted the installed disk with no ISO/kernel override. OVMF loaded its `Husk_OS` GRUB entry and the real screenshot reached Husk's SDDM greeter. The normal-user/Wayland report did not arrive before the deadline; that combined acceptance gate remains unpassed. |
+| Installed target | Recovery `39384138078` passed all 19 target checks: GPT/ESP/ext4, fstab, user/password presence, kernel/initramfs, GRUB/fallback, version, Live cleanup, actual job starts, IANA timezone, keyboard, English locale and hostname. Installation and Live ACPI shutdown were PASSED. |
+| Independent UEFI boot | The same run booted the installed disk with no ISO/kernel override and authenticated through SDDM into Husk Desktop. The actual normal-user report confirms UID 1000, `/dev/vda2` ext4, UEFI, no Live medium/debug shell, Wayland session on VT1, connected native bridge and mapped desktop/panel. Installed ACPI shutdown passed. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
 It includes the corrected summary/completion UI and existing artwork, passed
 payload validation, Live UEFI boot, real offline installation and target
-inspection, and fits the file-size limit. Independent boot reached SDDM;
-normal-user/Wayland acceptance remains pending:
+inspection, and fits the file-size limit. Independent installed UEFI boot,
+normal-user/Wayland login and safe shutdown also passed. The artifact retains
+its original UNVERIFIED filename; these results do not imply hardware or
+normal Live authorization acceptance and do not authorize publication:
 
 - Source: `812d74c248ca4696fd6cda27f87ffaef0f9a14ec`
 - Size: **2,079,227,904 bytes**
 - SHA-256: `860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21`
 - [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570/artifacts/12244682086) (retained until 2026-10-27)
 - [Build/Live/installer evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570/artifacts/12245252087)
+- [Passing installation/installed-boot evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078/artifacts/12246674833)
+- [Permanent machine-readable acceptance summary](evidence/v3-phase2/2026-10-20-acceptance.json)
 
 The completed image includes the normal panel painting, GTK clipboard callback
 and popup outside-click fixes, installer display/startup corrections, explicit os-prober dependency and nonexpiring
@@ -62,7 +66,19 @@ current release candidate. The previous `0ac564d` image and its
 [successful Live-boot evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39123206803/artifacts/12135591545)
 remain preserved for diagnostic history.
 
-## Active acceptance and blockers
+## Current acceptance and diagnostic history
+
+All three jobs in [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078)
+passed at `22ed589`. It reused the exact `812d74c` ISO and matching prior Live
+UEFI proof without rebuilding. The real installer cancelled without writes,
+installed offline, passed all 19 target checks, postponed restart and shut
+down safely. A new VM booted only the installed disk, selected Husk in SDDM,
+authenticated as newly created user `huskcheck` (UID 1000), and reported a real
+Wayland Husk Desktop with no Live media or debug kernel arguments. Its final
+screenshot shows the preserved wallpaper, Home/Trash and normal panel, with
+no Install Husk OS icon. Installed-system ACPI shutdown passed. Results and
+proof scope are preserved in the linked JSON; remaining coverage limits are
+listed below. No publication, merge or main change is authorized.
 
 Recovery [39381173228](https://github.com/monsteri24/Husk-OS/actions/runs/39381173228)
 passed the corrected target inspection and all 19 checks, then cleanly shut
@@ -82,10 +98,10 @@ autologin, authorization bypass or installed-system modification is added.
 Actual Qt Quick tests load the repository's real SDDM theme: the old sequence
 left stock labwc selected; the corrected sequence selects Husk and fills the
 proper username/password fields under both Basic and Fusion. The tests mock
-the authentication backend; the recovery VM still has to prove real login.
+the authentication backend; the subsequent recovery VM proved real login.
 The current full local suite passes 469 tests with 71 explicit environment
-skips, all 177 source checks and native sanitizer checks. The next recovery
-uses the identical ISO and prior Live evidence again.
+skips, all 177 source checks and native sanitizer checks. Recovery
+`39384138078` used the identical ISO and passed the full user/session gate.
 
 The current `812d74c` build passed both payload checks, its size gate and real
 Live UEFI boot. Actual screenshots verify the readable partition legend,
@@ -111,7 +127,7 @@ The real log also shows Python start events use stable module IDs (`unpackfs`,
 those exact start events, rejects mere planned queue entries, and additionally
 checks the installed hostname. All 31 focused input/orchestration tests pass.
 The following recovery reused this image without rebuilding and passed target
-inspection as recorded above. Normal-user/Wayland acceptance remains pending.
+inspection as recorded above; `39384138078` then passed normal-user/Wayland acceptance.
 
 The preceding `8bf2df4` build passed the size gate. Zstd19 reduced the previous
 2,147,778,560-byte image by 68,550,656 bytes with the same package selection
@@ -313,8 +329,9 @@ device with mode 0600; runners without it retain TCG. These changes affect
 only the disposable test environment, not the ISO or installed system.
 
 The recovery workflow reuses the already-passed Live UEFI evidence for the
-verified identical ISO instead of repeating that separate boot. The new
-installation VM still has to reach real Calamares and the installed desktop.
+verified identical ISO instead of repeating that separate boot. Each new
+installation VM must independently reach real Calamares and the installed desktop;
+this passed in `39384138078`.
 The replaced fixed-delay run was superseded by this acknowledged test. It may attach
 only a newly created 32 GiB qcow2 without a backing file and read-only Live
 media. Actual Qt pointer/keyboard input must select the target, IANA zone and
@@ -324,7 +341,7 @@ independent QEMU zero-write/unmap acknowledgement before the next process. Succe
 countdown, Restart Later surviving beyond 30 seconds, target filesystem/job
 checks, safe shutdown and a second UEFI boot with **no ISO or kernel override**
 into the newly created user's SDDM/Wayland desktop. These installation and
-installed-boot gates have **not yet passed**.
+installed-boot gates **passed in 39384138078**.
 
 A later parallel Labwc run exposed test input arriving before the compositor
 returned pointer focus after Escape destroyed a popup. The harness now moves
@@ -349,10 +366,12 @@ payload changed for this test-harness correction.
 For this candidate's first installed login, select **Husk Desktop (Experimental)**
 in SDDM. The stock labwc entry remains present and was initially selected in
 the real greeter; default-session refinement remains incomplete. The VM input
-test explicitly chooses Husk and must still prove the real user session.
+test explicitly chose Husk and proved the real user session. Automatic default
+selection of Husk remains future refinement.
 
 The VM input fixture uses a test-only root debug console; it does not verify the
-normal graphical polkit/PAM authorization or Live password dialog. The signed
+normal Live graphical polkit/PAM authorization or Live password dialog. The
+installed user's SDDM and text-console password authentication did pass. The signed
 package test also runs as an explicitly consented disposable root container;
 it does not launch Steam or games. Restart Now and automatic-zero behavior
 have real Qt logic tests, but their actual VM restart remains unverified.
@@ -364,6 +383,6 @@ silently overwritten.
 The local sandbox prevents binding Unix listener sockets, so actual Xvfb/Labwc and VM acceptance
 runs in GitHub Actions. Local sanitizer checks disable leak detection because
 the required process metadata is unavailable. Offscreen Qt and source checks
-alone never imply ISO or installation success. Do not publish this candidate
-as a working installer unless essential installation and installed UEFI boot
-gates pass; report failures and hardware-dependent gaps explicitly.
+alone never imply ISO or installation success. The passing VM gates do not
+authorize publication: the user's explicit no-release instruction remains in
+force. Report the remaining hardware-dependent and authorization gaps explicitly.

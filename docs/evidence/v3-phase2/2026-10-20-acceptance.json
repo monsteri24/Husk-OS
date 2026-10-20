@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "observed_utc": "2026-10-20T07:12:27Z",
+  "proof_scope": "Disposable KVM/OVMF installation and installed-user Wayland acceptance; not hardware or normal Live polkit acceptance",
+  "runtime_source": "812d74c248ca4696fd6cda27f87ffaef0f9a14ec",
+  "acceptance_source": "22ed5895ccb1167eda6dc2e79b1693bc3bb1e6d3",
+  "build_run": 39377861570,
+  "acceptance_run": 39384138078,
+  "iso_artifact": 12244682086,
+  "evidence_artifact": 12246674833,
+  "iso_artifact_expires": "2026-10-27",
+  "iso_sha256": "860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21",
+  "iso_bytes": 2079227904,
+  "source_tests": {
+    "real_gtk_tests": 469,
+    "real_gtk_skips": 0,
+    "source_checks": 177,
+    "native_sanitizers": "PASSED",
+    "real_labwc": "PASSED"
+  },
+  "vm_results": {
+    "installation": "PASSED",
+    "installed_boot": "PASSED",
+    "live_shutdown": "PASSED",
+    "installed_shutdown": "PASSED"
+  },
+  "cancellation_qemu_blockstats": {
+    "unmap_operations": 0,
+    "unmap_merged": 0,
+    "failed_zone_append_operations": 0,
+    "flush_total_time_ns": 18878,
+    "wr_highest_offset": 0,
+    "wr_total_time_ns": 0,
+    "failed_wr_operations": 0,
+    "failed_rd_operations": 0,
+    "wr_merged": 0,
+    "wr_bytes": 0,
+    "timed_stats": [],
+    "failed_unmap_operations": 0,
+    "zone_append_merged": 0,
+    "failed_flush_operations": 0,
+    "account_invalid": true,
+    "rd_total_time_ns": 4548947,
+    "invalid_unmap_operations": 0,
+    "flush_operations": 1,
+    "wr_operations": 0,
+    "unmap_bytes": 0,
+    "rd_merged": 2,
+    "rd_bytes": 21934080,
+    "unmap_total_time_ns": 0,
+    "invalid_flush_operations": 0,
+    "account_failed": true,
+    "idle_time_ns": 1488415667,
+    "zone_append_total_time_ns": 0,
+    "zone_append_operations": 0,
+    "rd_operations": 227,
+    "zone_append_bytes": 0,
+    "invalid_zone_append_operations": 0,
+    "invalid_wr_operations": 0,
+    "invalid_rd_operations": 0
+  },
+  "target_checks": {
+    "efi_partition": true,
+    "root_partition": true,
+    "fstab": true,
+    "user": true,
+    "kernel": true,
+    "initramfs": true,
+    "grub": true,
+    "efi_fallback": true,
+    "version": true,
+    "live_cleanup": true,
+    "guard_job": true,
+    "copy_job": true,
+    "users_job": true,
+    "initramfs_job": true,
+    "bootloader_job": true,
+    "timezone": true,
+    "keyboard": true,
+    "english_locale": true,
+    "hostname": true
+  },
+  "countdown": {
+    "elapsed_ms": 157367,
+    "event": "countdown-observed",
+    "first": 30,
+    "last": 26,
+    "observed_ms": 4499,
+    "time": "2026-10-20T07:10:19.531Z"
+  },
+  "restart_postponed": true,
+  "installed": {
+    "uid": 1000,
+    "user": "huskcheck",
+    "live": false,
+    "uefi": true,
+    "debug_shell": false,
+    "root_device": "/dev/vda2",
+    "root_fstype": "ext4",
+    "optical_media": [],
+    "session": {
+      "Name": "huskcheck",
+      "VTNr": "1",
+      "Remote": "no",
+      "Type": "wayland",
+      "State": "online"
+    },
+    "cmdline": "BOOT_IMAGE=/boot/vmlinuz-linux root=UUID=fecb7a27-47b7-4007-92bd-7bbeec07bb42 rw loglevel=3 quiet"
+  },
+  "installed_status": {
+    "backend": "wayland",
+    "bridge_connected": true,
+    "desktop": "Husk Desktop",
+    "desktop_surfaces": 1,
+    "keyring_ready": false,
+    "live": false,
+    "os": "Husk OS",
+    "panel_mapped": true,
+    "panel_mode": "desktop",
+    "panel_visible": true,
+    "renderer": "pixman",
+    "version": "v3-phase2",
+    "window_count": 0
+  },
+  "installed_boot_has_no_live_or_kernel_override": true,
+  "virtual_disk": {
+    "format": "qcow2",
+    "virtual-size": 34359738368
+  },
+  "installed_desktop_png": {
+    "artifact_path": "install-v3/installed-husk-desktop.png",
+    "sha256": "17a88b74f37de316e0368cad839b33245848c30eff35efef19bc7f1766907a75"
+  },
+  "limitations": [
+    "First installed login must select Husk Desktop (Experimental); default-session refinement remains incomplete.",
+    "The Live GTK password/polkit authorization path was not tested by the root serial fixture.",
+    "Restart Now and automatic-zero actual VM reboots were not tested; Qt logic tests passed.",
+    "Physical Wi-Fi/Bluetooth/GPU/firmware/USB-removal and nonempty hardware target testing remain outstanding.",
+    "Steam/game launch and normal graphical package authorization were not tested by this VM run."
+  ],
+  "release_authorized": false,
+  "main_modified": false,
+  "offline": true,
+  "disk_guard": {
+    "guard_target_accepted": true,
+    "live_medium_rejected": true
+  },
+  "cancellation_guest": {
+    "cancellation": true,
+    "cancellation_host_confirmed": true,
+    "cancellation_disk_before": {
+      "writes_completed": 0,
+      "sectors_written": 0,
+      "discards_completed": 0,
+      "sectors_discarded": 0,
+      "flushes_completed": 0,
+      "partition_edges_sha256": "bb9f8df61474d25e71fa00722318cd387396ca1736605e1248821cc0de3d3af8"
+    },
+    "cancellation_disk_after": {
+      "writes_completed": 1,
+      "sectors_written": 0,
+      "discards_completed": 0,
+      "sectors_discarded": 0,
+      "flushes_completed": 1,
+      "partition_edges_sha256": "bb9f8df61474d25e71fa00722318cd387396ca1736605e1248821cc0de3d3af8"
+    }
+  }
+}
