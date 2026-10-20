@@ -31,9 +31,9 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) passed at `8bf2df4`: 454 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
+| Source/models/real GTK | [39374652341](https://github.com/monsteri24/Husk-OS/actions/runs/39374652341) passed at `e1c959f`: 458 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
 | Local checks | The last full local run passed 454 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current focused installer-input/orchestration suite passes all 25 tests, including a real styled Qt combo popup regression. All 176 source/configuration checks pass. |
-| Actual Labwc | The same `8bf2df4` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Actual Labwc | The same `e1c959f` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) compiled patched Calamares, built signed packages and produced the branding-fixed ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. The later installation test failed as described below. |
 | Live UEFI boot | That exact `8bf2df4` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
@@ -67,6 +67,20 @@ and preserved wallpaper digest. The previous `65b2085` ISO and its successful
 [Live evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39253873845)
 remain preserved; only the required production branding correction justified
 this rebuild. Publication remains forbidden by the user's current instruction.
+
+Recovery [39374652341](https://github.com/monsteri24/Husk-OS/actions/runs/39374652341)
+verified the existing ISO digest/payload and matching prior Live boot proof.
+Its real GTK run passed 458 tests without skips, and real Labwc passed. The
+VM setup then stopped safely before Calamares: a default route was still
+visible immediately after NetworkManager reported successful reapplication.
+The prior code inspected routes just once, so it could not distinguish delayed
+kernel/RA convergence from a persistent failure. The test now applies each
+device change once, polls for up to 30 seconds and requires a stable empty
+result for one second. It records every route observation and the apply
+result, and preserves the exact remaining routes on timeout. Command/JSON
+errors still stop immediately. Two regressions reproduce delayed removal and
+a persistent route; all 24 focused orchestration tests pass. This is a VM
+fixture change and does not require rebuilding or modifying the ISO.
 
 The actual remaining failure in `39256344428` was the test driver's immediate
 pointer selection of a row in a large styled region popup. The same failure

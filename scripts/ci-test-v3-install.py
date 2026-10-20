@@ -226,11 +226,31 @@ def routes():
 def disconnect_external_routes():
     # Change only the VM's active configuration, never a profile copied to the
     # installed system. Keep the directly connected evidence-server route.
-    for device in sorted({route['device'] for route in routes()}):
-        command(['nmcli','--wait','20','device','modify',device,
-                 'ipv4.never-default','yes','ipv6.never-default','yes'])
-    if routes(): raise RuntimeError('External default routes could not be removed for the offline install')
-    return True
+    started=time.monotonic(); deadline=started+30; empty_since=None
+    devices={route['device'] for route in state.get('routes_before',[])}
+    modified=set(); observations=[]; state['offline_route_updates']=[]
+    while True:
+        current=routes()
+        observations.append(dict(elapsed_seconds=round(time.monotonic()-started,3),routes=current))
+        state['offline_route_checks']=observations[-128:]
+        devices.update(route['device'] for route in current)
+        for device in sorted(devices-modified):
+            result=command(['nmcli','--wait','20','device','modify',device,
+                            'ipv4.never-default','yes','ipv6.never-default','yes'])
+            modified.add(device)
+            state['offline_route_updates'].append(dict(device=device,output=result.stdout[-2000:]))
+        now=time.monotonic()
+        if current:
+            empty_since=None
+        elif empty_since is None:
+            empty_since=now
+        elif now-empty_since>=1:
+            return True
+        if now>=deadline:
+            raise RuntimeError('External default routes did not converge for the offline install: '+json.dumps(current,sort_keys=True))
+        # A successful reapply may precede kernel/RA route notifications. Wait
+        # for a stable empty result; never repeat the mutation or ignore errors.
+        time.sleep(0.25)
 def authorize_x11(env, uid):
     display=env.get('DISPLAY','')
     if type(uid) is not int or uid<1000 or not re.fullmatch(r':[0-9]+(?:\.[0-9]+)?',display):
