@@ -1,0 +1,8 @@
+{
+  "attempt": 1,
+  "source": "7a190ec010307676bf5b6b3c26235c2ed75bf4a5",
+  "run": 39438711556,
+  "sha256": "2bc0374737c0ea0225847db3a2a1b03282c6b6f6b5afc77f5f3dbb5264d725d8",
+  "bytes": 2079227904,
+  "scope": "Normal Live GTK/password/polkit startup only; no installation or default-session claim"
+}

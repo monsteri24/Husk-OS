@@ -4,7 +4,7 @@
 
 **Goal:** First installed login opens Husk Desktop without manually selecting its session, while retaining later remembered choices.
 
-**Architecture:** SDDM's existing theme already uses `sessionModel.lastIndex`. Seed its standard `[Last] Session` only when `/var/lib/sddm/state.conf` is missing, using systemd-tmpfiles `f`; retain the theme and SDDM's normal persistence.
+**Architecture:** SDDM's existing theme already uses `sessionModel.lastIndex`. Seed its standard `[Last] Session` with `/usr/share/wayland-sessions/ownos-wayland.desktop` only when `/var/lib/sddm/state.conf` is missing, using systemd-tmpfiles `f`; retain the theme and SDDM's normal persistence.
 
 **Tech Stack:** Arch packages, systemd-tmpfiles, SDDM, Qt Quick, QEMU/OVMF.
 
@@ -18,7 +18,7 @@
 
 ## Review focus
 
-- Missing state must select `ownos-wayland.desktop`, without adding an autologin user.
+- Missing state must select `/usr/share/wayland-sessions/ownos-wayland.desktop`, without adding an autologin user.
 - Existing remembered `labwc.desktop` state must survive repeated tmpfiles runs.
 - Packaged rule must create the file with SDDM ownership and mode 0600.
 - First login must use the default, without a test controller silently changing sessions.
@@ -66,3 +66,24 @@ The observer also retains actual polkit/Calamares startup logs on failure,
 NP/P password-status letters, active-session fields and the nonsecret Qt locale/
 platform/style environment. It never collects password hashes or cookie bytes.
 The final local suite remains 474 / 71 explicit skips / 180 syntax checks.
+
+Correction found while the new VM was running: the first seed used a basename.
+Tracing upstream `Session::setTo` in `src/common/Session.cpp` shows that
+`fileName()` is absolute, and `SessionModel::populate` compares that exact value
+with the saved setting. Initial source review and the injected-index Qt fixture
+missed this integration requirement. The packaged-state regression now requires
+the absolute path; it failed against the basename before the rule was corrected.
+Remembered-session preservation still passes. The running `7a190ec` image must
+not be accepted as fixing the default; a corrected image is required.
+The `7a190ec` VM then confirmed the boundary: Live/terminal/ACPI, offline install,
+all 19 target checks and Restart Later passed; the installed disk booted UEFI and
+accepted normal-user console login, but its greeter still selected stock Labwc
+and no Husk session was observed. The corrected full local suite passed 474
+tests / 71 explicit skips / 180 syntax checks (second log with explicit exit 0).
+
+The Live-only authorization test may reuse this image: all runtime inputs must
+match except the exact basename-to-absolute SDDM seed correction, whose diff is
+saved. It never starts SDDM or claims default-session/installation acceptance.
+This narrowly checked difference avoids withholding a tested fix from the branch
+while testing the unchanged GTK/PAM/polkit pipeline. The corrected final image
+still requires its own complete offline-install/default-login acceptance.

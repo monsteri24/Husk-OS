@@ -30,13 +30,22 @@ countdown and Restart Later/Restart Now order.
 ## Completed evidence
 
 The next first-login refinement seeds SDDM's standard `Last/Session` with
-`ownos-wayland.desktop` only when its state file is absent. The packaged
+`/usr/share/wayland-sessions/ownos-wayland.desktop` only when its state file is absent. The packaged
 systemd-tmpfiles rule preserves existing remembered choices and does not
 enable autologin. Real package staging/tmpfiles and actual Qt theme tests
 pass locally. The VM login controller now leaves the session choice alone,
 so it cannot conceal a wrong image default. **A new image and full VM check
 are still pending for this runtime change**; the passing `812d74c` image
 below remains the immutable baseline.
+
+The first new image (`7a190ec`, run `39438711556`) used only the session basename.
+Further upstream tracing found that SDDM stores/compares the absolute session
+path. The corrected package-state regression failed with that basename and the
+source rule now uses the absolute path. The first image is **not accepted as
+fixing the default session**. Its VM result confirmed all 19 target checks,
+offline installation and Restart Later, but the greeter still selected Labwc
+and installed Husk-session acceptance failed. Its result is retained for diagnosis;
+the corrected runtime needs a fresh image after Live authorization investigation.
 
 A separate test-only Live authorization workflow is being prepared. It launches
 the real GTK class from the active user's terminal, enters the temporary

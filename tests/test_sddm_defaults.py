@@ -45,7 +45,9 @@ class SddmDefaultsTests(unittest.TestCase):
         self.create()
         state = configparser.ConfigParser()
         state.read(self.state)
-        self.assertEqual(state['Last']['Session'], 'ownos-wayland.desktop')
+        # Session::setTo canonicalizes the directory; SessionModel compares its
+        # absolute fileName() with stateConfig.Last.Session, not its basename.
+        self.assertEqual(state['Last']['Session'], '/usr/share/wayland-sessions/ownos-wayland.desktop')
         self.assertNotIn('User', state['Last'])
         self.assertNotIn('Autologin', state)
         self.assertEqual(stat.S_IMODE(self.state.stat().st_mode), 0o600)
@@ -53,7 +55,7 @@ class SddmDefaultsTests(unittest.TestCase):
 
     def test_subsequent_boots_preserve_the_users_remembered_session(self):
         self.state.parent.mkdir(parents=True)
-        previous = b'[Last]\nUser=remembered\nSession=labwc.desktop\n'
+        previous = b'[Last]\nUser=remembered\nSession=/usr/share/wayland-sessions/labwc.desktop\n'
         self.state.write_bytes(previous)
         self.create()
         self.create()

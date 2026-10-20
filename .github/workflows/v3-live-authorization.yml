@@ -45,7 +45,20 @@ jobs:
           test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = "$HUSK_IMAGE_BYTES"
           test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = "$HUSK_IMAGE_SHA256"
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
-          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging
+          # This Live-only scenario does not run SDDM. Permit only the exact
+          # basename-to-absolute seed correction, recording it separately;
+          # every other installed runtime input must match the image.
+          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging ':(exclude)branding/ownos-sddm.conf'
+          git diff "$HUSK_IMAGE_SOURCE" HEAD -- branding/ownos-sddm.conf > out/sddm-seed-not-in-image.diff
+          python3 - <<'PY'
+          import os, subprocess
+          from pathlib import Path
+          before=subprocess.check_output(['git','show',os.environ['HUSK_IMAGE_SOURCE']+':branding/ownos-sddm.conf'])
+          after=Path('branding/ownos-sddm.conf').read_bytes()
+          corrected=before.replace(b'Session=ownos-wayland.desktop\\n',
+              b'Session=/usr/share/wayland-sessions/ownos-wayland.desktop\\n',1)
+          if after not in (before,corrected): raise ValueError('Unexpected SDDM seed difference')
+          PY
           printf 'image_source=%s\ntest_source=%s\n' "$HUSK_IMAGE_SOURCE" "$GITHUB_SHA" > out/authorization-image-source.txt
       - name: Prepare disposable VM tools and the exact image kernel
         run: |
@@ -68,6 +81,7 @@ jobs:
           name: v3-live-authorization-${{ github.run_id }}
           path: |
             out/*.txt
+            out/*.diff
             out/*.log
             out/live-auth-v3/*.json
             out/live-auth-v3/*.log
