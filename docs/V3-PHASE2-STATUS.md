@@ -29,10 +29,19 @@ countdown and Restart Later/Restart Now order.
 
 ## Completed evidence
 
+The next first-login refinement seeds SDDM's standard `Last/Session` with
+`ownos-wayland.desktop` only when its state file is absent. The packaged
+systemd-tmpfiles rule preserves existing remembered choices and does not
+enable autologin. Real package staging/tmpfiles and actual Qt theme tests
+pass locally. The VM login controller now leaves the session choice alone,
+so it cannot conceal a wrong image default. **A new image and full VM check
+are still pending for this runtime change**; the passing `812d74c` image
+below remains the immutable baseline.
+
 | Check | Observed result |
 | --- | --- |
 | Source/models/real GTK | [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078) passed at `22ed589`: 469 tests with zero failures or skips in the actual GTK run; 177 source/configuration checks and native sanitizer checks also passed. |
-| Local checks | The current full local run passed 469 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and input against the actual SDDM theme in Basic/Fusion styles. All 177 source/configuration checks pass. |
+| Local checks | The current full local run passed 471 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 178 source/configuration checks pass. |
 | Actual Labwc | The same `22ed589` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |

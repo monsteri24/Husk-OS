@@ -753,10 +753,9 @@ class Acceptance:
 
     def sddm_login(self):
         self.auth_started = True
-        # The captured, automatically activated greeter may use VT2. Keep it
-        # active, explicitly choose Husk rather than stock labwc, then fill.
-        self.monitor.key('tab'); self.monitor.key('home'); self.monitor.key('h')
-        self.monitor.key('shift-tab'); self.monitor.key('shift-tab'); self.monitor.key('ctrl-a')
+        # Keep the automatically activated greeter (which may use VT2) and
+        # its session default: selecting Husk here would conceal a bad image.
+        self.monitor.key('shift-tab'); self.monitor.key('ctrl-a')
         self.monitor.type_text(self.args.username); self.monitor.key('tab')
         self.monitor.type_text(self.password); self.monitor.key('ret')
 

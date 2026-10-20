@@ -13,7 +13,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 
 class SddmInputTests(unittest.TestCase):
-    def test_real_theme_keyboard_sequence_selects_husk_and_fills_the_correct_fields(self):
+    def test_real_theme_login_preserves_seeded_and_remembered_sessions(self):
         flags=subprocess.run(['pkg-config','--cflags','--libs','Qt6Quick','Qt6Qml','Qt6Test'],capture_output=True,text=True)
         if flags.returncode: self.skipTest('Qt6 Quick development packages unavailable')
         spec=importlib.util.spec_from_file_location('login_harness',ROOT/'scripts/ci-test-v3-install.py')
@@ -55,6 +55,9 @@ QtObject {
 })QML",QUrl());
     std::unique_ptr<QObject> mock(component.create());
     if (!mock) return 1;
+    const int expectedSession=QString::fromLocal8Bit(argv[3]).toInt();
+    mock->property("sessions").value<QObject*>()->setProperty("lastIndex",expectedSession);
+    mock->setProperty("lastUser",QString::fromLocal8Bit(argv[4]));
     view.rootContext()->setContextProperty("userModel",mock.get());
     view.rootContext()->setContextProperty("sddm",mock.get());
     view.rootContext()->setContextProperty("sessionModel",mock->property("sessions").value<QObject*>());
@@ -77,7 +80,7 @@ QtObject {
         else return 4;
         QCoreApplication::processEvents();
     }
-    if (mock->property("loggedSession").toInt()!=1) return 5;
+    if (mock->property("loggedSession").toInt()!=expectedSession) return 5;
     if (mock->property("loggedUser")!="huskcheck") return 6;
     if (mock->property("loggedPassword")!="TestOnlyV3Password") return 7;
     return 0;
@@ -91,7 +94,9 @@ QtObject {
                 prefix=Path(environment['HUSK_TEST_SYSROOT'])/'usr/lib/x86_64-linux-gnu/qt6'
                 environment.update(QT_PLUGIN_PATH=str(prefix/'plugins'),QML_IMPORT_PATH=str(prefix/'qml'),QML2_IMPORT_PATH=str(prefix/'qml'))
             for style in ('Basic','Fusion'):
-                with self.subTest(style=style):
-                    result=subprocess.run([str(binary),str(commands),str(ROOT/'branding/sddm/Main.qml')],
-                        env=dict(environment,QT_QUICK_CONTROLS_STYLE=style),capture_output=True,text=True,timeout=10)
-                    self.assertEqual(result.returncode,0,'Actual greeter input failed: '+result.stderr)
+                for session, last_user in ((1, ''), (0, 'remembered')):
+                    with self.subTest(style=style, session=session, last_user=last_user):
+                        result=subprocess.run([str(binary),str(commands),str(ROOT/'branding/sddm/Main.qml'),
+                            str(session),last_user], env=dict(environment,QT_QUICK_CONTROLS_STYLE=style),
+                            capture_output=True,text=True,timeout=10)
+                        self.assertEqual(result.returncode,0,'Actual greeter input failed: '+result.stderr)

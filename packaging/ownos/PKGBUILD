@@ -72,6 +72,7 @@ package_ownos-branding() {
   install -m644 ownos/branding/sddm/* "$pkgdir/usr/share/sddm/themes/ownos/"
   install -m644 ownos/branding/plymouth/* "$pkgdir/usr/share/plymouth/themes/ownos/"
   install -Dm644 ownos/branding/sddm.conf "$pkgdir/etc/sddm.conf.d/ownos-theme.conf"
+  install -Dm644 ownos/branding/ownos-sddm.conf "$pkgdir/usr/lib/tmpfiles.d/ownos-sddm.conf"
 }
 
 package_ownos-keyring() {

@@ -132,14 +132,15 @@ class InstallHarnessTests(unittest.TestCase):
                 self.assertTrue(self.harness.validate_installed_report(dict(valid, **changes),
                                                                       'v3-phase2', 'huskcheck'))
 
-    def test_sddm_login_keeps_the_active_greeter_and_selects_husk(self):
+    def test_sddm_login_keeps_the_active_greeter_and_uses_the_installed_default(self):
         window=SimpleNamespace(auth_started=False,monitor=Mock(),args=SimpleNamespace(username='huskcheck'),password='test-only')
         with patch.object(self.harness.time,'sleep'):
             self.harness.Acceptance.sddm_login(window)
         keys=[call.args[0] for call in window.monitor.key.call_args_list]
         self.assertFalse(any(key.startswith('ctrl-alt-f') for key in keys),
                          'The auto-activated greeter is not guaranteed to be on VT1')
-        self.assertIn('h',keys,'Choose the actual Husk entry instead of default bare labwc')
+        self.assertEqual(keys,['shift-tab','ctrl-a','tab','ret'],
+                         'Acceptance must not hide a wrong session default by choosing Husk')
         self.assertTrue(window.auth_started)
 
     def test_graphical_return_vt_must_come_from_the_actual_wayland_session(self):
