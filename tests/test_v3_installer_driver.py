@@ -42,6 +42,9 @@ int main(int argc, char** argv) {
     if (selectComboRowWithKeys(&combo,3) || combo.currentIndex()!=72) return 5;
     combo.setEnabled(true); combo.setCurrentIndex(-1);
     if (!selectComboRowWithKeys(&combo,0) || combo.currentIndex()!=0) return 6;
+    const QString summary="Erase disk <strong>/dev/vda</strong>; new GPT; EFI fat32; root ext4";
+    if (!reviewedDiskSummary(summary)) return 7; // Users has no upstream summary.
+    if (reviewedDiskSummary(summary+" /dev/sr0") || reviewedDiskSummary("/dev/vda only")) return 8;
     return 0;
 }
 ''')

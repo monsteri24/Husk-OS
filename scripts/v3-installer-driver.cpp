@@ -32,6 +32,12 @@
 #include <unistd.h>
 
 namespace {
+bool reviewedDiskSummary(const QString& text) {
+    return text.contains("/dev/vda") && !text.contains("/dev/sr0") && text.contains("Erase disk")
+        && text.contains("GPT") && text.contains("fat32",Qt::CaseInsensitive)
+        && text.contains("ext4",Qt::CaseInsensitive);
+}
+
 bool selectComboRowWithKeys(QComboBox* combo, int row) {
     if (!combo || !combo->isVisible() || !combo->isEnabled() || row<0 || row>=combo->count()) return false;
     // A tall, styled popup can place its row rectangle outside the actual
@@ -100,7 +106,7 @@ class Driver : public QObject {
     int lastPage = -1, countdownStart = -1;
     qint64 confirmationAt = -1, finishAt = -1;
     bool stopped = false, diskInitial = false, diskSelected = false;
-    bool eraseSelected = false, usersEntered = false, summarySeen = false;
+    bool eraseSelected = false, usersEntered = false, usersValidated = false, summarySeen = false;
     bool zoneClockChosen = false, zoneSelected = false;
     bool confirmationSeen = false, confirmationClicked = false, finishSeen = false;
     bool cancelRequested = false;
@@ -167,7 +173,7 @@ class Driver : public QObject {
             stopped = true; timer.stop(); click(yes); return true;
         }
         if (!box || !box->windowTitle().contains("Continue with Installation")) return true;
-        if (!summarySeen || !diskSelected || !eraseSelected || !usersEntered) {
+        if (!summarySeen || !diskSelected || !eraseSelected || !usersValidated) {
             fail("An installation confirmation appeared before the reviewed choices"); return true;
         }
         if (!box->text().contains("not be able", Qt::CaseInsensitive)) {
@@ -328,8 +334,11 @@ class Driver : public QObject {
         }
         if (index == 5 && !summarySeen) {
             const QString text = labels(page);
-            if (!text.contains("/dev/vda") || !text.contains(user) || text.contains("/dev/sr0")) {
-                fail("The actual summary did not identify the selected target and account"); return;
+            // Upstream UsersViewStep has no prettyStatus/summary widget. Its
+            // actual fields and validation were checked before leaving Users.
+            if (!usersValidated || !reviewedDiskSummary(text)) {
+                record("summary-rejected", {{"text",text.left(16384)}});
+                fail("The actual summary did not identify the reviewed disk changes"); return;
             }
             summarySeen = true; record("summary-reviewed", {{"text", text}});
         }
@@ -368,6 +377,15 @@ class Driver : public QObject {
         }
         if (next->isVisible() && next->isEnabled() && !advanced.contains(index) &&
             (index != 5 || pageTime.elapsed() >= 4000)) {
+            if (index==4) {
+                auto* login=page->findChild<QLineEdit*>("textBoxLoginName");
+                auto* hostname=page->findChild<QLineEdit*>("textBoxHostname");
+                if (!usersEntered || !login || login->text()!=user || !hostname || hostname->text()!="husk-v3-check") {
+                    fail("The actual validated account/hostname changed before leaving Users"); return;
+                }
+                usersValidated=true;
+                record("users-validated", {{"user",login->text()},{"hostname",hostname->text()}});
+            }
             advanced.insert(index); click(next);
         }
     }

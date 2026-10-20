@@ -32,7 +32,7 @@ countdown and Restart Later/Restart Now order.
 | Check | Observed result |
 | --- | --- |
 | Source/models/real GTK | [39374652341](https://github.com/monsteri24/Husk-OS/actions/runs/39374652341) passed at `e1c959f`: 458 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
-| Local checks | The last full local run passed 454 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current focused installer-input/orchestration suite passes all 25 tests, including a real styled Qt combo popup regression. All 176 source/configuration checks pass. |
+| Local checks | The last full local run passed 454 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current focused installer-input/orchestration suite passes all 28 tests, including a real styled Qt combo popup regression. All 176 source/configuration checks pass. |
 | Actual Labwc | The same `e1c959f` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) compiled patched Calamares, built signed packages and produced the branding-fixed ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. The later installation test failed as described below. |
@@ -93,6 +93,34 @@ absence before starting Calamares. This offline/IPv4 VM fixture does not prove
 real-hardware IPv6 networking. All 24 focused orchestration tests pass,
 including the explicit VM network configuration and unchanged boot isolation.
 
+Recovery [39375781268](https://github.com/monsteri24/Husk-OS/actions/runs/39375781268)
+passed offline setup with no external IPv4/IPv6 defaults, then reached actual
+Helsinki selection, an initially unselected protected drive, explicit erase,
+validated account input and the disk-change summary. The driver's expectation
+that the summary contain a username was incorrect: pinned UsersViewStep has
+no prettyStatus/summary widget. The driver now verifies the actual account and
+hostname before leaving the enabled Users page; the summary must identify
+`/dev/vda`, erase, GPT, FAT32 and ext4 and must not mention the Live medium.
+It retains the separate destructive confirmation and cancellation checks.
+
+The Qt startup event reported the actual log at `//.cache/calamares/session.log`:
+the debug service had HOME=/ and the runtime application cache name was
+lowercase. The fixture now supplies the normal root HOME/cache environment
+and reads the actual Qt-reported path, restricted to Calamares session logs in
+root cache directories. Unrelated/relative/traversal paths are rejected. The
+previous inferred capitalization did not collect real logs. All 28 focused
+input/orchestration tests pass, including summary and log-path regressions.
+
+The same real screenshot exposed two product UI issues that remain in this
+immutable ISO: automatic summary expansion places navigation beneath the
+panel, and partition-legend text is hardcoded black on the dark background.
+Pinned Calamares already supports `windowExpanding: noexpand`, which keeps the
+existing summary scroll area instead of requesting automatic growth. The
+legend renderer must use its widget palette. These changes are still pending;
+backend diagnostics continue on the existing ISO so required runtime changes
+can be combined in one necessary rebuild. Do not treat backend test success
+as final graphical acceptance of this image.
+
 The actual remaining failure in `39256344428` was the test driver's immediate
 pointer selection of a row in a large styled region popup. The same failure
 was reproduced locally with the actual Qt popup and Husk stylesheet: pointer
@@ -102,9 +130,8 @@ checks the resulting selection and refuses unavailable/invalid rows. A compiled
 Qt regression covers an initially off-screen item and disabled controls.
 
 The recovery run reuses this immutable ISO and its matching, already-passed
-Live proof. It also collects the correctly capitalized Calamares log path
-(`/root/.cache/Calamares/session.log`), confirmed by the pinned upstream
-application name. The old lowercase path missed the real diagnostic log.
+Live proof. Log collection now uses the actual Qt-reported cache path as
+described above, rather than assuming HOME or application-name capitalization.
 
 Cancellation retains actual GUI confirmation, zero guest written/discarded
 sectors, monotonic raw counters and identical GPT-edge hashes. Before the

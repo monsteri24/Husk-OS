@@ -365,6 +365,18 @@ class InstallHarnessTests(unittest.TestCase):
         self.assertNotIn(crypt,safe)
         self.assertIn('Create user huskcheck',safe)
 
+    def test_log_collection_uses_the_actual_qt_cache_path_and_rejects_unrelated_files(self):
+        guest = self.guest_functions('calamares_log_path')
+        guest['P'] = Path
+        for path in ('//.cache/calamares/session.log', '/root/.cache/Calamares/session.log'):
+            with self.subTest(path=path):
+                found=guest['calamares_log_path']([dict(event='driver-started',calamares_log=path)])
+                self.assertEqual(found,str(Path(path).resolve()))
+        for path in ('/etc/shadow','/root/.cache/calamares/../../../etc/shadow','relative/session.log'):
+            with self.subTest(path=path):
+                self.assertEqual(guest['calamares_log_path']([dict(event='driver-started',calamares_log=path)]),
+                                 '/root/.cache/calamares/session.log')
+
 
 if __name__ == '__main__':
     unittest.main()
