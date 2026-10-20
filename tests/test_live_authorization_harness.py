@@ -51,6 +51,16 @@ class LiveAuthorizationHarnessTests(unittest.TestCase):
             self.harness.AuthorizationAcceptance.live_authorization(window)
         monitor.key.assert_called_once_with('meta_l-ret')
 
+    def test_terminal_bootstrap_does_not_assume_us_punctuation(self):
+        monitor = Mock()
+        window = SimpleNamespace(args=SimpleNamespace(timeout=120), alive=lambda: None,
+            serial=SimpleNamespace(read=lambda: b''), ready_marker=b'not-ready', monitor=monitor,
+            latest=lambda _: dict(stage='terminal-ready'))
+        with patch.object(self.harness.time, 'monotonic', side_effect=[0, 1, 1, 121]), \
+             patch.object(self.harness.time, 'sleep'), self.assertRaisesRegex(RuntimeError, 'deadline'):
+            self.harness.AuthorizationAcceptance.live_authorization(window)
+        monitor.console.assert_called_once_with('python3 huskauthcheck.py')
+
 
 if __name__ == '__main__':
     unittest.main()

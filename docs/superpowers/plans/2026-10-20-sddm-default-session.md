@@ -87,3 +87,17 @@ saved. It never starts SDDM or claims default-session/installation acceptance.
 This narrowly checked difference avoids withholding a tested fix from the branch
 while testing the unchanged GTK/PAM/polkit pipeline. The corrected final image
 still requires its own complete offline-install/default-login acceptance.
+
+Normal authorization attempt `39445082106` ended at `terminal-ready`, before
+the GTK class or polkit was reached. Its real terminal screenshot shows that
+typing a slash/hyphen path with US physical key codes produced the wrong text
+under the shipped Finnish Live layout (`config/labwc/environment` and defaults).
+The test now creates a collision-checked plain filename in the fresh Live home
+and types only layout-neutral characters. The controller regression failed on
+the old slash path first. The bootstrap has a 60-second acknowledgement deadline;
+root diagnostics finish before the host deadline and stage changes are logged.
+No keyboard setting or production launcher/authentication policy was changed.
+
+The layout-neutral fix passed the full local suite: 475 tests / 71 explicit
+environment skips / 180 syntax checks and native sanitizers (explicit exit 0).
+Both failed-scenario summaries are preserved under `docs/evidence/v3-phase2`.

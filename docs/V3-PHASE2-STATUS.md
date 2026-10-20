@@ -53,12 +53,16 @@ password through GTK and the real system dialog, and requires polkit journal
 and actual root-process/private-cookie evidence. The root debug console only
 delivers fixtures and observes; it does not set the password, invoke the helper,
 replace executables or preload code. It checks a fresh disposable disk for zero
-writes and never installs. **This new VM scenario has not run yet.**
+writes and never installs. Its first run `39445082106` stopped before GTK/polkit:
+the fixture typed a path with US physical-key assumptions into the Finnish Live
+layout. The terminal screenshot identified the bad command. The fixture now
+uses a layout-neutral home filename and a bounded client acknowledgement; the
+actual authorization flow remains unverified until the next run.
 
 | Check | Observed result |
 | --- | --- |
 | Source/models/real GTK | [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078) passed at `22ed589`: 469 tests with zero failures or skips in the actual GTK run; 177 source/configuration checks and native sanitizer checks also passed. |
-| Local checks | The current full local run passed 474 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 180 source/configuration checks pass. |
+| Local checks | The current full local run passed 475 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 180 source/configuration checks pass. |
 | Actual Labwc | The same `22ed589` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |

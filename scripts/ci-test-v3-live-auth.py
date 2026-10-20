@@ -21,6 +21,7 @@ import time
 import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
+CLIENT_NAME = 'huskauthcheck.py'
 spec = importlib.util.spec_from_file_location('husk_install_vm', ROOT/'scripts/ci-test-v3-install.py')
 vm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(vm)
@@ -130,6 +131,12 @@ try:
     if hashlib.sha256(client.read_bytes()).hexdigest()!=CONFIG['client_sha256']:
         raise RuntimeError('The GTK fixture digest did not match')
     client.chmod(0o644)
+    # The shipped Live layout is Finnish. A plain home filename avoids typing
+    # slash/minus keys with a US physical-key map; do not change the user's layout.
+    home_client=P('/home/live')/CONFIG['client_name']
+    if home_client.exists() or home_client.is_symlink():
+        raise RuntimeError('Refusing to replace an existing Live home test file')
+    home_client.symlink_to(client)
     config=directory/'client-config.json'; config.write_text(json.dumps(dict(password=CONFIG['password'],timeout=CONFIG['timeout'])))
     os.chown(config,uid,uid); config.chmod(0o600)
     state['stage']='terminal-needed'; post()
@@ -137,8 +144,11 @@ try:
         time.sleep(1)
     if time.monotonic()>=deadline: raise RuntimeError('The active session terminal did not start')
     state['stage']='terminal-ready'; post()
-    probe=directory/'client.json'; calamares_since=None; target_pid=None
+    probe=directory/'client.json'; calamares_since=None; target_pid=None; journal_at=0
+    client_deadline=time.monotonic()+60
     while time.monotonic()<deadline:
+        if not probe.is_file() and time.monotonic()>client_deadline:
+            raise RuntimeError('The GTK client did not report after terminal launch; inspect the terminal screenshot')
         if probe.is_file():
             info=json.loads(probe.read_text()); state['gtk']=info
             if info.get('error'): raise RuntimeError('Actual GTK launcher: '+info['error'])
@@ -174,7 +184,11 @@ try:
                         if not all(checks.get(name) is True for name in CONFIG['required']):
                             raise RuntimeError('The actual root Calamares process did not satisfy all authorization checks')
                         state.update(stage='calamares-ready',finished=True,success=True); post(); break
-                else: state['stage']='authorization-pending'
+                else:
+                    state['stage']='authorization-pending'
+                    if time.monotonic()-journal_at>=10:
+                        state['polkit_journal']=command(['/usr/bin/journalctl','-b','-u','polkit.service','--no-pager','-o','cat'])[-16000:]
+                        journal_at=time.monotonic()
         post(); time.sleep(1)
     if not state['success']: raise RuntimeError('Normal Live authorization deadline expired')
     # The host first captures the verified GUI and independently checks zero writes.
@@ -206,7 +220,7 @@ finally:
 class AuthorizationAcceptance(vm.Acceptance):
     def live_authorization(self):
         started=time.monotonic(); next_ready=15; delivered=False
-        terminal=False; launched=False; prompt_since=None; authenticated=False; captured=False
+        terminal=False; launched=False; prompt_since=None; authenticated=False; captured=False; last_stage=None
         while time.monotonic()-started<self.args.timeout:
             self.alive(); elapsed=time.monotonic()-started
             output=self.serial.read()
@@ -222,10 +236,12 @@ class AuthorizationAcceptance(vm.Acceptance):
             report=self.latest('installation')
             if report:
                 stage=report.get('stage')
+                if stage!=last_stage:
+                    print('Live authorization checkpoint:',stage,flush=True); last_stage=stage
                 if stage=='terminal-needed' and not terminal:
                     self.monitor.key('meta_l-ret'); terminal=True
                 if stage=='terminal-ready' and not launched:
-                    self.monitor.console('python3 /run/husk-v3-auth/client.py'); launched=True
+                    self.monitor.console('python3 '+CLIENT_NAME); launched=True
                 if stage=='authorization-pending' and not authenticated:
                     if prompt_since is None: prompt_since=time.monotonic()
                     if time.monotonic()-prompt_since>=4:
@@ -242,7 +258,9 @@ class AuthorizationAcceptance(vm.Acceptance):
                     if report.get('cleanup_completed') is True:
                         self.result['authorization']='PASSED'; return
             time.sleep(1)
-        raise RuntimeError('The bounded Live authorization deadline expired')
+        last=self.latest('installation') or {}
+        raise RuntimeError('The bounded Live authorization deadline expired at stage '+str(last.get('stage'))+
+                           '; checks='+json.dumps(last.get('checks',{}),sort_keys=True))
 
     def run(self):
         self.result=dict(authorization='FAILED',live_shutdown='NOT TESTED',problems=[],
@@ -260,8 +278,9 @@ class AuthorizationAcceptance(vm.Acceptance):
             self.base='http://10.0.2.2:'+str(server.server_address[1])+'/'+self.token
             self.ready_marker=('HUSK-AUTH-READY-'+secrets.token_hex(16)).encode()
             client=GTK_CLIENT.encode()
-            config=dict(base=self.base,password=self.password,timeout=self.args.timeout,
-                        client_sha256=hashlib.sha256(client).hexdigest(),required=REQUIRED_CHECKS)
+            # Let the observer report its failure/logs before the host deadline.
+            config=dict(base=self.base,password=self.password,timeout=self.args.timeout-60,
+                        client_sha256=hashlib.sha256(client).hexdigest(),client_name=CLIENT_NAME,required=REQUIRED_CHECKS)
             self.resources={'ready':self.ready_marker+b'\n','client.py':client,
                             'setup.py':('CONFIG='+repr(config)+'\n'+ROOT_OBSERVER).encode()}
             threading.Thread(target=server.serve_forever,daemon=True).start()
