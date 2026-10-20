@@ -2,7 +2,10 @@
 import ast
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock, patch
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,6 +36,20 @@ class LiveAuthorizationHarnessTests(unittest.TestCase):
         for name in ('ROOT_OBSERVER', 'GTK_CLIENT'):
             with self.subTest(source=name):
                 ast.parse('CONFIG={}\n' + getattr(self.harness, name), filename=name)
+
+    def test_terminal_input_uses_the_shipped_labwc_shortcut(self):
+        config = ET.parse(ROOT / 'config/labwc/rc.xml')
+        action = config.find('.//keybind[@key="W-Return"]/action')
+        self.assertIsNotNone(action)
+        self.assertEqual(action.attrib, dict(name='Execute', command='foot'))
+        monitor = Mock()
+        window = SimpleNamespace(args=SimpleNamespace(timeout=120), alive=lambda: None,
+            serial=SimpleNamespace(read=lambda: b''), ready_marker=b'not-ready', monitor=monitor,
+            latest=lambda _: dict(stage='terminal-needed'))
+        with patch.object(self.harness.time, 'monotonic', side_effect=[0, 1, 1, 121]), \
+             patch.object(self.harness.time, 'sleep'), self.assertRaisesRegex(RuntimeError, 'deadline'):
+            self.harness.AuthorizationAcceptance.live_authorization(window)
+        monitor.key.assert_called_once_with('meta_l-ret')
 
 
 if __name__ == '__main__':

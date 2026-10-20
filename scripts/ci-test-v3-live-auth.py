@@ -211,7 +211,7 @@ class AuthorizationAcceptance(vm.Acceptance):
             if report:
                 stage=report.get('stage')
                 if stage=='terminal-needed' and not terminal:
-                    self.monitor.key('ctrl-alt-t'); terminal=True
+                    self.monitor.key('meta_l-ret'); terminal=True
                 if stage=='terminal-ready' and not launched:
                     self.monitor.console('python3 /run/husk-v3-auth/client.py'); launched=True
                 if stage=='authorization-pending' and not authenticated:

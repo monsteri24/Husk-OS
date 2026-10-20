@@ -52,3 +52,13 @@
 - [x] Require the active Live session, NP-to-P password state, successful polkit journal action, UID-0 real Calamares, private cookie, English Qt environment, zero QMP disk writes and safe shutdown. Local suite: 473 tests / 71 explicit skips; 180 syntax checks.
 - [ ] Save/review test code, then pin the completed new ISO's exact source/digest/size without rebuilding.
 - [ ] Run the real VM check and inspect its actual polkit/Calamares screenshots before claiming graphical startup acceptance.
+
+Review: the SDDM diff had no findings. Independent review of the new authorization
+fixture found an incorrect terminal shortcut before VM execution. The shipped
+Labwc binding is Super+Return, so the controller now sends `meta_l-ret` as the
+existing Live boot harness does. The regression exercised the actual controller
+against the shipped XML and failed with Ctrl+Alt+T before the correction. No
+runtime desktop binding was changed. Other review assumptions (real dialog
+focus/journal wording/GUI visibility) remain for the VM and screenshot check.
+After the shortcut regression, the full local suite passed 474 tests with 71
+explicit environment skips, native sanitizer checks and 180 syntax checks.
