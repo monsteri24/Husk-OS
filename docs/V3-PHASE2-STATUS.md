@@ -82,6 +82,17 @@ errors still stop immediately. Two regressions reproduce delayed removal and
 a persistent route; all 24 focused orchestration tests pass. This is a VM
 fixture change and does not require rebuilding or modifying the ISO.
 
+The bounded retry [39375337125](https://github.com/monsteri24/Husk-OS/actions/runs/39375337125)
+showed a persistent IPv6 default through `fe80::2` after 30 seconds; IPv4 had
+been removed. The fixture now explicitly uses QEMU user networking with
+`ipv6=off`, avoiding an independent IPv6 router in this IPv4 evidence transport
+([QEMU invocation documentation](https://www.qemu.org/docs/master/system/invocation.html)).
+The ISO and installed-system network configuration are unchanged. The guest
+still checks both IPv4 and IPv6 for unexpected defaults and requires stable
+absence before starting Calamares. This offline/IPv4 VM fixture does not prove
+real-hardware IPv6 networking. All 24 focused orchestration tests pass,
+including the explicit VM network configuration and unchanged boot isolation.
+
 The actual remaining failure in `39256344428` was the test driver's immediate
 pointer selection of a row in a large styled region popup. The same failure
 was reproduced locally with the actual Qt popup and Husk stylesheet: pointer

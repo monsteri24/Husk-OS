@@ -87,7 +87,9 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
         '-drive', 'if=none,id=target,format=qcow2,file=' + str(disk),
         '-device', 'virtio-blk-pci,drive=target,serial=HUSK-DISPOSABLE',
         '-device', 'virtio-vga', '-device', 'qemu-xhci', '-device', 'usb-tablet',
-        '-nic', 'user,model=virtio-net-pci', '-display', 'none',
+        # This offline fixture needs only the local IPv4 evidence channel.
+        # Do not advertise an independent slirp IPv6 router to the guest.
+        '-nic', 'user,model=virtio-net-pci,ipv6=off', '-display', 'none',
         '-qmp', 'unix:' + str(monitor) + ',server=on,wait=off']
     if stage == 'live':
         if not re.fullmatch(r'[A-Za-z0-9_-]{1,32}', iso_label):

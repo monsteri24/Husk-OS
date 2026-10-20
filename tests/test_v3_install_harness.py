@@ -75,6 +75,10 @@ class InstallHarnessTests(unittest.TestCase):
             for argument in ('-cdrom', '-kernel', '-initrd', '-append'):
                 self.assertNotIn(argument, installed)
             self.assertNotIn(str(values['iso']), installed)
+            for command in (live, installed):
+                self.assertEqual(command[command.index('-nic')+1],
+                                 'user,model=virtio-net-pci,ipv6=off',
+                                 'The offline fixture must not advertise an independent IPv6 router')
             self.assertTrue(any('serial=HUSK-DISPOSABLE' in item for item in installed))
             with self.assertRaises(ValueError):
                 self.harness.make_qemu_command('installed', **dict(values, disk=Path('/dev/vda')))
