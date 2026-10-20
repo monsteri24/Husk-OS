@@ -27,6 +27,7 @@ import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
 DISK_SIZE = 32 * 1024 ** 3
+PROBE_VT = 6  # Keep the authenticated text probe away from greeter/user VTs.
 REQUIRED_DRIVER_EVENTS = (
     'driver-started', 'page-welcome', 'page-keyboard', 'page-locale', 'timezone-selected',
     'drive-no-selection', 'drive-selected', 'erase-selected', 'users-entered', 'users-validated',
@@ -147,6 +148,15 @@ def cancellation_blockstats(response):
     return stats
 
 
+def installed_graphical_vt(report):
+    session=report.get('session',{}) if isinstance(report,dict) else {}
+    value=session.get('VTNr') if isinstance(session,dict) else None
+    if (not isinstance(value,str) or not re.fullmatch(r'[1-9][0-9]?',value)
+            or not 1<=int(value)<=12 or int(value)==PROBE_VT):
+        raise ValueError('No valid graphical VT was observed in the actual Wayland session')
+    return int(value)
+
+
 def validate_installed_report(report, version, username):
     problems = []
     if not isinstance(report, dict): return ['No installed-user report was received']
@@ -160,6 +170,8 @@ def validate_installed_report(report, version, username):
     session = report.get('session', {})
     if session.get('Type') != 'wayland' or session.get('Name') != username or session.get('Remote') != 'no':
         problems.append('The real local SDDM Wayland session was not observed')
+    try: installed_graphical_vt(report)
+    except ValueError as error: problems.append(str(error))
     status = report.get('status', {})
     if (status.get('version') != version or status.get('backend') != 'wayland' or status.get('live') is not False or
             status.get('bridge_connected') is not True or status.get('panel_mapped') is not True or
@@ -508,7 +520,7 @@ for path in P('/proc').iterdir():
         report['desktop_pid']=int(path.name)
         identifier=env.get('XDG_SESSION_ID')
         if identifier:
-            result=run(['loginctl','show-session',identifier,'-p','Type','-p','Name','-p','Remote','-p','State'])
+            result=run(['loginctl','show-session',identifier,'-p','Type','-p','Name','-p','Remote','-p','State','-p','VTNr'])
             report['session']=dict(line.split('=',1) for line in result.stdout.splitlines() if '=' in line)
         break
     except (OSError,ValueError): pass
@@ -741,12 +753,15 @@ class Acceptance:
 
     def sddm_login(self):
         self.auth_started = True
-        self.monitor.key('ctrl-alt-f1'); time.sleep(1)
-        self.monitor.key('shift-tab'); self.monitor.key('ctrl-a')
+        # The captured, automatically activated greeter may use VT2. Keep it
+        # active, explicitly choose Husk rather than stock labwc, then fill.
+        self.monitor.key('tab'); self.monitor.key('home'); self.monitor.key('h')
+        self.monitor.key('shift-tab'); self.monitor.key('shift-tab'); self.monitor.key('ctrl-a')
         self.monitor.type_text(self.args.username); self.monitor.key('tab')
         self.monitor.type_text(self.password); self.monitor.key('ret')
 
     def installed_boot(self):
+        self.result['installed_boot']='FAILED'
         started=time.monotonic(); login=False; console_login=False
         next_probe=65 if self.kvm else 210
         while time.monotonic()-started < self.args.boot_timeout:
@@ -755,19 +770,20 @@ class Acceptance:
                 self.monitor.capture(self.artifacts/'installed-sddm-greeter.png')
                 self.sddm_login(); login=True
             if login and elapsed >= next_probe:
-                self.monitor.key('ctrl-alt-f2'); time.sleep(1)
+                self.monitor.key('ctrl-alt-f'+str(PROBE_VT)); time.sleep(3)
                 if not console_login:
-                    self.monitor.console(self.args.username); time.sleep(1)
-                    self.monitor.console(self.password); time.sleep(2)
+                    self.monitor.console(self.args.username); time.sleep(2)
+                    self.monitor.console(self.password); time.sleep(3)
                     console_login=True
                 self.monitor.console('curl -fsS -o /tmp/husk-v3-probe.py '+self.base+
                     '/installed.py; python3 /tmp/husk-v3-probe.py')
-                self.monitor.key('ctrl-alt-f1'); next_probe=elapsed+45
+                next_probe=elapsed+45
             report=self.latest('installed')
             if report:
                 problems=validate_installed_report(report,self.args.expected_version,self.args.username)
                 self.result['installed_problems']=problems
                 if not problems:
+                    self.monitor.key('ctrl-alt-f'+str(installed_graphical_vt(report))); time.sleep(1)
                     self.result['installed_boot']='PASSED'; self.result['installed_status']=report['status']
                     self.monitor.capture(self.artifacts/'installed-husk-desktop.png'); return
             time.sleep(2)

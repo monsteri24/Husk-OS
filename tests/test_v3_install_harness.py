@@ -120,7 +120,7 @@ class InstallHarnessTests(unittest.TestCase):
         valid = dict(phase='installed', uid=1001, user='huskcheck', live=False, uefi=True,
                      debug_shell=False, root_device='/dev/vda2', root_fstype='ext4',
                      optical_media=[], packages=['ownos-core','ownos-ui','ownos-desktop','linux','grub','sddm'],
-                     session=dict(Type='wayland', Name='huskcheck', Remote='no'),
+                     session=dict(Type='wayland', Name='huskcheck', Remote='no', VTNr='1'),
                      status=dict(version='v3-phase2', backend='wayland', live=False,
                                  bridge_connected=True, panel_mapped=True, desktop_surfaces=1))
         self.assertEqual(self.harness.validate_installed_report(valid, 'v3-phase2', 'huskcheck'), [])
@@ -131,6 +131,23 @@ class InstallHarnessTests(unittest.TestCase):
             with self.subTest(changes=changes):
                 self.assertTrue(self.harness.validate_installed_report(dict(valid, **changes),
                                                                       'v3-phase2', 'huskcheck'))
+
+    def test_sddm_login_keeps_the_active_greeter_and_selects_husk(self):
+        window=SimpleNamespace(auth_started=False,monitor=Mock(),args=SimpleNamespace(username='huskcheck'),password='test-only')
+        with patch.object(self.harness.time,'sleep'):
+            self.harness.Acceptance.sddm_login(window)
+        keys=[call.args[0] for call in window.monitor.key.call_args_list]
+        self.assertFalse(any(key.startswith('ctrl-alt-f') for key in keys),
+                         'The auto-activated greeter is not guaranteed to be on VT1')
+        self.assertIn('h',keys,'Choose the actual Husk entry instead of default bare labwc')
+        self.assertTrue(window.auth_started)
+
+    def test_graphical_return_vt_must_come_from_the_actual_wayland_session(self):
+        report=dict(session=dict(Type='wayland',Name='huskcheck',Remote='no',VTNr='2'))
+        self.assertEqual(self.harness.installed_graphical_vt(report),2)
+        for value in ('',None,'6','0','13','64','2; reboot'):
+            with self.subTest(value=value),self.assertRaises(ValueError):
+                self.harness.installed_graphical_vt(dict(session=dict(report['session'],VTNr=value)))
 
     def test_install_success_requires_explicit_confirmation_and_postponed_restart(self):
         events = [dict(event=name) for name in self.harness.REQUIRED_DRIVER_EVENTS]

@@ -31,20 +31,22 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) passed at `812d74c`: 464 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
-| Local checks | The last full local run passed 464 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current 31 focused input/orchestration tests pass, including target-tree and real job-name regressions. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds and the patched partition renderer. All 176 source/configuration checks pass. |
-| Actual Labwc | The same `812d74c` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Source/models/real GTK | [39381173228](https://github.com/monsteri24/Husk-OS/actions/runs/39381173228) passed at `7132783`: 466 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
+| Local checks | The current full local run passed 469 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and input against the actual SDDM theme in Basic/Fusion styles. All 177 source/configuration checks pass. |
+| Actual Labwc | The same `7132783` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |
 | Live UEFI boot | That exact `812d74c` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
 | Calamares UI/jobs | Actual selection, readable scrollable disk review, separate irreversible confirmation, all 30 offline jobs, Installation Complete, real countdown 30 to 26 and pointer activation of Restart Later passed. The process exited 0 and the Live boot ID remained unchanged beyond 35 seconds. Target-file and independent installed-boot validation are still pending. |
 | Disk guard/cancellation | The current VM accepted only the disposable target and rejected the Live medium. Actual summary cancellation exited 0, guest written/discard sectors and GPT-edge hashes were unchanged, and independent QMP counters showed zero target writes/unmaps before installation was authorized. |
+| Installed target | Recovery `39381173228` passed all 19 target checks: GPT/ESP/ext4, fstab, user/password presence, kernel/initramfs, GRUB/fallback, version, Live cleanup, actual job starts, IANA timezone, keyboard, English locale and hostname. Installation and Live ACPI shutdown were PASSED. |
+| Independent UEFI boot | The same run booted the installed disk with no ISO/kernel override. OVMF loaded its `Husk_OS` GRUB entry and the real screenshot reached Husk's SDDM greeter. The normal-user/Wayland report did not arrive before the deadline; that combined acceptance gate remains unpassed. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
 It includes the corrected summary/completion UI and existing artwork, passed
-payload validation, Live UEFI boot and the real offline installer job queue,
-and fits the file-size limit. Final target inspection and independent installed
-boot remain unaccepted:
+payload validation, Live UEFI boot, real offline installation and target
+inspection, and fits the file-size limit. Independent boot reached SDDM;
+normal-user/Wayland acceptance remains pending:
 
 - Source: `812d74c248ca4696fd6cda27f87ffaef0f9a14ec`
 - Size: **2,079,227,904 bytes**
@@ -61,6 +63,29 @@ current release candidate. The previous `0ac564d` image and its
 remain preserved for diagnostic history.
 
 ## Active acceptance and blockers
+
+Recovery [39381173228](https://github.com/monsteri24/Husk-OS/actions/runs/39381173228)
+passed the corrected target inspection and all 19 checks, then cleanly shut
+down the Live VM. Its new VM had no ISO or kernel override; OVMF loaded the
+installed GRUB from the virtual disk and the screenshot shows the Husk SDDM
+greeter with Password focused. The selected session was stock `labwc`, not
+Husk. The input fixture then unnecessarily switched to VT1 and later assumed
+VT2 was a text console. No installed-user report arrived, so the full gate
+failed rather than claiming success from a greeter screenshot.
+
+The fixture now keeps the auto-activated greeter, explicitly selects the Husk
+session through actual keyboard input, and uses separate text VT6 for normal
+password authentication. It reads VTNr from the actual Wayland session and
+returns only to that validated graphical VT. An attempted boot is now marked
+FAILED until accepted, rather than being left NOT TESTED. No debug shell,
+autologin, authorization bypass or installed-system modification is added.
+Actual Qt Quick tests load the repository's real SDDM theme: the old sequence
+left stock labwc selected; the corrected sequence selects Husk and fills the
+proper username/password fields under both Basic and Fusion. The tests mock
+the authentication backend; the recovery VM still has to prove real login.
+The current full local suite passes 469 tests with 71 explicit environment
+skips, all 177 source checks and native sanitizer checks. The next recovery
+uses the identical ISO and prior Live evidence again.
 
 The current `812d74c` build passed both payload checks, its size gate and real
 Live UEFI boot. Actual screenshots verify the readable partition legend,
@@ -85,9 +110,8 @@ The real log also shows Python start events use stable module IDs (`unpackfs`,
 `bootloader`) before their lazy pretty_name is loaded. The fixture now checks
 those exact start events, rejects mere planned queue entries, and additionally
 checks the installed hostname. All 31 focused input/orchestration tests pass.
-The next recovery reuses this exact image and matching Live proof, without
-rebuilding. The required installed-filesystem and independent UEFI/SDDM/Wayland
-boot gates have not yet passed.
+The following recovery reused this image without rebuilding and passed target
+inspection as recorded above. Normal-user/Wayland acceptance remains pending.
 
 The preceding `8bf2df4` build passed the size gate. Zstd19 reduced the previous
 2,147,778,560-byte image by 68,550,656 bytes with the same package selection
@@ -321,6 +345,11 @@ run passed with this correction. No production desktop code or current ISO
 payload changed for this test-harness correction.
 
 ## Coverage limits
+
+For this candidate's first installed login, select **Husk Desktop (Experimental)**
+in SDDM. The stock labwc entry remains present and was initially selected in
+the real greeter; default-session refinement remains incomplete. The VM input
+test explicitly chooses Husk and must still prove the real user session.
 
 The VM input fixture uses a test-only root debug console; it does not verify the
 normal graphical polkit/PAM authorization or Live password dialog. The signed

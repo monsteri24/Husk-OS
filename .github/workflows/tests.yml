@@ -18,7 +18,7 @@ jobs:
             libwayland-dev pkg-config gettext qt6-base-dev qt6-declarative-dev \
             qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts \
             qml6-module-qtquick-templates qml6-module-qtquick-window \
-            qml6-module-qtqml-workerscript qemu-utils
+            qml6-module-qtqml-workerscript qml6-module-qtqml-models qemu-utils
       - name: Fetch and verify the pinned Calamares source fixture
         run: |
           curl -fsSL --retry 3 --connect-timeout 30 --max-time 120 \
