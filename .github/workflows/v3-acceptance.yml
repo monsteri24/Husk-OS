@@ -8,7 +8,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: husk-v3-recovered-acceptance-39256344428
+  group: husk-v3-recovered-acceptance-39377861570
   cancel-in-progress: true
 jobs:
   source:
@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 65
     env:
-      HUSK_IMAGE_SOURCE: 8bf2df4eaa297747b30de5aa34c41d682e512843
-      HUSK_BOOT_EVIDENCE_RUN: '39256344428'
+      HUSK_IMAGE_SOURCE: 812d74c248ca4696fd6cda27f87ffaef0f9a14ec
+      HUSK_BOOT_EVIDENCE_RUN: '39377861570'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,17 +32,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/39256344428" --jq .head_sha)" = "$HUSK_IMAGE_SOURCE"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/39377861570" --jq .head_sha)" = "$HUSK_IMAGE_SOURCE"
           mkdir -p out
-          gh run download 39256344428 --repo "$GITHUB_REPOSITORY" \
-            --name HuskOS-v3-UNVERIFIED-candidate-39256344428 --dir out
+          gh run download 39377861570 --repo "$GITHUB_REPOSITORY" \
+            --name HuskOS-v3-UNVERIFIED-candidate-39377861570 --dir out
           test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2079227904
-          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 8d06e8f62e55d8157c703cdd9b103e9e0d12b12bccc892a9ed05ce5088068ed2
+          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
           mkdir -p .build/prior-evidence
-          gh run download 39256344428 --repo "$GITHUB_REPOSITORY" \
-            --name v3-candidate-evidence-39256344428 --dir .build/prior-evidence
-          if [ "$HUSK_BOOT_EVIDENCE_RUN" != 39256344428 ]; then
+          gh run download 39377861570 --repo "$GITHUB_REPOSITORY" \
+            --name v3-candidate-evidence-39377861570 --dir .build/prior-evidence
+          if [ "$HUSK_BOOT_EVIDENCE_RUN" != 39377861570 ]; then
             mkdir -p .build/prior-boot
             gh run download "$HUSK_BOOT_EVIDENCE_RUN" --repo "$GITHUB_REPOSITORY" \
               --name "v3-recovered-acceptance-$HUSK_BOOT_EVIDENCE_RUN" --dir .build/prior-boot
@@ -52,14 +52,14 @@ jobs:
           from pathlib import Path
           prior = Path('.build/prior-evidence')
           build = json.loads((prior/'v3-build.json').read_text())
-          directory = prior if os.environ['HUSK_BOOT_EVIDENCE_RUN'] == '39256344428' else Path('.build/prior-boot')
+          directory = prior if os.environ['HUSK_BOOT_EVIDENCE_RUN'] == '39377861570' else Path('.build/prior-boot')
           boot_file = directory/'boot-v3/result.json'
           if not boot_file.exists(): boot_file = directory/'reused-live-boot.json'
           boot = json.loads(boot_file.read_text()) if boot_file.exists() else None
           spec = importlib.util.spec_from_file_location('boot_proof', 'scripts/ci-test-system1.py')
           verifier = importlib.util.module_from_spec(spec); spec.loader.exec_module(verifier)
           proof = verifier.verified_recovered_boot(build, boot, os.environ['HUSK_IMAGE_SOURCE'],
-              '8d06e8f62e55d8157c703cdd9b103e9e0d12b12bccc892a9ed05ce5088068ed2', 2079227904)
+              '860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21', 2079227904)
           if proof is not None:
               proof['proof_reused_from_run'] = int(os.environ['HUSK_BOOT_EVIDENCE_RUN'])
               proof['proof_scope'] = 'Prior real Live UEFI boot of this exact immutable image; not rerun in this workflow'
@@ -69,8 +69,8 @@ jobs:
           PY
           printf 'image_source=%s\nacceptance_source=%s\n' "$HUSK_IMAGE_SOURCE" "$GITHUB_SHA" > out/recovered-image-source.txt
           git diff --stat "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging > out/changes-since-image.txt
-          # The profile generator's new compression is not in this reused ISO.
-          # Record that build-only difference; require identical runtime sources.
+          # Require identical runtime sources and record any build-only profile
+          # difference separately; no changed runtime is accepted as this ISO.
           git diff "$HUSK_IMAGE_SOURCE" HEAD -- src/ownos/build.py > out/build-profile-changes-not-in-image.txt
           git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging ':(exclude)src/ownos/build.py'
       - name: Install VM tools and inspect the exact recovered payload

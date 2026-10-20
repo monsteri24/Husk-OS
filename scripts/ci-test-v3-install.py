@@ -37,7 +37,7 @@ REQUIRED_DRIVER_EVENTS = (
 REQUIRED_TARGET_CHECKS = (
     'efi_partition', 'root_partition', 'fstab', 'user', 'kernel', 'initramfs',
     'grub', 'efi_fallback', 'version', 'live_cleanup', 'guard_job', 'copy_job',
-    'users_job', 'initramfs_job', 'bootloader_job', 'timezone', 'keyboard', 'english_locale',
+    'users_job', 'initramfs_job', 'bootloader_job', 'timezone', 'keyboard', 'english_locale', 'hostname',
 )
 
 
@@ -310,14 +310,29 @@ def unchanged_cancellation_data(before, after):
     return (all(after[key]==before[key] for key in ('sectors_written','discards_completed','sectors_discarded'))
             and bool(before.get('partition_edges_sha256'))
             and before['partition_edges_sha256']==after.get('partition_edges_sha256'))
+def started_job_checks(logs):
+    # Python jobs acquire pretty_name only when executed; their start event
+    # uses the stable module ID, as observed in the real completed job queue.
+    jobs=set(re.findall(r'Starting job "([^"\n]+)"',logs))
+    return dict(guard_job='Verify installation drive and protect Live USB' in jobs,
+        copy_job='unpackfs' in jobs, users_job=('Create user '+CONFIG['user']) in jobs,
+        initramfs_job=any('mkinitcpio' in name for name in jobs), bootloader_job='bootloader' in jobs)
 def inspect_target():
-    devices = json.loads(command(['lsblk','--json','-b','-o','PATH,TYPE,FSTYPE,UUID,PARTTYPE,SIZE,SERIAL']).stdout)
-    disk = next(device for device in devices['blockdevices'] if device['path']=='/dev/vda')
+    command(['udevadm','settle','--timeout=30'])
+    # lsblk supplies children[] only with NAME or --tree. Request it explicitly.
+    devices = json.loads(command(['lsblk','--json','--tree','-b','-o','PATH,TYPE,FSTYPE,UUID,PARTTYPE,SIZE,SERIAL']).stdout)
+    state['target_partitions']=devices
+    disks=[device for device in devices.get('blockdevices',[]) if device.get('path')=='/dev/vda' and device.get('type')=='disk']
+    if len(disks)!=1 or disks[0].get('serial')!='HUSK-DISPOSABLE' or disks[0].get('size')!=32*1024**3:
+        raise RuntimeError('Installed target is not the expected disposable 32 GiB disk; inspect target_partitions')
+    disk=disks[0]
     parts=disk.get('children',[])
-    root=next(part for part in parts if part.get('fstype')=='ext4')
-    esp=next(part for part in parts if part.get('fstype')=='vfat')
-    if len(parts)!=2 or not all(re.fullmatch(r'/dev/vda[1-9][0-9]*',p['path']) for p in parts):
-        raise RuntimeError('The disposable disk has an unexpected partition layout')
+    roots=[part for part in parts if part.get('fstype')=='ext4']
+    esps=[part for part in parts if part.get('fstype')=='vfat']
+    if (len(parts)!=2 or len(roots)!=1 or len(esps)!=1 or
+            not all(part.get('type')=='part' and re.fullmatch(r'/dev/vda[1-9][0-9]*',part.get('path','')) for part in parts)):
+        raise RuntimeError('Expected two disposable ext4/FAT32 partitions; inspect target_partitions')
+    root,esp=roots[0],esps[0]
     mount=P('/mnt/husk-v3-check'); mount.mkdir(exist_ok=True)
     command(['e2fsck','-fn',root['path']],timeout=120)
     command(['mount','-o','ro,noload',root['path'],str(mount)])
@@ -346,15 +361,12 @@ def inspect_target():
                 live_cleanup='live' not in users and not (mount/'etc/sddm.conf.d/ownos-live.conf').exists() and
                     not (mount/'etc/systemd/system/ownos-live-setup.service').exists() and
                     not (mount/'tmp/husk-v3-driver.so').exists(),
-                guard_job='Verify installation drive and protect Live USB' in joblines,
-                copy_job='Filling up filesystems' in joblines,
-                users_job=('Create user '+CONFIG['user']) in joblines,
-                initramfs_job='mkinitcpio' in joblines,
-                bootloader_job='Install bootloader' in joblines,
+                **started_job_checks(logs),
                 timezone=(mount/'etc/localtime').is_symlink() and
                     str((mount/'etc/localtime').readlink()).endswith('/zoneinfo/Europe/Helsinki'),
                 keyboard=json.loads((mount/'etc/ownos/keyboard.json').read_text())==dict(layout='us',variant=''),
-                english_locale='LANG=en_US.UTF-8' in (mount/'etc/locale.conf').read_text())
+                english_locale='LANG=en_US.UTF-8' in (mount/'etc/locale.conf').read_text(),
+                hostname=(mount/'etc/hostname').read_text().strip()=='husk-v3-check')
             state['target_checks']=checks
             state['target_partitions']=devices
             state['target_fstab']=fstab
@@ -461,7 +473,7 @@ try:
     inspect_target()
     state['success']=state['restart_postponed'] and state['offline'] and all(state['target_checks'].values())
 except Exception as exc:
-    state['error']=str(exc)
+    state['error']=type(exc).__name__+': '+str(exc)
 finally:
     state['finished']=True; post()
 '''

@@ -1,6 +1,6 @@
-image_run=39256344428
-attempt=12-real-user-page-review-disk-summary-and-observed-log-path
-image_source=8bf2df4eaa297747b30de5aa34c41d682e512843
-image_sha256=8d06e8f62e55d8157c703cdd9b103e9e0d12b12bccc892a9ed05ce5088068ed2
+image_run=39377861570
+attempt=13-inspect-real-target-tree-and-started-jobs
+image_source=812d74c248ca4696fd6cda27f87ffaef0f9a14ec
+image_sha256=860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21
 image_bytes=2079227904
-request=Reuse the branding-fixed ISO and its passed Live UEFI proof; actual native input and independent QEMU cancellation counters; no release or merge
+request=Reuse the UI-corrected ISO and its passed Live UEFI proof; actual native input and independent QEMU cancellation counters; no release or merge

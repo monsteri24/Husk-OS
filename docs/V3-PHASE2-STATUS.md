@@ -31,25 +31,26 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39376727601](https://github.com/monsteri24/Husk-OS/actions/runs/39376727601) passed at `ff36d91`: 461 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
-| Local checks | The current full local run passed 464 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt regressions exercise the launcher's actual style options, completion actions, popup selection, navigation bounds and the actual patched partition text renderer. All 176 source/configuration checks pass. |
-| Actual Labwc | The same `ff36d91` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Source/models/real GTK | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) passed at `812d74c`: 464 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
+| Local checks | The last full local run passed 464 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current 31 focused input/orchestration tests pass, including target-tree and real job-name regressions. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds and the patched partition renderer. All 176 source/configuration checks pass. |
+| Actual Labwc | The same `812d74c` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
-| Full V3 build | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) compiled patched Calamares, built signed packages and produced the branding-fixed ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. The later installation test failed as described below. |
-| Live UEFI boot | That exact `8bf2df4` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
-| Calamares UI | Recovery [39375781268](https://github.com/monsteri24/Husk-OS/actions/runs/39375781268) reached Welcome, English (US), actual Helsinki/IANA selection, explicit drive/erase choices, user input and the disk-change summary. The summary test incorrectly required an upstream-absent Users summary; that fixture is corrected. Installation is still a separate gate. |
-| Disk guard in Live | The new run accepted the disposable target and rejected the Live optical medium. Written/discarded sectors remained zero and GPT-edge hashes matched. A zero-sector flush incremented raw write/flush operation counters; those are recorded rather than described as all-zero. |
+| Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |
+| Live UEFI boot | That exact `812d74c` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
+| Calamares UI/jobs | Actual selection, readable scrollable disk review, separate irreversible confirmation, all 30 offline jobs, Installation Complete, real countdown 30 to 26 and pointer activation of Restart Later passed. The process exited 0 and the Live boot ID remained unchanged beyond 35 seconds. Target-file and independent installed-boot validation are still pending. |
+| Disk guard/cancellation | The current VM accepted only the disposable target and rejected the Live medium. Actual summary cancellation exited 0, guest written/discard sectors and GPT-edge hashes were unchanged, and independent QMP counters showed zero target writes/unmaps before installation was authorized. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
-It includes the required branding maps and existing artwork, passed payload
-validation and Live UEFI boot, and fits the file-size limit. Installation and
-independent installed boot remain unaccepted:
+It includes the corrected summary/completion UI and existing artwork, passed
+payload validation, Live UEFI boot and the real offline installer job queue,
+and fits the file-size limit. Final target inspection and independent installed
+boot remain unaccepted:
 
-- Source: `8bf2df4eaa297747b30de5aa34c41d682e512843`
+- Source: `812d74c248ca4696fd6cda27f87ffaef0f9a14ec`
 - Size: **2,079,227,904 bytes**
-- SHA-256: `8d06e8f62e55d8157c703cdd9b103e9e0d12b12bccc892a9ed05ce5088068ed2`
-- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428/artifacts/12189701056)
-- [Build/Live/installer evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428/artifacts/12189785495)
+- SHA-256: `860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21`
+- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570/artifacts/12244682086) (retained until 2026-10-27)
+- [Build/Live/installer evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570/artifacts/12245252087)
 
 The completed image includes the normal panel painting, GTK clipboard callback
 and popup outside-click fixes, installer display/startup corrections, explicit os-prober dependency and nonexpiring
@@ -61,7 +62,34 @@ remain preserved for diagnostic history.
 
 ## Active acceptance and blockers
 
-The `8bf2df4` build now passes the size gate. Zstd19 reduced the previous
+The current `812d74c` build passed both payload checks, its size gate and real
+Live UEFI boot. Actual screenshots verify the readable partition legend,
+scrollable summary and navigation inside the 1280x746 work area. Completion
+loaded correctly with the Husk palette and working ViewManager actions. The
+offline VM ran all 30 jobs, including users, locale generation, mkinitcpio,
+UEFI GRUB/fallback, checked filesystem flush, normal unmount and final sync.
+The countdown changed 30 to 26 in four seconds, Restart Later exited 0 and
+the boot ID remained unchanged beyond the automatic-restart interval.
+
+Final inspection then raised an empty StopIteration: its lsblk request used
+PATH without NAME or `--tree`, so the output was flat and had no `children`.
+The read-only fixture now explicitly requests `--tree` after udev settle,
+preserves the raw result before validation, checks the disposable disk identity
+and expected ext4/FAT32 layout, and reports exception types on failure
+([lsblk format documentation](https://man.archlinux.org/man/lsblk.8.html)). A
+regression reproduces the old StopIteration and reaches the read-only fsck
+checkpoint with the corrected request. Wrong disk identity, absent partitions
+and paths outside the disposable disk are rejected. No target validation is bypassed.
+
+The real log also shows Python start events use stable module IDs (`unpackfs`,
+`bootloader`) before their lazy pretty_name is loaded. The fixture now checks
+those exact start events, rejects mere planned queue entries, and additionally
+checks the installed hostname. All 31 focused input/orchestration tests pass.
+The next recovery reuses this exact image and matching Live proof, without
+rebuilding. The required installed-filesystem and independent UEFI/SDDM/Wayland
+boot gates have not yet passed.
+
+The preceding `8bf2df4` build passed the size gate. Zstd19 reduced the previous
 2,147,778,560-byte image by 68,550,656 bytes with the same package selection
 and preserved wallpaper digest. The previous `65b2085` ISO and its successful
 [Live evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39253873845)
@@ -128,8 +156,9 @@ incorrectly exposed ViewManager from core. Both now match the real UI module;
 the corrected fixture first failed with the old import and then passed actual
 Restart Later, Restart Now and countdown logic with the fix. The page also
 sets the existing Husk dark/yellow palette explicitly for Qt Quick controls.
-The next required ISO build includes these runtime corrections; the old ISO
-cannot prove the corrected completion UI or final graphical acceptance.
+The `812d74c` ISO includes these runtime corrections. Its actual completion
+page and Restart Later behavior passed as recorded above; the older ISO
+cannot prove them.
 
 The Qt startup event reported the actual log at `//.cache/calamares/session.log`:
 the debug service had HOME=/ and the runtime application cache name was
@@ -152,10 +181,10 @@ after it. The next VM driver additionally requires visible, unclipped Install
 and Cancel buttons and an installer frame inside the available screen before
 disk confirmation. Real Qt cases cover parent clipping and off-screen windows.
 The launcher's failure message now identifies the observed lowercase root
-cache log. These source corrections are locally verified but still require a
-new ISO. Backend diagnostics continue on the existing ISO so required runtime
-changes can be combined in one necessary rebuild. Do not treat backend test
-success as final graphical acceptance of this older image.
+cache log. These source corrections are included in the `812d74c` ISO; its
+actual screenshots and navigation-bound events verify their behavior. Earlier
+backend diagnostics on `8bf2df4` remain historical evidence, not final
+graphical acceptance of that older image.
 
 The actual remaining failure in `39256344428` was the test driver's immediate
 pointer selection of a row in a large styled region popup. The same failure

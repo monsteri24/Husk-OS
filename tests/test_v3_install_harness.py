@@ -170,6 +170,43 @@ class InstallHarnessTests(unittest.TestCase):
         exec(compile(ast.Module(body=definitions, type_ignores=[]), '<guest-functions>', 'exec'), namespace)
         return namespace
 
+    def test_target_inspection_requests_the_real_lsblk_partition_tree(self):
+        guest = self.guest_functions('inspect_target')
+        parts = [dict(path='/dev/vda1',type='part',fstype='vfat'),
+                 dict(path='/dev/vda2',type='part',fstype='ext4')]
+        disk = dict(path='/dev/vda',type='disk',serial='HUSK-DISPOSABLE',size=32*1024**3)
+        class LayoutReached(Exception): pass
+        def command(argv, **kwargs):
+            if argv[0]=='udevadm': return SimpleNamespace(stdout='')
+            if argv[0]=='lsblk':
+                # Documented lsblk behavior: PATH without NAME/--tree is flat.
+                devices = [dict(disk,children=parts)] if '--tree' in argv else [disk,*parts]
+                return SimpleNamespace(stdout=json.dumps(dict(blockdevices=devices)))
+            if argv[0]=='e2fsck': raise LayoutReached('validated tree reached readonly fsck')
+            self.fail('Unexpected disk command: '+str(argv))
+        with tempfile.TemporaryDirectory() as temporary:
+            guest.update(command=Mock(side_effect=command), P=lambda _:Path(temporary))
+            with self.assertRaisesRegex(LayoutReached,'validated tree'):
+                guest['inspect_target']()
+        self.assertEqual(guest['state']['target_partitions']['blockdevices'][0]['children'],parts)
+        disk['serial']='not-disposable'
+        with self.assertRaisesRegex(RuntimeError,'expected disposable'):
+            guest['inspect_target']()
+        disk['serial']='HUSK-DISPOSABLE'
+        for invalid in ([], [parts[0],dict(parts[1],path='/dev/sda2')]):
+            parts=invalid
+            with self.assertRaisesRegex(RuntimeError,'Expected two disposable'):
+                guest['inspect_target']()
+
+    def test_job_evidence_matches_real_start_events_and_not_planned_queue_lines(self):
+        guest = self.guest_functions('started_job_checks')
+        log='\n'.join('Starting job "'+name+'" ( 1 / 30 )' for name in (
+            'Verify installation drive and protect Live USB','unpackfs','Create user huskcheck',
+            'Creating initramfs with mkinitcpio…','bootloader'))
+        guest['CONFIG']={'user':'huskcheck'}
+        self.assertTrue(all(guest['started_job_checks'](log).values()))
+        self.assertFalse(any(guest['started_job_checks'](log.replace('Starting job','.. Job 1')).values()))
+
     def test_offline_setup_temporarily_updates_networkmanager_without_an_ipv6_default(self):
         guest = self.guest_functions('routes', 'disconnect_external_routes')
         route = [json.dumps([dict(dst='default', gateway='10.0.2.2', dev='enp0s2')]), '[]', '', '[]', '[]']
