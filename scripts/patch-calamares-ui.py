@@ -24,6 +24,7 @@ SOURCE_SHA256 = {
     'src/modules/finishedq/finishedq.qml': '05fc9f3e122bd0b73aeb9cfa920ab1d2328f8817f6368400004c390cc407f7d0',
     'src/modules/finishedq/finishedq-qt6.qml': '4b037519e5276a0cdd5a565834c7922abedf8ca736cde8b040f11c315c88fabb',
     'src/modules/welcome/WelcomePage.cpp': '092bf5d74b4c910cd8112761bac17daf875b05477ad5a8b83538718b73508a5d',
+    'src/modules/partition/gui/PartitionLabelsView.cpp': '0a19b5be9a2c74eabf0f5190bb4b87410f7a379e59b6e8e37ee1baa144cfb87b',
 }
 
 LOCALE_PAGE = '''#include "LocalePage.h"
@@ -191,6 +192,13 @@ def patch(source, assets):
     // The Live launcher sets en_US.UTF-8; language changes are postponed.
     ui->languageWidget->setEnabled( false );
 ''', welcome)
+    legend = 'src/modules/partition/gui/PartitionLabelsView.cpp'
+    if originals[legend].count('painter->setPen( Qt::black );') != 2:
+        raise ValueError('Exact replacement mismatch: partition legend text')
+    changes[legend] = originals[legend].replace('painter->setPen( Qt::black );',
+        'painter->setPen( palette().color( QPalette::WindowText ) );')
+    changes[legend] = replace_once(changes[legend], 'painter->setPen( Qt::gray );',
+        'painter->setPen( palette().color( QPalette::WindowText ) );', legend)
     for name in ('src/modules/finishedq/finishedq.qml', 'src/modules/finishedq/finishedq-qt6.qml'):
         changes[name] = asset_data['husk-finished.qml']
     changes[header_name] = asset_data['HuskClockSelector.h']

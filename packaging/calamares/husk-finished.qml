@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import io.calamares.core 1.0
+import io.calamares.ui 1.0
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -8,6 +8,13 @@ Page {
     id: finished
     width: parent ? parent.width : 800
     height: parent ? parent.height : 600
+    palette.window: "#151b20"
+    palette.windowText: "#f2f3ef"
+    palette.text: "#f2f3ef"
+    palette.button: "#252e34"
+    palette.buttonText: "#f2f3ef"
+    palette.highlight: "#f5cf3b"
+    palette.highlightedText: "#151710"
 
     property int secondsRemaining: 30
     property bool activatedInCalamares: false
@@ -123,6 +130,7 @@ Page {
             Button {
                 objectName: "husk-restart-now"
                 text: "Restart Now"
+                highlighted: true
                 Layout.minimumWidth: 160
                 enabled: !config.failed && !finished.restartRequested
                 onClicked: finished.restartNow()

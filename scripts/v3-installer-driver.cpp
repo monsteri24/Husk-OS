@@ -23,16 +23,27 @@
 #include <QQuickWindow>
 #include <QRadioButton>
 #include <QScrollArea>
+#include <QScreen>
 #include <QSet>
 #include <QStandardPaths>
 #include <QStackedWidget>
 #include <QTest>
+#include <QTextDocumentFragment>
 #include <QTimer>
 #include <QTimeZone>
 #include <unistd.h>
 
 namespace {
-bool reviewedDiskSummary(const QString& text) {
+bool navigationFitsScreen(QWidget* button) {
+    if (!button || !button->isVisible() || !button->screen()) return false;
+    const QRect bounds(button->mapToGlobal(QPoint()),button->size());
+    const QRect available=button->screen()->availableGeometry();
+    return available.contains(bounds) && available.contains(button->window()->frameGeometry())
+        && button->visibleRegion().intersected(button->rect())==QRegion(button->rect());
+}
+
+bool reviewedDiskSummary(const QString& richText) {
+    const QString text=QTextDocumentFragment::fromHtml(richText).toPlainText();
     return text.contains("/dev/vda") && !text.contains("/dev/sr0") && text.contains("Erase disk")
         && text.contains("GPT") && text.contains("fat32",Qt::CaseInsensitive)
         && text.contains("ext4",Qt::CaseInsensitive);
@@ -340,6 +351,13 @@ class Driver : public QObject {
                 record("summary-rejected", {{"text",text.left(16384)}});
                 fail("The actual summary did not identify the reviewed disk changes"); return;
             }
+            if (!navigationFitsScreen(next) || !navigationFitsScreen(cancel)) {
+                fail("Summary navigation is clipped or outside the available screen"); return;
+            }
+            const QRect frame=next->window()->frameGeometry();
+            const QRect available=next->screen()->availableGeometry();
+            record("navigation-reviewed", {{"window",QJsonArray{frame.x(),frame.y(),frame.width(),frame.height()}},
+                {"available",QJsonArray{available.x(),available.y(),available.width(),available.height()}}});
             summarySeen = true; record("summary-reviewed", {{"text", text}});
         }
         if (index == 5 && cancelMode) {

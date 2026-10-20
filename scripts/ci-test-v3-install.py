@@ -30,7 +30,7 @@ DISK_SIZE = 32 * 1024 ** 3
 REQUIRED_DRIVER_EVENTS = (
     'driver-started', 'page-welcome', 'page-keyboard', 'page-locale', 'timezone-selected',
     'drive-no-selection', 'drive-selected', 'erase-selected', 'users-entered', 'users-validated',
-    'summary-reviewed', 'confirmation-shown', 'confirmation-click',
+    'navigation-reviewed', 'summary-reviewed', 'confirmation-shown', 'confirmation-click',
     'page-execution', 'installation-success', 'countdown-observed',
     'restart-later-click', 'application-quit',
 )

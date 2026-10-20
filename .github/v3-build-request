@@ -1,5 +1,5 @@
 request=V3 Phase 2 guarded installer candidate
-attempt=5-required-branding-images-and-compact-iso
+attempt=6-readable-summary-and-loadable-completion
 acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI
-changes=required-branding-maps,existing-Husk-artwork,guest-asset-validation,zstd19
+changes=scrollable-summary,readable-partition-legend,separate-Qt-styles,correct-ViewManager-import,real-navigation-bounds
 release=forbidden-by-user-no-publish-no-merge-no-main-changes

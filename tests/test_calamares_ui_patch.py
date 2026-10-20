@@ -26,10 +26,58 @@ PATCHED_FILES = (
     'src/modules/finishedq/finishedq.qml',
     'src/modules/finishedq/finishedq-qt6.qml',
     'src/modules/welcome/WelcomePage.cpp',
+    'src/modules/partition/gui/PartitionLabelsView.cpp',
 )
 
 
 class CalamaresUiPatchTests(unittest.TestCase):
+    def test_actual_partition_legend_renderer_uses_the_widgets_foreground_palette(self):
+        flags = subprocess.run(['pkg-config','--cflags','--libs','Qt6Widgets'],capture_output=True,text=True)
+        if flags.returncode:
+            self.skipTest('Qt6 Widgets development packages unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory=Path(temporary)
+            self.fixture(directory)
+            self.assertEqual(self.patch(directory).returncode,0)
+            text=(directory/'src/modules/partition/gui/PartitionLabelsView.cpp').read_text()
+            method=text[text.index('void\nPartitionLabelsView::drawLabel('):text.index('QModelIndex\nPartitionLabelsView::indexAt(')]
+            cpp=directory/'legend.cpp'
+            cpp.write_text(r'''
+#include <QApplication>
+#include <QWidget>
+#include <QPainter>
+#include <QImage>
+#include <QStringList>
+constexpr int LABEL_PARTITION_SQUARE_MARGIN=20;
+// Only decorative squares are excluded; compile the real upstream text renderer.
+template<typename... T> void drawPartitionSquare(T&&...) {}
+template<typename... T> void drawSelectionSquare(T&&...) {}
+class PartitionLabelsView: public QWidget {
+public: void drawLabel(QPainter*,const QStringList&,const QColor&,const QPoint&,bool);
+};
+''' + method + r'''
+int main(int argc,char**argv) {
+    QApplication app(argc,argv); PartitionLabelsView view;
+    QPalette colors=view.palette(); colors.setColor(QPalette::WindowText,QColor("#f2f3ef")); view.setPalette(colors);
+    QImage image(420,90,QImage::Format_ARGB32); image.fill(QColor("#151b20"));
+    QPainter painter(&image); view.drawLabel(&painter,{"EFI system","512 MiB FAT32"},Qt::red,QPoint(0,20),false); painter.end();
+    int first=0,second=0;
+    for(int y=0;y<70;++y)for(int x=20;x<420;++x) {
+        QColor c=image.pixelColor(x,y);
+        if(c.red()>200&&c.green()>200&&c.blue()>200) { if(y<31) ++first; else ++second; }
+    }
+    return first>5&&second>5 ? 0 : 1;
+}
+''')
+            executable=directory/'legend'
+            built=subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-fPIC',str(cpp),'-o',str(executable),*shlex.split(flags.stdout)],capture_output=True,text=True)
+            self.assertEqual(built.returncode,0,built.stderr)
+            environment=dict(os.environ,QT_QPA_PLATFORM='offscreen')
+            if environment.get('HUSK_TEST_SYSROOT'):
+                environment['QT_PLUGIN_PATH']=str(Path(environment['HUSK_TEST_SYSROOT'])/'usr/lib/x86_64-linux-gnu/qt6/plugins')
+            result=subprocess.run([str(executable)],env=environment,capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,'Actual partition text is invisible on dark background: '+result.stderr)
+
     def test_ui_patch_and_assets_exist(self):
         for path in (SCRIPT, ASSETS / 'HuskClockSelector.h', ASSETS / 'husk-finished.qml'):
             with self.subTest(path=path):
@@ -138,6 +186,7 @@ QT_BEHAVIOR = r'''
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QQmlProperty>
 #include <QQuickItem>
 #include <QTextStream>
 #include <QVariant>
@@ -227,6 +276,10 @@ QtObject {
         return false;
     };
     auto object = create();
+    check(QQmlProperty(object.get(), "palette.window", &engine).read().value<QColor>() == QColor("#151b20"),
+          "completion must retain the Husk dark background");
+    check(QQmlProperty(object.get(), "palette.highlight", &engine).read().value<QColor>() == QColor("#f5cf3b"),
+          "completion must retain the Husk yellow accent");
     auto timer = object->findChild<QObject*>("husk-restart-timer");
     check(timer && !timer->property("running").toBool(), "countdown cannot run when QML is constructed");
     invoke(object.get(), "onActivate");
@@ -253,7 +306,7 @@ QtObject {
     check(!timer->property("running").toBool() && config->property("restarts").toInt() == 1, "Later must stop countdown and suppress restart");
     // The fixture is a URL-based QML singleton, not a C++ registered qmlTypeId.
     QQmlComponent managerProbe(&engine);
-    managerProbe.setData("import QtQml\nimport io.calamares.core 1.0\n"
+    managerProbe.setData("import QtQml\nimport io.calamares.ui 1.0\n"
                          "QtObject { property QtObject manager: ViewManager }", QUrl());
     std::unique_ptr<QObject> probe(managerProbe.create());
     check(bool(probe), qPrintable(managerProbe.errorString()));
@@ -313,19 +366,33 @@ class CalamaresQtUiTests(unittest.TestCase):
             zones.write_text('# test IANA geographic zones\nFI\t+6010+02458\tEurope/Helsinki\n'
                              'NP\t+2743+08519\tAsia/Kathmandu\nNZ\t-4357-17633\tPacific/Chatham\n'
                              'KI\t+0152-15720\tPacific/Kiritimati\nXX\t+0000+00000\tEtc/GMT+12\n')
-            module = directory / 'imports/io/calamares/core'
+            # Match pinned registerQmlModels(): ViewManager belongs to UI,
+            # not core. A permissive mock here previously hid a real failure.
+            module = directory / 'imports/io/calamares/ui'
             module.mkdir(parents=True)
-            (module / 'qmldir').write_text('module io.calamares.core\nsingleton ViewManager 1.0 ViewManager.qml\n')
+            (module / 'qmldir').write_text('module io.calamares.ui\nsingleton ViewManager 1.0 ViewManager.qml\n')
             (module / 'ViewManager.qml').write_text('pragma Singleton\nimport QtQml\n'
                   'QtObject { property int quits: 0; function quit() { quits += 1 } }\n')
             environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+            # Use the actual launcher's style arguments/environment: QWidget
+            # accepts lowercase fusion while Qt Quick imports are case-sensitive.
+            wrapper = (ROOT / 'bin/husk-installer-root').read_text().splitlines()
+            for line in wrapper:
+                if line.startswith('export '):
+                    for token in shlex.split(line)[1:]:
+                        name, value = token.split('=', 1)
+                        if name in ('QT_STYLE_OVERRIDE', 'QT_QUICK_CONTROLS_STYLE'):
+                            environment[name] = value
+            launch = next(shlex.split(line)[2:] for line in wrapper if line.startswith('exec '))
+            launch = [str(ROOT / 'installer/calamares/husk.qss') if value == '/etc/calamares/husk.qss' else value
+                      for value in launch]
             if environment.get('HUSK_TEST_SYSROOT'):
                 prefix = Path(environment['HUSK_TEST_SYSROOT']) / 'usr/lib/x86_64-linux-gnu/qt6'
                 environment['QT_PLUGIN_PATH'] = str(prefix / 'plugins')
                 environment['QML_IMPORT_PATH'] = str(prefix / 'qml')
                 environment['QML2_IMPORT_PATH'] = str(prefix / 'qml')
             result = subprocess.run([str(binary), str(zones), str(directory / 'imports'),
-                                     str(ASSETS / 'husk-finished.qml')],
+                                     str(ASSETS / 'husk-finished.qml'), *launch],
                                     capture_output=True, text=True, env=environment, timeout=30)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn('Qt clock and completion behavior passed', result.stdout)

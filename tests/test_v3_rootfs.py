@@ -153,6 +153,12 @@ class V3RootfsTests(unittest.TestCase):
                 path.unlink()
                 self.assertTrue(any(relative in message for message in self.errors()))
 
+    def test_widget_style_argument_cannot_override_the_quick_completion_style(self):
+        wrapper = (ROOT/'bin/husk-installer-root').read_text().replace(
+            'exec /usr/bin/calamares ', 'exec /usr/bin/calamares -style fusion ')
+        self.put('usr/lib/ownos/husk-installer-root', wrapper, 0o755)
+        self.assertTrue(any('Qt Quick' in message for message in self.errors()))
+
     def test_missing_or_malformed_required_branding_sections_are_rejected(self):
         relative = 'etc/calamares/branding/ownos/branding.desc'
         original = yaml.safe_load((self.root / relative).read_text())

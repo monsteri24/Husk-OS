@@ -190,10 +190,15 @@ def _check_policy_and_launcher(reader):
         if (len(commands) != 1 or commands[0][:2] != ['exec','/usr/bin/calamares'] or
                 any(value == '-c' or value.startswith('--config') for value in commands[0][2:])):
             raise ValueError('Use the standard Calamares settings/data directories; a test config override hides installed QML.')
+        if any(value in ('-style','--style') or value.startswith(('-style=','--style='))
+               for value in commands[0][2:]):
+            raise ValueError('Keep QWidget and Qt Quick styles separate; a command-line style overrides the completion style.')
         exports = dict(token.split('=',1) for line in wrapper.splitlines() if line.strip().startswith('export ')
                        for token in shlex.split(line)[1:] if '=' in token)
         if any(exports.get(name) not in ('C.UTF-8','C.utf8') for name in ('LANG','LC_ALL')):
             raise ValueError('Use the built-in English UTF-8 locale without requiring generated Live locale data.')
+        if exports.get('QT_STYLE_OVERRIDE') != 'Fusion' or exports.get('QT_QUICK_CONTROLS_STYLE') != 'Basic':
+            raise ValueError('Use the installed Fusion widget and Basic Qt Quick styles with their exact case.')
     except ValueError as exc:
         problems.append('Invalid V3 installer startup/data directories: ' + str(exc))
     try:

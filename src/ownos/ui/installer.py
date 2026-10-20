@@ -93,7 +93,7 @@ class InstallerLauncher(Gtk.Window):
         if self.closed: return False
         if code in (126,127): return self.failed('Authorization was cancelled or unavailable. No installation was started.')
         if code != 0:
-            return self.failed('The installer stopped unexpectedly (status %s). Installation was not verified. Check /var/log/Calamares.log before trying again.' % code)
+            return self.failed('The installer stopped unexpectedly (status %s). Installation was not verified. An administrator can inspect /root/.cache/calamares/session.log before trying again.' % code)
         # A zero process exit also means the user may have cancelled Calamares.
         # Only Calamares's successful job queue displays installation success.
         self.destroy(); return False

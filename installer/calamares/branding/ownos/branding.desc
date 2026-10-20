@@ -15,7 +15,7 @@ images:
   productIcon: /usr/share/icons/hicolor/128x128/apps/husk-install.png
   productLogo: /usr/share/icons/hicolor/128x128/apps/husk-install.png
   productWelcome: /usr/share/ownos/wallpapers/husk-desert.jpg
-windowExpanding: normal
+windowExpanding: noexpand
 windowSize: 1000px,650px
 windowPlacement: center
 sidebar: widget

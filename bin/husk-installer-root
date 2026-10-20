@@ -5,4 +5,4 @@ set -eu
 [ -f /run/archiso/bootmnt/arch/x86_64/airootfs.sfs ] || exit 1
 export LANG=C.UTF-8 LC_ALL=C.UTF-8
 export QT_QPA_PLATFORM=xcb QT_STYLE_OVERRIDE=Fusion QT_QUICK_CONTROLS_STYLE=Basic
-exec /usr/bin/calamares -style fusion -stylesheet /etc/calamares/husk.qss
+exec /usr/bin/calamares -stylesheet /etc/calamares/husk.qss

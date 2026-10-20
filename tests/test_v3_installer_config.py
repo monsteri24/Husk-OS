@@ -18,6 +18,8 @@ class V3InstallerConfiguration(unittest.TestCase):
         for key in ('productIcon', 'productLogo', 'productWelcome'):
             self.assertTrue(branding['images'].get(key), 'Missing installer branding image: ' + key)
         self.assertEqual(branding['uploadServer']['type'], 'none')
+        self.assertEqual(branding['windowExpanding'], 'noexpand',
+                         'Keep large summaries scrollable without moving navigation beneath the panel')
 
     def test_installer_is_erase_only_and_requires_separate_confirmation(self):
         settings = yaml.safe_load((ROOT/'installer/calamares/settings.conf').read_text())

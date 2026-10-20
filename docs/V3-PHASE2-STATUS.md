@@ -31,13 +31,13 @@ countdown and Restart Later/Restart Now order.
 
 | Check | Observed result |
 | --- | --- |
-| Source/models/real GTK | [39374652341](https://github.com/monsteri24/Husk-OS/actions/runs/39374652341) passed at `e1c959f`: 458 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
-| Local checks | The last full local run passed 454 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. The current focused installer-input/orchestration suite passes all 28 tests, including a real styled Qt combo popup regression. All 176 source/configuration checks pass. |
-| Actual Labwc | The same `e1c959f` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
+| Source/models/real GTK | [39376727601](https://github.com/monsteri24/Husk-OS/actions/runs/39376727601) passed at `ff36d91`: 461 tests with zero failures or skips in the actual GTK run; 176 source/configuration checks and native sanitizer checks also passed. ISO/VM acceptance is separate. |
+| Local checks | The current full local run passed 464 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt regressions exercise the launcher's actual style options, completion actions, popup selection, navigation bounds and the actual patched partition text renderer. All 176 source/configuration checks pass. |
+| Actual Labwc | The same `ff36d91` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39256344428](https://github.com/monsteri24/Husk-OS/actions/runs/39256344428) compiled patched Calamares, built signed packages and produced the branding-fixed ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. The later installation test failed as described below. |
 | Live UEFI boot | That exact `8bf2df4` ISO passed real OVMF Live startup, Wayland desktop evidence, terminal shortcut and safe ACPI shutdown. |
-| Calamares UI | Actual Qt navigation reached Welcome, English (US) keyboard selection and the clock-based location page. The real screenshot shows the Husk installer window. The input driver then failed to select the regional combo row; no installer job queue ran. |
+| Calamares UI | Recovery [39375781268](https://github.com/monsteri24/Husk-OS/actions/runs/39375781268) reached Welcome, English (US), actual Helsinki/IANA selection, explicit drive/erase choices, user input and the disk-change summary. The summary test incorrectly required an upstream-absent Users summary; that fixture is corrected. Installation is still a separate gate. |
 | Disk guard in Live | The new run accepted the disposable target and rejected the Live optical medium. Written/discarded sectors remained zero and GPT-edge hashes matched. A zero-sector flush incremented raw write/flush operation counters; those are recorded rather than described as all-zero. |
 
 The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
@@ -103,6 +103,34 @@ hostname before leaving the enabled Users page; the summary must identify
 `/dev/vda`, erase, GPT, FAT32 and ext4 and must not mention the Live medium.
 It retains the separate destructive confirmation and cancellation checks.
 
+Recovery [39376727601](https://github.com/monsteri24/Husk-OS/actions/runs/39376727601)
+again verified offline mode and reached validated account fields and the real
+summary. Its next driver failure was rich-text handling: the actual summary
+says `<strong>Erase</strong> disk`, so a raw substring search for `Erase disk`
+incorrectly rejected it. The helper now converts through Qt's rich-text parser
+before checking the unchanged disk/method/filesystem requirements. A real Qt
+regression uses the captured markup. No installation jobs ran; guest written
+and discard sectors remained zero and the GPT-edge digest matched.
+
+The newly collected real session log also exposed a production QML failure:
+`module "fusion" is not installed`. The launcher's `-style fusion` option
+overrode `QT_QUICK_CONTROLS_STYLE=Basic`; Qt Quick treated the lowercase widget
+style as a case-sensitive import. The wrapper now sets Fusion for QWidget and
+Basic for Qt Quick independently, without the conflicting command-line option
+([Qt style precedence](https://doc.qt.io/qt-6.12/qtquickcontrols-styles.html)).
+The actual completion QML test now uses the wrapper's real style environment
+and arguments; it reproduced this exact load failure and passes after the fix.
+Read-only rootfs validation rejects the conflicting style option.
+
+Pinned `registerQmlModels()` exports ViewManager from `io.calamares.ui`, while
+the custom completion page previously imported only core. The test double had
+incorrectly exposed ViewManager from core. Both now match the real UI module;
+the corrected fixture first failed with the old import and then passed actual
+Restart Later, Restart Now and countdown logic with the fix. The page also
+sets the existing Husk dark/yellow palette explicitly for Qt Quick controls.
+The next required ISO build includes these runtime corrections; the old ISO
+cannot prove the corrected completion UI or final graphical acceptance.
+
 The Qt startup event reported the actual log at `//.cache/calamares/session.log`:
 the debug service had HOME=/ and the runtime application cache name was
 lowercase. The fixture now supplies the normal root HOME/cache environment
@@ -116,10 +144,18 @@ immutable ISO: automatic summary expansion places navigation beneath the
 panel, and partition-legend text is hardcoded black on the dark background.
 Pinned Calamares already supports `windowExpanding: noexpand`, which keeps the
 existing summary scroll area instead of requesting automatic growth. The
-legend renderer must use its widget palette. These changes are still pending;
-backend diagnostics continue on the existing ISO so required runtime changes
-can be combined in one necessary rebuild. Do not treat backend test success
-as final graphical acceptance of this image.
+legend renderer now uses its widget's foreground palette in the pinned UI
+patch, and branding disables automatic expansion. A real offscreen Qt test
+compiles the actual patched upstream text renderer and verifies that both text
+lines are light on a dark background. It failed before the patch and passes
+after it. The next VM driver additionally requires visible, unclipped Install
+and Cancel buttons and an installer frame inside the available screen before
+disk confirmation. Real Qt cases cover parent clipping and off-screen windows.
+The launcher's failure message now identifies the observed lowercase root
+cache log. These source corrections are locally verified but still require a
+new ISO. Backend diagnostics continue on the existing ISO so required runtime
+changes can be combined in one necessary rebuild. Do not treat backend test
+success as final graphical acceptance of this older image.
 
 The actual remaining failure in `39256344428` was the test driver's immediate
 pointer selection of a row in a large styled region popup. The same failure

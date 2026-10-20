@@ -16,6 +16,43 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallerDriverSafetyTests(unittest.TestCase):
+    def test_navigation_must_be_visible_inside_the_window_and_screen(self):
+        flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Widgets', 'Qt6Test', 'Qt6Quick'],
+                               capture_output=True, text=True)
+        if flags.returncode:
+            self.skipTest('Qt6 development packages are unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / 'navigation.cpp'
+            source.write_text('#include ' + json.dumps(str(ROOT / 'scripts/v3-installer-driver.cpp')) + '\n' + r'''
+int main(int argc, char** argv) {
+    QApplication app(argc, argv);
+    QWidget window; window.setGeometry(20,20,400,300);
+    QPushButton button("Install", &window); button.setGeometry(30,220,140,45);
+    window.show(); QTest::qWait(30);
+    if (!navigationFitsScreen(&button)) return 1;
+    button.move(30,320); // Visible property alone misses parent clipping.
+    if (navigationFitsScreen(&button)) return 2;
+    button.move(30,220);
+    window.move(window.screen()->availableGeometry().bottomRight());
+    QTest::qWait(30);
+    if (navigationFitsScreen(&button)) return 3;
+    window.move(20,20); button.hide();
+    if (navigationFitsScreen(&button) || navigationFitsScreen(nullptr)) return 4;
+    return 0;
+}
+''')
+            executable = directory / 'navigation'
+            built = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-fPIC',
+                str(source), '-o', str(executable), *shlex.split(flags.stdout)], capture_output=True, text=True)
+            self.assertEqual(built.returncode, 0, built.stderr)
+            environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE', None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                environment['QT_PLUGIN_PATH'] = str(Path(environment['HUSK_TEST_SYSROOT']) / 'usr/lib/x86_64-linux-gnu/qt6/plugins')
+            result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_real_combo_selection_reaches_a_scrolled_item_using_actual_keys(self):
         flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Widgets', 'Qt6Test', 'Qt6Quick'],
                                capture_output=True, text=True)
@@ -42,7 +79,8 @@ int main(int argc, char** argv) {
     if (selectComboRowWithKeys(&combo,3) || combo.currentIndex()!=72) return 5;
     combo.setEnabled(true); combo.setCurrentIndex(-1);
     if (!selectComboRowWithKeys(&combo,0) || combo.currentIndex()!=0) return 6;
-    const QString summary="Erase disk <strong>/dev/vda</strong>; new GPT; EFI fat32; root ext4";
+    // Captured from the real pinned Calamares summary, including word markup.
+    const QString summary="<strong>Erase</strong> disk <strong>/dev/vda</strong>; new <strong>GPT</strong>; EFI fat32; root ext4";
     if (!reviewedDiskSummary(summary)) return 7; // Users has no upstream summary.
     if (reviewedDiskSummary(summary+" /dev/sr0") || reviewedDiskSummary("/dev/vda only")) return 8;
     return 0;
