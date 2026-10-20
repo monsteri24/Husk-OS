@@ -62,3 +62,7 @@ runtime desktop binding was changed. Other review assumptions (real dialog
 focus/journal wording/GUI visibility) remain for the VM and screenshot check.
 After the shortcut regression, the full local suite passed 474 tests with 71
 explicit environment skips, native sanitizer checks and 180 syntax checks.
+The observer also retains actual polkit/Calamares startup logs on failure,
+NP/P password-status letters, active-session fields and the nonsecret Qt locale/
+platform/style environment. It never collects password hashes or cookie bytes.
+The final local suite remains 474 / 71 explicit skips / 180 syntax checks.

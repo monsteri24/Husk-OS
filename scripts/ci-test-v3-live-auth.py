@@ -112,7 +112,8 @@ try:
         raise RuntimeError('The observer requires a disposable UEFI Live VM')
     if P('/sys/class/block/vda/serial').read_text().strip()!='HUSK-DISPOSABLE':
         raise RuntimeError('The attached disk is not the new disposable target')
-    checks=state['checks']; checks['initial_password_empty']=password_state()=='NP'
+    checks=state['checks']; state['initial_password_state']=password_state()
+    checks['initial_password_empty']=state['initial_password_state']=='NP'
     deadline=time.monotonic()+CONFIG['timeout']; desktop=None
     while time.monotonic()<deadline:
         desktop=next(processes(b'/usr/bin/husk-desktop'),None)
@@ -122,6 +123,7 @@ try:
     uid=(P('/proc')/str(desktop)).stat().st_uid; env=environment(desktop)
     session=env.get('XDG_SESSION_ID','')
     details=command(['/usr/bin/loginctl','show-session',session,'-p','Name','-p','Active','-p','Remote'])
+    state['live_session']=details.splitlines()
     checks['live_session_active']={'Name=live','Active=yes','Remote=no'}<=set(details.splitlines())
     directory=P('/run/husk-v3-auth'); directory.mkdir(mode=0o700); os.chown(directory,uid,uid)
     client=directory/'client.py'; urllib.request.urlretrieve(CONFIG['base']+'/client.py',client)
@@ -143,12 +145,15 @@ try:
             pid=info.get('pid'); helper=info.get('helper_pid')
             if type(pid) is int:
                 checks['unprivileged_launcher']=(P('/proc')/str(pid)).stat().st_uid==uid and uid!=0
-            checks['password_was_set']=info.get('password_submitted') is True and password_state()=='P'
+            state['final_password_state']=password_state()
+            checks['password_was_set']=info.get('password_submitted') is True and state['final_password_state']=='P'
             if type(helper) is int:
                 process=P('/proc')/str(helper)
                 argv=(process/'cmdline').read_bytes().split(b'\0')
                 if b'/usr/bin/calamares' in argv and process.stat().st_uid==0:
                     target_pid=helper; qt=environment(helper)
+                    state['qt_environment']={key:qt.get(key) for key in ('LANG','LC_ALL','QT_QPA_PLATFORM',
+                        'QT_STYLE_OVERRIDE','QT_QUICK_CONTROLS_STYLE')}
                     checks['root_calamares']=True
                     checks['no_test_injection']=not any(key in qt for key in ('LD_PRELOAD','HUSK_INSTALL_ACCEPTANCE'))
                     authority=P(qt.get('XAUTHORITY','/missing'))
@@ -187,6 +192,13 @@ try:
 except Exception as exc:
     state.update(error=type(exc).__name__+': '+str(exc),success=False)
 finally:
+    # Keep the actual startup/authentication diagnostics even if Qt exits before
+    # a process observation. No password or Xauthority contents are collected.
+    try:
+        state['polkit_journal']=command(['/usr/bin/journalctl','-b','-u','polkit.service','--no-pager','-o','cat'])[-16000:]
+        log=P('/root/.cache/calamares/session.log')
+        if log.is_file(): state['calamares_log']=log.read_text(errors='replace')[-64000:]
+    except (OSError,subprocess.SubprocessError): pass
     state['finished']=True; post()
 '''
 
