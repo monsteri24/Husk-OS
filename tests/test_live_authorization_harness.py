@@ -61,6 +61,33 @@ class LiveAuthorizationHarnessTests(unittest.TestCase):
             self.harness.AuthorizationAcceptance.live_authorization(window)
         monitor.console.assert_called_once_with('python3 huskauthcheck.py')
 
+    def audit_matcher(self):
+        source=ast.parse(self.harness.ROOT_OBSERVER)
+        functions=[node for node in source.body if isinstance(node,ast.FunctionDef) and node.name=='authorized_exec_audit']
+        self.assertEqual(len(functions),1,'Missing PID-bound pkexec audit verification')
+        namespace={}
+        exec(compile(ast.Module(body=functions,type_ignores=[]),'audit-parser','exec'),namespace)
+        return namespace['authorized_exec_audit']
+
+    def test_pkexec_audit_identifies_the_actual_privileged_helper(self):
+        match=self.audit_matcher()
+        record=dict(SYSLOG_IDENTIFIER='pkexec',_PID='1240',
+            MESSAGE='live: Executing command [USER=root] [TTY=unknown] [CWD=/home/live] [COMMAND=/usr/lib/ownos/husk-installer-root]')
+        self.assertTrue(match([record],1240))
+
+    def test_pkexec_audit_rejects_wrong_process_identity_target_and_denial(self):
+        match=self.audit_matcher()
+        record=dict(SYSLOG_IDENTIFIER='pkexec',_PID='1240',
+            MESSAGE='live: Executing command [USER=root] [TTY=unknown] [CWD=/home/live] [COMMAND=/usr/lib/ownos/husk-installer-root]')
+        for changes in (dict(_PID='1239'),dict(SYSLOG_IDENTIFIER='logger'),
+                        dict(MESSAGE=record['MESSAGE'].replace('Executing command','Error executing command')),
+                        dict(MESSAGE=record['MESSAGE'].replace('USER=root','USER=live')),
+                        dict(MESSAGE=record['MESSAGE'].replace('husk-installer-root','different-helper')),
+                        dict(MESSAGE=record['MESSAGE'].replace('live:','other:'))):
+            with self.subTest(changes=changes):
+                self.assertFalse(match([dict(record,**changes)],1240))
+        self.assertFalse(match([],1240))
+
 
 if __name__ == '__main__':
     unittest.main()

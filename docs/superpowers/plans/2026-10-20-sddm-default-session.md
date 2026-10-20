@@ -101,3 +101,19 @@ No keyboard setting or production launcher/authentication policy was changed.
 The layout-neutral fix passed the full local suite: 475 tests / 71 explicit
 environment skips / 180 syntax checks and native sanitizers (explicit exit 0).
 Both failed-scenario summaries are preserved under `docs/evidence/v3-phase2`.
+
+Authorization attempt `39448260566` reached the actual dialog, set the Live
+password NP-to-P and observed the real root Calamares process with private cookie,
+English Qt and no injection. Its only failing check was the expected log message:
+the fixture filtered `polkit.service`, while pkexec's audit belongs to its caller's
+session. Upstream pkexec logs `Executing command` through its own identifier before
+exec. The observer now requires that exact helper/root-target audit from the
+trusted matching journal PID plus actual `PKEXEC_UID`, instead of an unrelated
+daemon-unit phrase. Positive and wrong-PID/identity/target/denial tests first failed
+before the parser was added. Production policies/helpers remain unchanged.
+
+The PID-bound audit parser passed its positive/negative regressions and the full
+local suite: 477 tests / 71 explicit environment skips / 180 syntax checks,
+native sanitizers, explicit exit 0. The corrected SDDM ISO build is now requested
+alongside the third smoke test; the actual root launcher needs no runtime change
+from the eight positive observations in the second smoke test.

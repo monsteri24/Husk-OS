@@ -1,5 +1,5 @@
 request=V3 Phase 2 guarded installer candidate
-attempt=7-first-installed-login-defaults-to-husk
+attempt=8-absolute-sddm-session-state
 acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI
-changes=first-login-SDDM-state-seed,preserve-remembered-session,VM-login-must-use-default
+changes=absolute-SDDM-session-state,preserve-remembered-session,VM-login-must-use-default
 release=forbidden-by-user-no-publish-no-merge-no-main-changes

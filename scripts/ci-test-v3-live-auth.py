@@ -26,7 +26,7 @@ spec = importlib.util.spec_from_file_location('husk_install_vm', ROOT/'scripts/c
 vm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(vm)
 REQUIRED_CHECKS = ('initial_password_empty', 'live_session_active', 'unprivileged_launcher',
-                   'password_was_set', 'polkit_authenticated', 'root_calamares',
+                   'password_was_set', 'polkit_authenticated', 'pkexec_caller', 'root_calamares',
                    'no_test_injection', 'private_xauthority', 'qt_english')
 
 
@@ -92,6 +92,29 @@ from pathlib import Path as P
 state=dict(phase='installation',stage='starting',finished=False,success=False,checks={})
 def command(argv):
     return subprocess.run(argv,check=True,capture_output=True,text=True,timeout=15).stdout
+def authorization_journal():
+    # pkexec/agent audit messages belong to the caller's session, not necessarily
+    # polkit.service. Collect their identifiers and keep the trusted journal PID.
+    raw=command(['/usr/bin/journalctl','-b','--no-pager','-o','json',
+        '-t','polkitd','-t','pkexec','-t','polkit-agent-helper-1'])
+    records=[]
+    for line in raw.splitlines():
+        if not line.strip(): continue
+        entry=json.loads(line)
+        records.append({key:entry.get(key) for key in ('SYSLOG_IDENTIFIER','_PID','MESSAGE')})
+    return records[-100:]
+def authorized_exec_audit(records,helper_pid):
+    for record in records:
+        if not isinstance(record,dict) or record.get('SYSLOG_IDENTIFIER')!='pkexec': continue
+        if str(record.get('_PID'))!=str(helper_pid): continue
+        message=record.get('MESSAGE')
+        if not isinstance(message,str) or not message.startswith('live: Executing command '): continue
+        if '[USER=root]' not in message: continue
+        if any(target in message for target in (
+                '[COMMAND=/usr/lib/ownos/husk-installer-root]',
+                "[COMMAND='/usr/lib/ownos/husk-installer-root']")):
+            return True
+    return False
 def post():
     data=json.dumps(state).encode()
     request=urllib.request.Request(CONFIG['base']+'/report',data=data,headers={'Content-Type':'application/json'})
@@ -165,6 +188,8 @@ try:
                     state['qt_environment']={key:qt.get(key) for key in ('LANG','LC_ALL','QT_QPA_PLATFORM',
                         'QT_STYLE_OVERRIDE','QT_QUICK_CONTROLS_STYLE')}
                     checks['root_calamares']=True
+                    state['pkexec_uid']=qt.get('PKEXEC_UID')
+                    checks['pkexec_caller']=qt.get('PKEXEC_UID')==str(uid)
                     checks['no_test_injection']=not any(key in qt for key in ('LD_PRELOAD','HUSK_INSTALL_ACCEPTANCE'))
                     authority=P(qt.get('XAUTHORITY','/missing'))
                     checks['private_xauthority']=(authority.is_file() and not authority.is_symlink() and
@@ -173,11 +198,9 @@ try:
                     checks['qt_english']=all(qt.get(key)==value for key,value in {
                         'LANG':'C.UTF-8','LC_ALL':'C.UTF-8','QT_QPA_PLATFORM':'xcb',
                         'QT_STYLE_OVERRIDE':'Fusion','QT_QUICK_CONTROLS_STYLE':'Basic'}.items())
-                    journal=command(['/usr/bin/journalctl','-b','-u','polkit.service','--no-pager','-o','cat'])
-                    state['polkit_journal']=journal[-16000:]
-                    checks['polkit_authenticated']=any('successfully authenticated' in line and
-                        'org.ownos.install' in line and ('unix-user:live' in line or 'unix-user:'+str(uid) in line)
-                        for line in journal.splitlines())
+                    journal=authorization_journal()
+                    state['polkit_journal']=journal
+                    checks['polkit_authenticated']=authorized_exec_audit(journal,helper)
                     if calamares_since is None: calamares_since=time.monotonic()
                     state['stage']='calamares-starting'
                     if time.monotonic()-calamares_since>=8:
@@ -187,7 +210,7 @@ try:
                 else:
                     state['stage']='authorization-pending'
                     if time.monotonic()-journal_at>=10:
-                        state['polkit_journal']=command(['/usr/bin/journalctl','-b','-u','polkit.service','--no-pager','-o','cat'])[-16000:]
+                        state['polkit_journal']=authorization_journal()
                         journal_at=time.monotonic()
         post(); time.sleep(1)
     if not state['success']: raise RuntimeError('Normal Live authorization deadline expired')
@@ -209,7 +232,7 @@ finally:
     # Keep the actual startup/authentication diagnostics even if Qt exits before
     # a process observation. No password or Xauthority contents are collected.
     try:
-        state['polkit_journal']=command(['/usr/bin/journalctl','-b','-u','polkit.service','--no-pager','-o','cat'])[-16000:]
+        state['polkit_journal']=authorization_journal()
         log=P('/root/.cache/calamares/session.log')
         if log.is_file(): state['calamares_log']=log.read_text(errors='replace')[-64000:]
     except (OSError,subprocess.SubprocessError): pass
