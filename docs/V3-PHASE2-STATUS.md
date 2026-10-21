@@ -55,13 +55,33 @@ PKEXEC_UID, private Xauthority, English UTF-8 Qt environment and visible English
 Calamares Welcome were verified, without driver/preload injection. All ten
 checks, zero target writes/unmaps and safe shutdown passed. This scenario reused
 the preceding image with only the known installed SDDM-seed difference. A new
-request now repeats it against the corrected image above, without rebuilding.
+request repeated it against the corrected image above, without rebuilding, and
+[39609995495](https://github.com/monsteri24/Husk-OS/actions/runs/39609995495)
+passed all ten checks, zero disk writes/unmaps and safe shutdown. Its actual
+Welcome screenshot was inspected. The runtime sources exactly match the image.
+[Corrected-image authorization summary](evidence/v3-phase2/2026-10-21-live-authorization.json).
 [Permanent authorization summary](evidence/v3-phase2/2026-10-20-live-authorization.json).
 
 The same corrected-image run passed 477 real GTK tests with zero skips,
 180 source checks, native sanitizers and actual Labwc maximized/fullscreen,
 window controls, menus and application-confirmation interactions. Actual
 Restart Now/automatic-zero reboots and physical hardware remain unverified.
+
+The new completion workflow now requests those two actual restart scenarios
+against the same ISO, with a new disposable disk per mode and strict digest,
+size and runtime-source checks. Now must take effect at positive seconds and
+stop the actual timer; an eventual automatic reboot cannot pass as Now.
+Automatic mode observes the unchanged countdown through zero. Both require all
+19 target checks, genuine QMP guest-reset provenance, and independent installed
+UEFI boot. No host/fixture reboot command is injected. **VM results are pending.**
+The reviewed test changes passed 484 local tests (71 explicit environment skips),
+180 syntax checks, native sanitizers and complete C++ driver compilation.
+
+The latest Labwc follow-up `39610003707` passed panel max/fullscreen tests but
+stopped when its first mapped confirmation snapshot preceded actual Cancel
+focus. The test now waits bounded for actual focus/default rather than accepting
+an unfocused dialog. Its regression passed; the next real compositor run must
+still confirm this fix. The production dialog is unchanged.
 
 The following paragraphs retain the earlier diagnostic history and baseline.
 
@@ -98,7 +118,7 @@ second run `39448260566` reached the actual Authenticate dialog and root Calamar
 | Check | Observed result |
 | --- | --- |
 | Source/models/real GTK | [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078) passed at `22ed589`: 469 tests with zero failures or skips in the actual GTK run; 177 source/configuration checks and native sanitizer checks also passed. |
-| Local checks | The current full local run passed 477 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 180 source/configuration checks pass. |
+| Local checks | The current full local run passed 484 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 180 source/configuration checks pass. |
 | Actual Labwc | The same `22ed589` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |

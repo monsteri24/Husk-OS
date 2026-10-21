@@ -81,6 +81,21 @@ class LabwcHarnessTests(unittest.TestCase):
         self.assertEqual(test.wait_task_hover('Husk Files','files'),button)
         test.pointer_event.assert_called_once_with('move',button['rect'])
 
+    def test_missing_app_waits_for_actual_cancel_focus_after_mapping(self):
+        test=self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        window=dict(confirmation=dict(primary_text='Install Firefox?',cancel_focused=False,
+                                      cancel_default=True,confirm_focused=False))
+        test.search_start=Mock(return_value=dict(rect=[0,0,200,40]))
+        test.click=Mock();test.confirmation=lambda:window
+        test.state=lambda:dict(start_mapped=False)
+        def wait(description,predicate):
+            if description.startswith('Start hides'): return predicate()
+            self.assertIsNone(predicate(),'A mapped dialog may precede its compositor focus event')
+            window['confirmation']['cancel_focused']=True
+            return predicate()
+        test.wait=wait
+        self.assertIs(test.firefox_confirmation(),window)
+
     def test_output_discovery_accepts_a_visible_window_without_name_or_class(self):
         tree = '''xwininfo: Window id: 0x50d (the root window) (has no name)
   Root window id: 0x50d (the root window) (has no name)

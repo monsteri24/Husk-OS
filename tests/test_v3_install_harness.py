@@ -177,6 +177,121 @@ class InstallHarnessTests(unittest.TestCase):
                 and isinstance(node.args[0].value,bytes)]
             self.assertIn(b'\0',separators)
 
+    def restart_events(self, completion):
+        values = [dict(event='application-quit'),  # Earlier Cancel must not affect the install.
+                  dict(event='installation-success', title='Installation Complete', seconds=30),
+                  dict(event='countdown-observed', first=30, last=26, observed_ms=4000)]
+        if completion == 'now':
+            values.append(dict(event='restart-now-click', seconds=26))
+            values.append(dict(event='restart-now-accepted', seconds=26, requested=True,timer_stopped=True))
+            values.append(dict(event='application-quit', seconds=26))
+        else:
+            values += [dict(event='automatic-restart-awaited')]
+            values += [dict(event='countdown-tick', seconds=n, observed_ms=(30-n)*1000)
+                       for n in range(30, -1, -1)]
+        return values
+
+    def test_restart_requires_a_real_guest_reset_after_actual_success_and_input(self):
+        self.assertTrue(hasattr(self.harness, 'validate_restart_evidence'),
+                        'Actual reset provenance validation is missing')
+        reset = dict(event='SHUTDOWN', data=dict(guest=True, reason='guest-reset'))
+        values = self.restart_events('now')
+        check = self.harness.validate_restart_evidence
+        self.assertEqual(check(values, [reset], 'now', 0), [])
+        for evidence in ([], [dict(event='SHUTDOWN', data=dict(guest=True, reason='guest-shutdown'))],
+                         [dict(event='SHUTDOWN', data=dict(guest=False, reason='host-qmp-system-reset'))],
+                         [dict(event='SHUTDOWN', data=dict(guest=False, reason='host-signal'))]):
+            self.assertTrue(check(values, evidence, 'now', 0))
+        self.assertTrue(check(values, [reset], 'now', -15))
+        for event in ('installation-success', 'countdown-observed', 'restart-now-click'):
+            self.assertTrue(check([v for v in values if v['event'] != event], [reset], 'now', 0))
+        self.assertTrue(check(values+[dict(event='restart-later-click')], [reset], 'now', 0))
+        fallback=[dict(v,seconds=0) if v['event']=='application-quit' and 'seconds' in v else v
+                  for v in values if v['event']!='restart-now-accepted']
+        self.assertTrue(check(fallback,[reset],'now',0),
+                        'A failed Now click followed by the automatic timer must fail Now acceptance')
+        self.assertTrue(check([dict(v,seconds=0) if v['event']=='restart-now-accepted' else v
+                               for v in values],[reset],'now',0))
+        self.assertTrue(check([dict(v,timer_stopped=False) if v['event']=='restart-now-accepted' else v
+                               for v in values],[reset],'now',0))
+
+    def test_automatic_restart_requires_unaltered_decreasing_countdown_through_zero(self):
+        self.assertTrue(hasattr(self.harness, 'validate_restart_evidence'),
+                        'Actual automatic countdown validation is missing')
+        reset = [dict(event='SHUTDOWN', data=dict(guest=True, reason='guest-reset'))]
+        check = self.harness.validate_restart_evidence
+        values = self.restart_events('automatic')
+        self.assertEqual(check(values, reset, 'automatic', 0), [])
+        self.assertTrue(check(values+[dict(event='restart-now-click',seconds=4)], reset, 'automatic', 0))
+        self.assertTrue(check([v for v in values if v.get('seconds') != 0], reset, 'automatic', 0))
+        self.assertTrue(check([v for v in values if v['event'] != 'countdown-tick'], reset, 'automatic', 0))
+        bad = [dict(v, seconds=30) if v['event']=='countdown-tick' else v for v in values]
+        self.assertTrue(check(bad, reset, 'automatic', 0))
+        bad = [dict(v, observed_ms=1) if v['event']=='countdown-tick' else v for v in values]
+        self.assertTrue(check(bad, reset, 'automatic', 0))
+
+    def test_completion_serial_parser_reads_only_public_prefixed_records(self):
+        self.assertTrue(hasattr(self.harness, 'completion_serial_events'),
+                        'Restart evidence must survive HTTP service shutdown')
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary)/'serial.log'
+            path.write_text('kernel output\nHUSK-V3-COMPLETION not-json\n'
+                            '[ 200.01] HUSK-V3-COMPLETION {"event":"countdown-tick","seconds":0}\n'
+                            '{"event":"not-a-public-record"}\n')
+            self.assertEqual(self.harness.completion_serial_events(path),
+                             [dict(event='countdown-tick', seconds=0)])
+
+    def test_reboot_ready_requires_all_target_checks_and_the_real_disk_confirmation(self):
+        self.assertTrue(hasattr(self.harness, 'validate_reboot_ready'),
+                        'Target verification before restart is missing')
+        values=[dict(event=n) for n in self.harness.REQUIRED_DRIVER_EVENTS
+                if n not in ('restart-later-click','application-quit','countdown-observed')]
+        values += [dict(event='cancel-click'),dict(event='cancel-confirmed'),
+                   dict(event='installation-success',title='Installation Complete',seconds=30)]
+        valid=dict(reboot_ready=True,offline=True,guard_target_accepted=True,live_medium_rejected=True,
+                   cancellation=True,cancellation_host_confirmed=True,events=values,
+                   target_checks={n:True for n in self.harness.REQUIRED_TARGET_CHECKS})
+        self.assertEqual(self.harness.validate_reboot_ready(valid), [])
+        for key in ('offline','guard_target_accepted','live_medium_rejected','cancellation_host_confirmed'):
+            self.assertTrue(self.harness.validate_reboot_ready(dict(valid,**{key:False})))
+        for name in self.harness.REQUIRED_TARGET_CHECKS:
+            self.assertTrue(self.harness.validate_reboot_ready(dict(valid,
+                target_checks=dict(valid['target_checks'],**{name:False}))))
+        self.assertTrue(self.harness.validate_reboot_ready(dict(valid,
+            events=[v for v in values if v['event']!='confirmation-click'])))
+
+    def test_qmp_keeps_async_events_during_commands_and_drains_only_closed_guest(self):
+        self.assertTrue(hasattr(self.harness.Monitor, 'closed_events'),
+                        'Guest shutdown events must not be discarded')
+        client,guest=socket.socketpair()
+        self.addCleanup(guest.close)
+        monitor=self.harness.Monitor.__new__(self.harness.Monitor)
+        monitor.socket=client; monitor.stream=client.makefile('rwb',buffering=0); monitor.events=[]
+        self.addCleanup(monitor.close)
+        event=dict(event='STOP',data={})
+        guest.sendall((json.dumps(event)+'\n'+json.dumps(dict(return_value=1)).replace('return_value','return')+'\n').encode())
+        self.assertEqual(monitor.command('query-status'),1)
+        self.assertEqual(json.loads(guest.recv(1024))['execute'],'query-status')
+        reset=dict(event='SHUTDOWN',data=dict(guest=True,reason='guest-reset'))
+        guest.sendall((json.dumps(reset)+'\n').encode());guest.shutdown(socket.SHUT_WR)
+        self.assertEqual(monitor.closed_events(),[event,reset])
+
+    def test_approved_restart_does_not_race_ordinary_liveness_or_serial_eof(self):
+        for exit_during_poll in (True,False):
+            with self.subTest(exit_during_poll=exit_during_poll):
+                process=Mock()
+                process.poll.side_effect=[None,0] if exit_during_poll else [None,None,0]
+                acceptance=SimpleNamespace(args=SimpleNamespace(timeout=120),process=process,
+                    restart_reviewed=True,completion='now',latest=Mock(return_value={}),
+                    alive=Mock(side_effect=RuntimeError('QEMU exited between polls')),
+                    serial=SimpleNamespace(read=Mock(side_effect=RuntimeError('serial EOF before exit'))),
+                    accept_guest_restart=Mock())
+                with patch.object(self.harness.time,'sleep'):
+                    self.harness.Acceptance.live_install(acceptance)
+                acceptance.accept_guest_restart.assert_called_once()
+                acceptance.alive.assert_not_called()
+                acceptance.serial.read.assert_not_called()
+
     def guest_functions(self, *names):
         tree = ast.parse(self.harness.GUEST_SETUP)
         definitions = [node for node in tree.body

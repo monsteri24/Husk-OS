@@ -50,7 +50,7 @@
 - [x] Add a fail-closed authorization-report validator and observe missing-harness failures before implementation.
 - [x] Implement an observer-only root fixture, actual unprivileged GTK launcher/password input, and QMP input to the real polkit dialog. Keep helpers, PAM/polkit rules and Calamares executable unmodified; forbid preload/test-driver injection.
 - [x] Require the active Live session, NP-to-P password state, successful polkit journal action, UID-0 real Calamares, private cookie, English Qt environment, zero QMP disk writes and safe shutdown. Local suite: 473 tests / 71 explicit skips; 180 syntax checks.
-- [ ] Save/review test code, then pin the completed new ISO's exact source/digest/size without rebuilding.
+- [x] Save/review test code, then pin the completed new ISO's exact source/digest/size without rebuilding.
 - [x] Run the real VM check and inspect its actual polkit/Calamares screenshots before claiming graphical startup acceptance (`39449998358`, all ten checks and shutdown passed).
 
 Review: the SDDM diff had no findings. Independent review of the new authorization
@@ -117,3 +117,66 @@ local suite: 477 tests / 71 explicit environment skips / 180 syntax checks,
 native sanitizers, explicit exit 0. The corrected SDDM ISO build is now requested
 alongside the third smoke test; the actual root launcher needs no runtime change
 from the eight positive observations in the second smoke test.
+
+## Task 4: Verify the remaining real completion actions
+
+The continuation recovered remote `c677d21` and inspected its successful full
+image acceptance `39449998340`, plus real authorization `39449998358`. Their
+permanent summaries are committed. The scratch checkout had reverted to the
+previous synced milestone; the unsent completion-test patch mentioned by the
+previous execution is absent locally and its tree is not available remotely.
+Keep all remotely saved work and continue from that verified head.
+
+- [x] Extend only the existing guarded disposable-disk fixture with Now and
+  automatic modes; leave production QML, timer and reboot commands unchanged.
+- [x] Test validation first: target checks before restart, genuine QMP
+  guest-reset provenance, real countdown/input records, refusal of poweroff,
+  host reset, missing evidence and failed QEMU exit; preserve asynchronous QMP events.
+- [ ] Reuse the exact corrected ISO with a strict runtime-source/digest/size
+  check, separate fresh disks for each action, then independent installed UEFI boot.
+- [ ] Observe actual Now click before zero and automatic countdown through zero;
+  do not inject reboot commands or treat a plain application exit as restart.
+- [ ] Run the complete local suite and C++ driver compilation, save the milestone
+  remotely, review the fixture and run the real acceptance jobs.
+- [ ] Inspect evidence and record precise results/remaining limits. No release,
+  main update, merge or hardware disk operation is authorized.
+
+Ruling: use QEMU `-no-reboot` and require SHUTDOWN `guest=true`,
+`reason=guest-reset`, then boot the same installed disk without the ISO. This
+separates a real guest reboot from host ACPI poweroff or process termination
+and keeps USB removal deterministic. Cost if wrong: the test fails closed
+and requires further diagnostics; it never accepts a host reset as success.
+
+The corrected image also passed normal Live authorization in `39609995495`:
+all ten checks, actual English Calamares screenshot, zero QMP writes/unmaps and
+safe shutdown. Permanent evidence: `2026-10-21-live-authorization.json`.
+
+The fresh Labwc run `39610003707` passed panel maximized transparency and true
+fullscreen hide/restore, but its confirmation assertion consumed the first
+mapped snapshot before Cancel had focus (neither button was focused). The
+fixture now waits bounded for the same real Cancel focus/default requirement.
+Its regression first failed with the observed unfocused snapshot, then passed.
+Product confirmation behavior is unchanged; real follow-up remains pending.
+
+Final review: two Important findings, no Critical or Minor findings. The
+Now validator could accept a missed click followed by automatic zero; the
+observer could race expected shutdown against alive()/serial reads. Both were
+reproduced before correction. Now requires the actual QML restartRequested
+and stopped timer at positive seconds after the real click, plus genuine QMP
+guest reset. Approved shutdown waits no longer use live serial/liveness calls.
+The focused 35-test harness suite passed after these corrections.
+
+The first complete local run hit its explicit 180-second limit while compiling
+native-state checks; it was not accepted as passing. The focused native-state
+tests passed (2 tests, 19.854 seconds). A longer bounded full run follows the
+review fixes; no ISO rebuild or VM rerun was started by that timeout.
+
+Final: fixed false-positive Now fallback — positive QML request/stopped-timer
+evidence and fallback/zero/running-timer regressions RED→GREEN. Final: fixed
+shutdown observer race — exit-between-polls/serial-EOF regression RED→GREEN.
+The final full suite passed 484 tests with 71 explicit local environment skips
+in 270.668 seconds, native ASAN/UBSAN with local leak detection disabled and
+180 syntax checks; explicit exit 0. Complete C++ test driver compiled with
+Qt6 Widgets/Test/Quick and -Wall -Wextra -Werror; explicit exit 0.
+No minor findings were deferred. The image request now pins the already
+accepted c677d21 ISO for both actual restart modes; no runtime payload changed.

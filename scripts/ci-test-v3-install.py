@@ -124,6 +124,99 @@ def validate_install_report(report):
     return problems
 
 
+def validate_reboot_ready(report):
+    """Require the same real installation/target proof before acknowledging Now."""
+    if not isinstance(report, dict): return ['No pre-restart report was received']
+    # A reboot interrupts the observer, so final process-exit/postponement fields
+    # belong only to Later. All disk, confirmation and job checks still apply.
+    ignored = {'restart-later-click', 'application-quit', 'countdown-observed'}
+    problems = []
+    for key in ('reboot_ready', 'offline', 'guard_target_accepted', 'live_medium_rejected',
+                'cancellation', 'cancellation_host_confirmed'):
+        if report.get(key) is not True: problems.append('Pre-restart evidence is missing: '+key)
+    values = [v for v in report.get('events', []) if isinstance(v, dict)]
+    names = {v.get('event') for v in values}
+    for name in set(REQUIRED_DRIVER_EVENTS)-ignored | {'cancel-click','cancel-confirmed'}:
+        if name not in names: problems.append('Pre-restart GUI evidence is missing: '+name)
+    if 'driver-failed' in names or report.get('error'):
+        problems.append('The actual installation observer/driver failed')
+    if not any(v.get('event')=='installation-success' and v.get('title')=='Installation Complete' for v in values):
+        problems.append('The actual successful completion page was not observed')
+    for name in REQUIRED_TARGET_CHECKS:
+        if report.get('target_checks', {}).get(name) is not True:
+            problems.append('Pre-restart target evidence is missing: '+name)
+    return problems
+
+
+def completion_serial_events(path):
+    """Public completion-only records survive shutdown of the HTTP service."""
+    marker = 'HUSK-V3-COMPLETION '
+    values = []
+    for line in Path(path).read_text(errors='replace')[-256*1024:].splitlines():
+        if marker not in line: continue
+        try: value = json.loads(line.split(marker, 1)[1])
+        except ValueError: continue
+        if isinstance(value, dict): values.append(value)
+    return values
+
+
+def validate_restart_evidence(values, qmp_events, completion, exit_code):
+    """A plain QEMU exit, host reset or guest poweroff cannot prove reboot.
+
+    QEMU -no-reboot converts a guest reboot to SHUTDOWN/guest-reset:
+    https://www.qemu.org/docs/master/interop/qemu-qmp-ref.html#enum-ShutdownCause
+    """
+    problems = []
+    if completion not in ('now', 'automatic'): return ['Unknown reboot acceptance mode']
+    if type(exit_code) is not int or exit_code != 0: problems.append('QEMU did not exit cleanly')
+    if not any(e.get('event')=='SHUTDOWN' and e.get('data', {}).get('guest') is True
+               and e['data'].get('reason')=='guest-reset' for e in qmp_events if isinstance(e, dict)):
+        problems.append('No actual guest-originated reboot was observed by QMP')
+    values = [v for v in values if isinstance(v, dict)]
+    starts = [n for n,v in enumerate(values) if v.get('event')=='installation-success']
+    if not starts: return problems+['The actual successful installation was not observed']
+    values = values[starts[-1]:]  # Discard the earlier Cancel process's quit event.
+    start = values[0]
+    seconds = start.get('seconds')
+    if start.get('title')!='Installation Complete' or type(seconds) is not int or not 25<=seconds<=30:
+        problems.append('Successful completion did not start with the real thirty-second countdown')
+    observed = [v for v in values if v.get('event')=='countdown-observed']
+    if not any(type(v.get('observed_ms')) is int and v['observed_ms']>=4000
+               and type(v.get('first')) is int and type(v.get('last')) is int
+               and 0<v['last']<=v['first']-2<=28 for v in observed):
+        problems.append('The real countdown did not decrease over four seconds')
+    names = {v.get('event') for v in values}
+    if 'restart-later-click' in names or 'driver-failed' in names:
+        problems.append('An incompatible/failing completion action was observed')
+    clicks = [v for v in values if v.get('event')=='restart-now-click']
+    if completion=='now':
+        if len(clicks)!=1 or type(clicks[0].get('seconds')) is not int or not 0<clicks[0]['seconds']<30:
+            problems.append('No actual Restart Now click before zero was observed')
+        accepted = [v for v in values if v.get('event')=='restart-now-accepted']
+        if (len(accepted)!=1 or len(clicks)!=1 or accepted[0].get('requested') is not True or
+                accepted[0].get('timer_stopped') is not True or type(accepted[0].get('seconds')) is not int or
+                type(clicks[0].get('seconds')) is not int or
+                not 0<accepted[0]['seconds']<=clicks[0]['seconds'] or
+                values.index(accepted[0])<=values.index(clicks[0])):
+            problems.append('Restart Now did not actually request restart and stop the timer before zero')
+    else:
+        if clicks or 'automatic-restart-awaited' not in names:
+            problems.append('Automatic restart had unexpected input or no observation')
+        ticks = [v for v in values if v.get('event')=='countdown-tick']
+        numbers = [v.get('seconds') for v in ticks]
+        zero_at_quit = any(v.get('event')=='application-quit' and v.get('seconds')==0 for v in values)
+        if (len(numbers)<24 or any(type(n) is not int for n in numbers) or
+                not 25<=numbers[0]<=30 or numbers[-1]>2 or
+                any(a<=b for a,b in zip(numbers,numbers[1:])) or
+                (numbers[-1]!=0 and not zero_at_quit)):
+            problems.append('The actual automatic countdown was not observed through zero')
+        times = [v.get('observed_ms') for v in ticks]
+        if (not times or any(type(n) is not int for n in times) or
+                times[-1]-times[0]<24000):
+            problems.append('The automatic countdown did not run for its real duration')
+    return problems
+
+
 def cancellation_blockstats(response):
     """Independent QEMU backend proof before authorizing the second UI run.
 
@@ -436,7 +529,8 @@ try:
     env.update(HOME='/root', XDG_CACHE_HOME='/root/.cache',
         LD_PRELOAD=str(driver), HUSK_INSTALL_ACCEPTANCE='1',
         HUSK_INSTALL_DRIVER_LOG=str(events_path), HUSK_INSTALL_TEST_USER=CONFIG['user'],
-        HUSK_INSTALL_TEST_PASSWORD=CONFIG['password'], QT_QUICK_BACKEND='software')
+        HUSK_INSTALL_TEST_PASSWORD=CONFIG['password'], QT_QUICK_BACKEND='software',
+        HUSK_INSTALL_TEST_COMPLETION=CONFIG.get('completion','later'))
     state['live_desktop_pid']=desktop
     def run_installer(mode):
         env['HUSK_INSTALL_TEST_MODE']=mode
@@ -444,6 +538,24 @@ try:
             process=subprocess.Popen(['/usr/lib/ownos/husk-installer-root'],env=env,stdout=stream,stderr=subprocess.STDOUT)
             deadline=time.monotonic()+CONFIG['timeout']
             while process.poll() is None and time.monotonic()<deadline:
+                if (mode=='install' and CONFIG.get('completion','later')!='later'
+                        and not state.get('reboot_ready') and
+                        any(e.get('event')=='installation-success' for e in events())):
+                    # Completion follows the real flush, non-lazy unmount and
+                    # sync jobs. Inspect read-only without changing the timer.
+                    post()
+                    state['offline']=state['offline'] and not routes()
+                    inspect_target()
+                    if not state['offline'] or not all(state['target_checks'].values()):
+                        raise RuntimeError('The installed target failed inspection before restart')
+                    state['reboot_ready']=True; post()
+                if state.get('reboot_ready') and not P('/run/husk-v3-restart-reviewed').exists():
+                    try:
+                        reply=urllib.request.urlopen(CONFIG['base']+'/restart-reviewed',timeout=3).read()
+                        if reply==b'REVIEWED\n':
+                            marker=P('/run/husk-v3-restart-reviewed')
+                            marker.write_text('REVIEWED\n'); marker.chmod(0o600)
+                    except Exception: pass
                 post(); time.sleep(2)
             if process.poll() is None:
                 process.terminate(); process.wait(timeout=30); raise RuntimeError('The real installer exceeded the VM deadline')
@@ -473,6 +585,13 @@ try:
     process=run_installer('install')
     state['process_exit']=process.returncode; post()
     if process.returncode!=0: raise RuntimeError('Calamares or the input driver failed; inspect its real event/log evidence')
+    if CONFIG.get('completion','later')!='later':
+        # Application exit alone is insufficient. The unchanged production
+        # command must make QEMU report a genuine guest reset. The host owns
+        # that evidence; keep observing until the guest shuts the fixture down.
+        deadline=time.monotonic()+90
+        while time.monotonic()<deadline: post(); time.sleep(2)
+        raise RuntimeError('The real completion action did not restart the guest')
     names={event.get('event') for event in events()}
     if not {'installation-success','countdown-observed','restart-later-click','application-quit'} <= names:
         raise RuntimeError('Calamares exited without the required successful completion and Restart Later interaction')
@@ -577,6 +696,7 @@ class Monitor:
         self.socket = socket.socket(socket.AF_UNIX)
         self.socket.settimeout(15); self.socket.connect(str(path))
         self.stream = self.socket.makefile('rwb', buffering=0)
+        self.events = []
         self.stream.readline(); self.command('qmp_capabilities')
 
     def command(self, name, arguments=None):
@@ -585,8 +705,16 @@ class Monitor:
             line = self.stream.readline()
             if not line: raise RuntimeError('QEMU closed its monitor')
             response = json.loads(line)
+            if 'event' in response: self.events.append(response)
             if 'error' in response: raise RuntimeError(response['error'])
             if 'return' in response: return response['return']
+
+    def closed_events(self):
+        """Drain only after process.poll() proves QEMU has exited; never a live VM."""
+        for line in self.stream:
+            value = json.loads(line)
+            if 'event' in value: self.events.append(value)
+        return self.events
 
     def key(self, keys):
         response = self.command('human-monitor-command', {'command-line':'sendkey '+keys+' 20'})
@@ -626,6 +754,8 @@ class Acceptance:
         self.process = None; self.monitor = None; self.qemu_log = None; self.serial = None
         self.auth_started = False
         self.cancellation_verified = False
+        self.completion = getattr(args, 'completion', 'later')
+        self.restart_reviewed = False
         self.result = dict(installation='FAILED', installed_boot='NOT TESTED',
             live_shutdown='NOT TESTED', installed_shutdown='NOT TESTED', problems=[],
             polkit='NOT TESTED: test-only root serial console delivered the input fixture',
@@ -638,6 +768,12 @@ class Acceptance:
                 name = self.path.removeprefix('/'+acceptance.token+'/')
                 if self.path == '/'+acceptance.token+'/cancellation-reviewed':
                     if not acceptance.cancellation_verified:
+                        self.send_error(503); return
+                    data=b'REVIEWED\n'
+                    self.send_response(200); self.send_header('Content-Length',str(len(data)))
+                    self.end_headers(); self.wfile.write(data); return
+                if self.path == '/'+acceptance.token+'/restart-reviewed':
+                    if not acceptance.restart_reviewed:
                         self.send_error(503); return
                     data=b'REVIEWED\n'
                     self.send_response(200); self.send_header('Content-Length',str(len(data)))
@@ -704,7 +840,20 @@ class Acceptance:
 
     def live_install(self):
         started=time.monotonic(); bootstrapped=False; last_event=None; next_ready=15; setup_sent=None
+        restart_deadline=None
         while time.monotonic()-started < self.args.timeout:
+            if self.restart_reviewed:
+                # Serial EOF may precede poll() observing process exit. Once
+                # approved, no more live socket/liveness operations are valid.
+                if restart_deadline is None: restart_deadline=time.monotonic()+90
+                if self.process.poll() is not None:
+                    self.accept_guest_restart(); return
+                report=self.latest('installation') or {}
+                if report.get('error') or any(e.get('event')=='driver-failed' for e in report.get('events', [])):
+                    raise RuntimeError('The real installation observer/driver failed before restart')
+                if time.monotonic()>restart_deadline:
+                    raise RuntimeError('The successful installer did not actually restart the guest')
+                time.sleep(0.2); continue
             self.alive()
             elapsed=time.monotonic()-started
             serial_output = self.serial.read()
@@ -738,10 +887,20 @@ class Acceptance:
                     print('QEMU independently confirms zero target writes/unmaps before installation',flush=True)
                 events=report.get('events',[])
                 event=events[-1].get('event') if events else 'setup'
-                if event!=last_event:
+                if event!=last_event and not self.restart_reviewed:
                     print('Real installer checkpoint:',event,flush=True)
                     self.monitor.capture(self.artifacts/('install-'+re.sub('[^a-z0-9-]','-',event)+'.png'))
                     last_event=event
+                if self.completion!='later' and report.get('reboot_ready') and not self.restart_reviewed:
+                    problems=validate_reboot_ready(report)
+                    if problems: raise RuntimeError('; '.join(problems))
+                    self.result['pre_restart_target_checks']=report['target_checks']
+                    self.monitor.capture(self.artifacts/'installation-complete-before-restart.png')
+                    self.restart_reviewed=True; restart_deadline=time.monotonic()+90
+                    print('All installed target/job checks passed; awaiting the actual completion action and guest reset',flush=True)
+                if self.restart_reviewed and (report.get('error') or
+                        any(e.get('event')=='driver-failed' for e in events)):
+                    raise RuntimeError('The real installation observer/driver failed before restart')
                 if report.get('finished'):
                     problems=validate_install_report(report)
                     if problems: raise RuntimeError('; '.join(problems)+': '+report.get('error',''))
@@ -750,6 +909,21 @@ class Acceptance:
                     return
             time.sleep(2)
         raise RuntimeError('The bounded real installation deadline expired without accepted evidence')
+
+    def accept_guest_restart(self):
+        code=self.process.poll()
+        if code is None: raise RuntimeError('Cannot drain restart evidence from a running guest')
+        qmp_events=self.monitor.closed_events()
+        values=completion_serial_events(self.artifacts/'live-serial.log')
+        evidence=dict(completion=self.completion,qemu_exit=code,qmp_events=qmp_events,events=values)
+        (self.artifacts/'restart-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
+        problems=validate_restart_evidence(values,qmp_events,self.completion,code)
+        if problems: raise RuntimeError('; '.join(problems))
+        self.result.update(installation='PASSED',live_shutdown='PASSED',live_restart='PASSED',
+                           completion=self.completion)
+        self.monitor.close(); self.monitor=None
+        if self.serial: self.serial.close(); self.serial=None
+        self.qemu_log.close(); self.qemu_log=None
 
     def sddm_login(self):
         self.auth_started = True
@@ -808,13 +982,17 @@ class Acceptance:
             self.base='http://10.0.2.2:'+str(server.server_address[1])+'/'+self.token
             config=dict(base=self.base,user=self.args.username,password=self.password,
                         version=self.args.expected_version,timeout=self.args.timeout,
+                        completion=self.completion,
                         driver_sha256=hashlib.sha256(driver).hexdigest())
             self.ready_marker=('HUSK-READY-'+secrets.token_hex(16)).encode()
             self.resources={'setup.py':('CONFIG='+repr(config)+'\n'+GUEST_SETUP).encode(),
                             'installed.py':('CONFIG='+repr(dict(base=self.base))+'\n'+INSTALLED_PROBE).encode(),
                             'driver.so':driver, 'ready':self.ready_marker+b'\n'}
             threading.Thread(target=server.serve_forever,daemon=True).start()
-            self.start_vm('live',disk,variables,label); self.live_install(); self.shutdown('live')
+            self.start_vm('live',disk,variables,label); self.live_install()
+            if self.completion=='later': self.shutdown('live')
+            elif self.result.get('live_restart')!='PASSED':
+                raise RuntimeError('The requested completion action did not pass actual reboot validation')
             self.start_vm('installed',disk,variables,label); self.installed_boot(); self.shutdown('installed')
             info=subprocess.check_output(['qemu-img','info','--output=json',str(disk)],text=True)
             (self.artifacts/'installed-image-info.json').write_text(info)
@@ -855,6 +1033,7 @@ def main():
     parser.add_argument('--username',default='huskcheck')
     parser.add_argument('--timeout',type=int,default=2700)
     parser.add_argument('--boot-timeout',type=int,default=600)
+    parser.add_argument('--completion',choices=('later','now','automatic'),default='later')
     args=parser.parse_args()
     if args.timeout<120 or args.boot_timeout<120: parser.error('VM deadlines must allow at least 120 seconds')
     for name in ('iso','driver','kernel','initrd','firmware_code','firmware_vars'):

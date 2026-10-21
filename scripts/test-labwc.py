@@ -441,9 +441,16 @@ class DesktopTest:
     def firefox_confirmation(self):
         row = self.search_start('Firefox')
         self.click(row['rect'])
-        window = self.wait('real missing-Firefox confirmation from Start', self.confirmation)
-        assert window['confirmation']['primary_text'] == 'Install Firefox?', window
-        assert window['confirmation']['cancel_focused'] and window['confirmation']['cancel_default'], window
+        def focused_confirmation():
+            window = self.confirmation()
+            if window is None: return None
+            assert window['confirmation']['primary_text'] == 'Install Firefox?', window
+            # Mapping precedes asynchronous compositor focus delivery. Require
+            # the actual Cancel focus/default, rather than accepting the first
+            # mapped snapshot or introducing an arbitrary sleep.
+            confirmation = window['confirmation']
+            return window if confirmation['cancel_focused'] and confirmation['cancel_default'] else None
+        window = self.wait('real missing-Firefox confirmation with Cancel focused', focused_confirmation)
         self.wait('Start hides before confirmation interaction', lambda: not self.state().get('start_mapped'))
         return window
 

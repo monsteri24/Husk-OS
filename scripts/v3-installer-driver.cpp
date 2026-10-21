@@ -110,17 +110,18 @@ class Driver : public QObject {
     QString user = qEnvironmentVariable("HUSK_INSTALL_TEST_USER");
     QString password = qEnvironmentVariable("HUSK_INSTALL_TEST_PASSWORD");
     bool cancelMode = qEnvironmentVariable("HUSK_INSTALL_TEST_MODE") == "cancel";
+    QString completion = qEnvironmentVariable("HUSK_INSTALL_TEST_COMPLETION", "later");
     QTimer timer;
     QElapsedTimer elapsed, pageTime;
     ModalWatchdog unexpectedModal;
     QSet<int> advanced;
-    int lastPage = -1, countdownStart = -1;
+    int lastPage = -1, countdownStart = -1, lastSeconds = -1;
     qint64 confirmationAt = -1, finishAt = -1;
     bool stopped = false, diskInitial = false, diskSelected = false;
     bool eraseSelected = false, usersEntered = false, usersValidated = false, summarySeen = false;
     bool zoneClockChosen = false, zoneSelected = false;
     bool confirmationSeen = false, confirmationClicked = false, finishSeen = false;
-    bool cancelRequested = false;
+    bool cancelRequested = false, countdownObserved = false;
 
     void record(const QString& event, QJsonObject values = {}) {
         values.insert("event", event);
@@ -128,8 +129,19 @@ class Driver : public QObject {
         values.insert("time", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
         QFile file(logPath);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Append)) { qApp->exit(86); return; }
-        file.write(QJsonDocument(values).toJson(QJsonDocument::Compact) + '\n');
+        const QByteArray data = QJsonDocument(values).toJson(QJsonDocument::Compact) + '\n';
+        file.write(data);
         file.flush();
+        // Only these public facts reach the console. Never copy account,
+        // summary, modal, password or environment records onto this channel.
+        const QSet<QString> publicEvents{"installation-success", "countdown-observed", "countdown-tick",
+            "restart-now-click", "restart-now-accepted", "automatic-restart-awaited", "application-quit"};
+        if (publicEvents.contains(event) && QFile::exists("/dev/ttyS0")) {
+            QFile console("/dev/ttyS0");
+            if (console.open(QIODevice::WriteOnly)) {
+                console.write("HUSK-V3-COMPLETION " + data); console.flush();
+            }
+        }
     }
     void fail(const QString& message) {
         if (stopped) return;
@@ -251,7 +263,8 @@ class Driver : public QObject {
             if (!root) continue;
             auto* title = namedItem(root, "husk-finish-title");
             auto* later = namedItem(root, "husk-restart-later");
-            if (!title || !later) continue;
+            auto* now = namedItem(root, "husk-restart-now");
+            if (!title || !later || !now) continue;
             if (title->property("text").toString() != "Installation Complete") {
                 fail("Calamares did not report a successful real installation"); return;
             }
@@ -260,14 +273,36 @@ class Driver : public QObject {
                 if (seconds < 25 || seconds > 30) { fail("The real thirty-second countdown was unavailable"); return; }
                 finishSeen = true; finishAt = elapsed.elapsed(); countdownStart = seconds;
                 record("installation-success", {{"title", title->property("text").toString()}, {"seconds", seconds}});
+                if (completion == "automatic") record("automatic-restart-awaited");
             }
-            if (elapsed.elapsed() - finishAt >= 4000 && seconds <= countdownStart - 2 && seconds > 0) {
-                if (!later->isVisible() || !later->isEnabled()) { fail("Restart Later is not actionable"); return; }
+            if (seconds != lastSeconds) {
+                lastSeconds = seconds;
+                record("countdown-tick", {{"seconds", seconds}, {"observed_ms", elapsed.elapsed() - finishAt}});
+            }
+            if (!countdownObserved && elapsed.elapsed() - finishAt >= 4000 && seconds <= countdownStart - 2 && seconds > 0) {
+                countdownObserved = true;
                 record("countdown-observed", {{"first", countdownStart}, {"last", seconds},
                                               {"observed_ms", elapsed.elapsed() - finishAt}});
-                record("restart-later-click"); stopped = true; timer.stop();
-                const QPoint center = later->mapToScene(QPointF(later->width()/2, later->height()/2)).toPoint();
+            }
+            if (countdownObserved && completion != "automatic") {
+                // The host first checks all target/job facts. It never asks the
+                // guest to reboot: this is only permission to click the real UI.
+                if (completion == "now" && !QFile::exists("/run/husk-v3-restart-reviewed")) return;
+                auto* button = completion == "now" ? now : later;
+                if (seconds <= 0 || !button->isVisible() || !button->isEnabled()) {
+                    fail("The requested real completion button is not actionable before zero"); return;
+                }
+                record(completion == "now" ? "restart-now-click" : "restart-later-click", {{"seconds", seconds}});
+                stopped = true; timer.stop();
+                const QPoint center = button->mapToScene(QPointF(button->width()/2, button->height()/2)).toPoint();
+                QPointer<QQuickItem> finishRoot(root);
                 QTest::mouseClick(quick, Qt::LeftButton, Qt::NoModifier, center);
+                if (completion == "now" && finishRoot) {
+                    auto* actualTimer = finishRoot->findChild<QObject*>("husk-restart-timer");
+                    record("restart-now-accepted", {{"seconds", finishRoot->property("secondsRemaining").toInt()},
+                        {"requested", finishRoot->property("restartRequested").toBool()},
+                        {"timer_stopped", actualTimer && !actualTimer->property("running").toBool()}});
+                }
             }
             return;
         }
@@ -415,12 +450,21 @@ public:
         const QString serial = readFile("/sys/class/block/vda/serial");
         if (getuid() != 0 || !QFile::exists("/run/archiso/bootmnt/arch/x86_64/airootfs.sfs") ||
             !QFile::exists("/sys/firmware/efi") || readFile("/run/husk-v3-disposable-test") != "HUSK-DISPOSABLE" ||
-            serial != "HUSK-DISPOSABLE" || user.isEmpty() || password.size() < 16 || logPath.isEmpty()) {
+            serial != "HUSK-DISPOSABLE" || user.isEmpty() || password.size() < 16 || logPath.isEmpty() ||
+            !QStringList{"later", "now", "automatic"}.contains(completion)) {
             fail("The test driver requires the explicitly marked disposable UEFI Live guest"); return;
         }
         record("driver-started", {{"qt", qVersion()}, {"serial", serial},
             {"calamares_log", QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/session.log"}});
-        connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { record("application-quit"); });
+        connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
+            QJsonObject values;
+            if (finishSeen) for (auto* window : QGuiApplication::allWindows()) {
+                auto* quick = qobject_cast<QQuickWindow*>(window);
+                auto* root = quick ? itemWithProperty(quick->contentItem(), "secondsRemaining") : nullptr;
+                if (root) { values.insert("seconds", root->property("secondsRemaining").toInt()); break; }
+            }
+            record("application-quit", values);
+        });
         connect(&timer, &QTimer::timeout, this, [this] { tick(); }); timer.start(500);
     }
 };
