@@ -132,13 +132,13 @@ Keep all remotely saved work and continue from that verified head.
 - [x] Test validation first: target checks before restart, genuine QMP
   guest-reset provenance, real countdown/input records, refusal of poweroff,
   host reset, missing evidence and failed QEMU exit; preserve asynchronous QMP events.
-- [ ] Reuse the exact corrected ISO with a strict runtime-source/digest/size
+- [x] Reuse the exact corrected ISO with a strict runtime-source/digest/size
   check, separate fresh disks for each action, then independent installed UEFI boot.
-- [ ] Observe actual Now click before zero and automatic countdown through zero;
+- [x] Observe actual Now click before zero and automatic countdown through zero;
   do not inject reboot commands or treat a plain application exit as restart.
-- [ ] Run the complete local suite and C++ driver compilation, save the milestone
+- [x] Run the complete local suite and C++ driver compilation, save the milestone
   remotely, review the fixture and run the real acceptance jobs.
-- [ ] Inspect evidence and record precise results/remaining limits. No release,
+- [x] Inspect evidence and record precise results/remaining limits. No release,
   main update, merge or hardware disk operation is authorized.
 
 Ruling: use QEMU `-no-reboot` and require SHUTDOWN `guest=true`,
@@ -189,7 +189,7 @@ normal-user UEFI/Husk Wayland boot. All19 target checks and cancellation counter
 passed. Permanent Now evidence and the passing 484/zero-skip GTK plus real Labwc
 evidence are saved. The corrected focus wait passed the real compositor run.
 
-The automatic scenario ran all30 jobs and all19 checks, observed each real tick
+The automatic scenario ran all30 jobs and all 19 checks, observed each real tick
 30..0 and invoked the unchanged production sync/systemctl reboot. XWayland closed
 during shutdown and Qt exited1. The observer treated that late display loss as
 an installation error; the host terminated QEMU before final reset proof.
@@ -200,13 +200,13 @@ This failed run is preserved, not counted as automatic-restart acceptance.
 - [x] Preserve early/driver failures, retain late exit as diagnostics only after
   verified completion and require the same independent QMP/countdown proof.
 - [x] Add validated request modes so the already passing Now VM is not repeated.
-- [ ] Run the complete suite, save progress, retry only automatic on a new disk
+- [x] Run the complete suite, save progress, retry only automatic on a new disk
   using the same accepted ISO, and inspect final UEFI/Wayland evidence.
 
 The captured late Qt exit and validated request selection regressions passed,
 followed by the complete local suite: 486 tests in 394.224 seconds, 71 explicit
 environment skips, native ASAN/UBSAN with local leak detection disabled, all181
-source/configuration checks, explicit exit0. No production runtime or C++ driver
+source/configuration checks, explicit exit 0. No production runtime or C++ driver
 change was needed. The source and all completed/failed evidence are saved before
 the automatic-only retry; Now is not rerun.
 
@@ -228,13 +228,30 @@ It failed before implementation and passed afterward (16.013 seconds).
 
 - [x] Implement direct property observation with guarded object lifetime;
   stop fixture polling after zero, preserving the actual production timer.
-- [ ] Run the full suite and full driver compilation, save progress and retry
+- [x] Run the full suite and full driver compilation, save progress and retry
   only automatic with a fresh disk and the identical ISO.
-- [ ] Inspect zero, actual guest reset and independent installed UEFI/Wayland
+- [x] Inspect zero, actual guest reset and independent installed UEFI/Wayland
   evidence, then save the final status without a release or merge.
 
-The final notifier change passed the full local suite: 487 tests in387.359
+The final notifier change passed the full local suite: 487 tests in 387.359
 seconds, 71 explicit environment skips, native ASAN/UBSAN with local leak
-detection disabled and181 source checks. Full shared-driver compilation with
-Qt6 Widgets/Test/Quick and -Wall -Wextra -Werror also passed; explicit exit0.
+detection disabled and 181 source checks. Full shared-driver compilation with
+Qt6 Widgets/Test/Quick and -Wall -Wextra -Werror also passed; explicit exit 0.
 The third automatic-only request retains the exact c677d21 image/digest/size.
+
+Task 4: complete. Task 5: complete. Task 6: complete.
+The final automatic-only run 39620742691 passed every actual value 30..0,
+all 19 target checks, clean QMP guest-reset and independent installed UEFI/
+normal-user Husk Wayland boot. No ISO/kernel override/debug shell remained;
+UID 1000 used /dev/vda2 ext4, bridge/desktop/panel were mapped, and installed
+shutdown passed. Completion and installed screenshots were inspected.
+The same final test source 1e567c0 passed 487 real GTK tests with zero skips,
+181 syntax checks and native sanitizers; real Labwc 39620752139 also passed.
+Permanent final/automatic acceptance summaries are saved. Earlier failed
+traces remain in the history report. No release, merge or main change occurred.
+
+Integration: the user's existing explicit choice is to save this V3 branch and
+keep PR 1 a draft; no integration-choice prompt or merge is needed. The existing
+workspace is preserved. Final verification is against the tested code tree;
+the concluding commit changes only reports/evidence, so no successful VM or
+full source test is repeated for documentation-only changes.
