@@ -88,6 +88,13 @@ mapping. Failed scenarios are preserved and superseded by the passing evidence.
 
 ## Remaining coverage
 
+The next bounded acceptance run reuses the accepted image and the existing
+guarded VM/Live-session bootstrap. It exercises actual Steam confirmation,
+temporary-password and system-authorization cancellation before an explicitly
+authorized signed full-system transaction and a separate client-startup probe.
+Only test fixtures/workflows change; no package is added to the ISO. Results
+remain pending until the actual run finishes and its observations are reviewed.
+
 Physical Wi-Fi/Bluetooth adapters, GPU/firmware, actual USB removal and nonempty
 real-hardware targets need independent testing. The VM renderer is pixman.
 Normal graphical package authorization and Steam/Heroic/game launch remain

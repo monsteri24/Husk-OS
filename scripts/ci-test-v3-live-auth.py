@@ -241,6 +241,12 @@ finally:
 
 
 class AuthorizationAcceptance(vm.Acceptance):
+    client_source = GTK_CLIENT
+    observer_source = ROOT_OBSERVER
+    required_checks = REQUIRED_CHECKS
+    client_name = CLIENT_NAME
+    proof_scope = 'Real Live GTK/password/polkit launch; no installation'
+
     def live_authorization(self):
         started=time.monotonic(); next_ready=15; delivered=False
         terminal=False; launched=False; prompt_since=None; authenticated=False; captured=False; last_stage=None
@@ -287,7 +293,7 @@ class AuthorizationAcceptance(vm.Acceptance):
 
     def run(self):
         self.result=dict(authorization='FAILED',live_shutdown='NOT TESTED',problems=[],
-            accelerator='kvm' if self.kvm else 'tcg',proof_scope='Real Live GTK/password/polkit launch; no installation')
+            accelerator='kvm' if self.kvm else 'tcg',proof_scope=self.proof_scope)
         server=None
         try:
             for path in (self.args.iso,self.args.kernel,self.args.initrd,self.args.firmware_code,self.args.firmware_vars):
@@ -300,12 +306,12 @@ class AuthorizationAcceptance(vm.Acceptance):
             server=http.server.ThreadingHTTPServer(('127.0.0.1',0),self.handler())
             self.base='http://10.0.2.2:'+str(server.server_address[1])+'/'+self.token
             self.ready_marker=('HUSK-AUTH-READY-'+secrets.token_hex(16)).encode()
-            client=GTK_CLIENT.encode()
+            client=self.client_source.encode()
             # Let the observer report its failure/logs before the host deadline.
             config=dict(base=self.base,password=self.password,timeout=self.args.timeout-60,
-                        client_sha256=hashlib.sha256(client).hexdigest(),client_name=CLIENT_NAME,required=REQUIRED_CHECKS)
+                        client_sha256=hashlib.sha256(client).hexdigest(),client_name=self.client_name,required=self.required_checks)
             self.resources={'ready':self.ready_marker+b'\n','client.py':client,
-                            'setup.py':('CONFIG='+repr(config)+'\n'+ROOT_OBSERVER).encode()}
+                            'setup.py':('CONFIG='+repr(config)+'\n'+self.observer_source).encode()}
             threading.Thread(target=server.serve_forever,daemon=True).start()
             self.start_vm('live',disk,variables,label)
             self.live_authorization(); self.shutdown('live')

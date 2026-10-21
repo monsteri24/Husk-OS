@@ -1,0 +1,8 @@
+{
+  "attempt": 1,
+  "source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
+  "run": 39449998340,
+  "sha256": "14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec",
+  "bytes": 2079227904,
+  "scope": "Actual Live Steam GUI cancellation, PAM/polkit, signed packages and client startup; no game or hardware certification"
+}
