@@ -50,6 +50,16 @@ requested again, on a fresh disk with the same ISO. **Automatic acceptance is
 pending**. [Retained failure](evidence/v3-phase2/2026-10-21-automatic-restart-diagnostic.json).
 The observer/request correction passed all486 local tests (71 explicit
 environment skips), native sanitizers and181 syntax checks before this retry.
+That retry reached an actual clean guest reset, but its 500 ms sampler ended
+at1 and missed zero before process shutdown. The strict validator withheld
+acceptance and installed boot. A native read-only Qt property subscription
+now observes the actual zero synchronously before the QML reboot call;
+an actual Qt regression verified this order without an event-loop pump.
+The third request remains automatic-only and keeps every acceptance gate.
+[Zero-sampling diagnostic](evidence/v3-phase2/2026-10-21-automatic-zero-diagnostic.json).
+The notifier change passed487 local tests (71 explicit environment skips),181
+syntax checks, native sanitizers and full shared-driver compilation before
+the third automatic-only request was saved.
 
 The corrected `c677d21` image now passes the complete first-login gate in
 [39449998340](https://github.com/monsteri24/Husk-OS/actions/runs/39449998340):
@@ -140,7 +150,7 @@ second run `39448260566` reached the actual Authenticate dialog and root Calamar
 | Check | Observed result |
 | --- | --- |
 | Source/models/real GTK | [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078) passed at `22ed589`: 469 tests with zero failures or skips in the actual GTK run; 177 source/configuration checks and native sanitizer checks also passed. |
-| Local checks | The current full local run passed 486 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 181 source/configuration checks pass. |
+| Local checks | The current full local run passed 487 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 181 source/configuration checks pass. |
 | Actual Labwc | The same `22ed589` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |

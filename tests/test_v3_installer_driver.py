@@ -16,6 +16,57 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallerDriverSafetyTests(unittest.TestCase):
+    def test_countdown_zero_is_observed_synchronously_before_qml_shutdown(self):
+        code=(ROOT/'scripts/v3-installer-driver.cpp').read_text()
+        self.assertTrue('observeCountdown(' in code,'Polling can miss zero before shutdown; use the native property notifier')
+        flags=subprocess.run(['pkg-config','--cflags','--libs','Qt6Widgets','Qt6Test','Qt6Quick'],
+                             capture_output=True,text=True)
+        if flags.returncode: self.skipTest('Qt6 development packages unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary);source=path/'countdown.cpp'
+            source.write_text('#include '+json.dumps(str(ROOT/'scripts/v3-installer-driver.cpp'))+'\n'+r'''
+#include <QQmlComponent>
+#include <QQmlEngine>
+#include <vector>
+int main(int argc,char** argv) {
+    QApplication app(argc,argv); QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.setData(R"(import QtQuick
+Item {
+    property int secondsRemaining: 2
+    function advance() { secondsRemaining -= 1 }
+    function shutdown() { secondsRemaining = 0; Qt.quit() }
+})",QUrl("file:///clock-observation.qml"));
+    auto* root=qobject_cast<QQuickItem*>(component.create());
+    if (!root) { qWarning()<<component.errors(); return 1; }
+    std::vector<int> values; bool quit=false,zeroBeforeQuit=false;
+    if (observeCountdown(nullptr,&app,[](int){}) ||
+        !observeCountdown(root,&app,[&](int value){ values.push_back(value); })) return 2;
+    QObject::connect(&engine,&QQmlEngine::quit,&app,[&] {
+        quit=true; zeroBeforeQuit=!values.empty() && values.back()==0;
+    });
+    if (values!=std::vector<int>{2}) return 3;
+    if (!QMetaObject::invokeMethod(root,"advance",Qt::DirectConnection) || values!=std::vector<int>{2,1}) return 4;
+    // No event-loop pump or polling opportunity exists between setting zero
+    // and the real QML shutdown signal on the next instruction.
+    if (!QMetaObject::invokeMethod(root,"shutdown",Qt::DirectConnection)) return 5;
+    if (!quit || !zeroBeforeQuit || values!=std::vector<int>{2,1,0}) return 6;
+    if (root->property("secondsRemaining").toInt()!=0) return 7;
+    delete root; return 0;
+}
+''')
+            executable=path/'countdown'
+            built=subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-fPIC',
+                str(source),'-o',str(executable),*shlex.split(flags.stdout)],capture_output=True,text=True)
+            self.assertEqual(built.returncode,0,built.stderr)
+            environment=dict(os.environ,QT_QPA_PLATFORM='offscreen',QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE',None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                qt=Path(environment['HUSK_TEST_SYSROOT'])/'usr/lib/x86_64-linux-gnu/qt6'
+                environment.update(QT_PLUGIN_PATH=str(qt/'plugins'),QML_IMPORT_PATH=str(qt/'qml'),QML2_IMPORT_PATH=str(qt/'qml'))
+            result=subprocess.run([str(executable)],env=environment,capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
     def test_navigation_must_be_visible_inside_the_window_and_screen(self):
         flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Widgets', 'Qt6Test', 'Qt6Quick'],
                                capture_output=True, text=True)

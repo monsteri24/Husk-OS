@@ -19,6 +19,8 @@
 #include <QMessageBox>
 #include <QPointer>
 #include <QPushButton>
+#include <QQmlEngine>
+#include <QQmlExpression>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRadioButton>
@@ -31,6 +33,7 @@
 #include <QTextDocumentFragment>
 #include <QTimer>
 #include <QTimeZone>
+#include <functional>
 #include <unistd.h>
 
 namespace {
@@ -78,6 +81,26 @@ QQuickItem* namedItem(QQuickItem* root, const QString& name) {
     for (auto* child : root->childItems())
         if (auto* found = namedItem(child, name)) return found;
     return nullptr;
+}
+
+QQmlExpression* observeCountdown(QQuickItem* root, QObject* owner,
+                                const std::function<void(int)>& observed) {
+    if (!root || !owner || !qmlContext(root)) return nullptr;
+    auto* expression = new QQmlExpression(qmlContext(root), root, "secondsRemaining", owner);
+    expression->setNotifyOnValueChanged(true);
+    const QPointer<QQuickItem> guarded(root);
+    const auto update = [guarded, expression, observed] {
+        if (!guarded) return;
+        bool valid = false;
+        const int seconds = expression->evaluate().toInt(&valid);
+        observed(valid && !expression->hasError() ? seconds : -1);
+    };
+    // The direct notifier runs before the QML timer proceeds to its reboot
+    // command. A 500 ms poll can lose zero when the compositor shuts down.
+    QObject::connect(expression, &QQmlExpression::valueChanged, owner, update, Qt::DirectConnection);
+    update();
+    if (expression->hasError()) { delete expression; return nullptr; }
+    return expression;
 }
 
 QJsonObject modalDetails(QWidget* widget) {
@@ -273,11 +296,17 @@ class Driver : public QObject {
                 if (seconds < 25 || seconds > 30) { fail("The real thirty-second countdown was unavailable"); return; }
                 finishSeen = true; finishAt = elapsed.elapsed(); countdownStart = seconds;
                 record("installation-success", {{"title", title->property("text").toString()}, {"seconds", seconds}});
+                if (!observeCountdown(root, this, [this](int value) {
+                    if (stopped) return;
+                    if (value < 0 || value > 30) { fail("The real countdown observation became invalid"); return; }
+                    if (value == lastSeconds) return;
+                    lastSeconds = value;
+                    record("countdown-tick", {{"seconds", value}, {"observed_ms", elapsed.elapsed() - finishAt}});
+                    // Observation is complete at zero. Stop only the fixture's
+                    // polling timer; the production QML continues its reboot.
+                    if (value == 0) { stopped = true; timer.stop(); }
+                })) { fail("The real QML countdown notifier was unavailable"); return; }
                 if (completion == "automatic") record("automatic-restart-awaited");
-            }
-            if (seconds != lastSeconds) {
-                lastSeconds = seconds;
-                record("countdown-tick", {{"seconds", seconds}, {"observed_ms", elapsed.elapsed() - finishAt}});
             }
             if (!countdownObserved && elapsed.elapsed() - finishAt >= 4000 && seconds <= countdownStart - 2 && seconds > 0) {
                 countdownObserved = true;

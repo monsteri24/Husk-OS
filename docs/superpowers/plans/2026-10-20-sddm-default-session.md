@@ -209,3 +209,32 @@ environment skips, native ASAN/UBSAN with local leak detection disabled, all181
 source/configuration checks, explicit exit0. No production runtime or C++ driver
 change was needed. The source and all completed/failed evidence are saved before
 the automatic-only retry; Now is not rerun.
+
+## Task 6: Observe zero before the QML reboot call
+
+`39617183344` reached a clean QMP SHUTDOWN guest=true/reason=guest-reset.
+The Qt late-exit correction worked. The strict zero gate still failed: the
+500 ms sampler recorded30..1, then the process shut down before another poll.
+Independent installed boot was correctly withheld. The failed trace is kept
+in `2026-10-21-automatic-zero-diagnostic.json`.
+
+Ruling: replace only test countdown polling with a read-only native
+QQmlExpression valueChanged subscription. Its direct callback observes the
+actual secondsRemaining change before the QML handler calls reboot; no timer,
+value or product command is changed. Cost if wrong: strict zero/reset/target
+gates still reject the run. A real Qt test sets zero and immediately emits
+QML shutdown without pumping the event loop; the observer must already hold0.
+It failed before implementation and passed afterward (16.013 seconds).
+
+- [x] Implement direct property observation with guarded object lifetime;
+  stop fixture polling after zero, preserving the actual production timer.
+- [ ] Run the full suite and full driver compilation, save progress and retry
+  only automatic with a fresh disk and the identical ISO.
+- [ ] Inspect zero, actual guest reset and independent installed UEFI/Wayland
+  evidence, then save the final status without a release or merge.
+
+The final notifier change passed the full local suite: 487 tests in387.359
+seconds, 71 explicit environment skips, native ASAN/UBSAN with local leak
+detection disabled and181 source checks. Full shared-driver compilation with
+Qt6 Widgets/Test/Quick and -Wall -Wextra -Werror also passed; explicit exit0.
+The third automatic-only request retains the exact c677d21 image/digest/size.
