@@ -13,13 +13,35 @@ concurrency:
 jobs:
   source:
     uses: ./.github/workflows/tests.yml
+  request:
+    runs-on: ubuntu-24.04
+    outputs:
+      modes: ${{ steps.request.outputs.modes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select only explicitly requested completion tests
+        id: request
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          request=json.loads(Path('.github/v3-restart-request.json').read_text())
+          modes=request.get('modes',['now','automatic'])
+          if (not isinstance(modes,list) or not modes or len(modes)>2 or
+              any(mode not in ('now','automatic') for mode in modes) or len(set(modes))!=len(modes)):
+              raise ValueError('Invalid completion test modes')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as stream: stream.write('modes='+json.dumps(modes)+'\n')
+          PY
   completion:
+    needs: request
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     strategy:
       fail-fast: false
       matrix:
-        completion: [now, automatic]
+        completion: ${{ fromJSON(needs.request.outputs.modes) }}
     steps:
       - uses: actions/checkout@v4
         with:

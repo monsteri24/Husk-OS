@@ -292,6 +292,30 @@ class InstallHarnessTests(unittest.TestCase):
                 acceptance.alive.assert_not_called()
                 acceptance.serial.read.assert_not_called()
 
+    def test_late_xwayland_exit_during_reboot_waits_for_independent_reset_proof(self):
+        guest=self.guest_functions('completion_requires_guest_reset')
+        values=self.restart_events('automatic')
+        guest.update(CONFIG=dict(completion='automatic'),events=lambda:values,
+                     state=dict(reboot_ready=True,target_checks={n:True for n in self.harness.REQUIRED_TARGET_CHECKS}))
+        self.assertTrue(guest['completion_requires_guest_reset'](1),
+                        'Captured Qt X11-disconnect exit at zero is not an installation failure by itself')
+        self.assertEqual(guest['state']['process_exit'],1)
+        self.assertTrue(self.harness.validate_restart_evidence(values,[],'automatic',0),
+                        'A late application exit still cannot substitute for actual QMP guest-reset proof')
+        for changes in (dict(reboot_ready=False),dict(target_checks={}),
+                        dict(target_checks=dict(guest['state']['target_checks'],grub=False))):
+            with self.subTest(changes=changes):
+                original=guest['state'];guest['state']=dict(original,**changes)
+                with self.assertRaises(RuntimeError): guest['completion_requires_guest_reset'](1)
+                guest['state']=original
+        for code in (85,86):
+            with self.assertRaises(RuntimeError): guest['completion_requires_guest_reset'](code)
+        values.append(dict(event='driver-failed'))
+        with self.assertRaises(RuntimeError): guest['completion_requires_guest_reset'](1)
+        values.pop();guest['CONFIG']['completion']='later'
+        with self.assertRaises(RuntimeError): guest['completion_requires_guest_reset'](1)
+        self.assertFalse(guest['completion_requires_guest_reset'](0))
+
     def guest_functions(self, *names):
         tree = ast.parse(self.harness.GUEST_SETUP)
         definitions = [node for node in tree.body

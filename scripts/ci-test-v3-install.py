@@ -484,6 +484,23 @@ def inspect_target():
                 state['target_files'][relative]=dict(bytes=path.stat().st_size,sha256=digest)
         finally: command(['umount',str(efi)])
     finally: command(['umount',str(mount)])
+def completion_requires_guest_reset(code):
+    state['process_exit']=code
+    completion=CONFIG.get('completion','later')
+    if completion in ('now','automatic'):
+        checks=state.get('target_checks',{})
+        if (state.get('reboot_ready') is not True or not checks or
+                not all(value is True for value in checks.values()) or code in (85,86) or
+                any(e.get('event')=='driver-failed' for e in events())):
+            raise RuntimeError('Calamares or the input driver failed before verified completion')
+        # The compositor may disappear during a real systemd reboot. Retain
+        # its Qt exit code as diagnostics, then require the independent host
+        # guest-reset/countdown proof. This does not mark installation success.
+        state['completion_exit_during_shutdown']=code
+        return True
+    if completion!='later' or code!=0:
+        raise RuntimeError('Calamares or the input driver failed; inspect its real event/log evidence')
+    return False
 try:
     if os.getuid()!=0 or not P('/run/archiso').is_dir() or not P('/sys/firmware/efi').is_dir() or serial()!='HUSK-DISPOSABLE':
         raise RuntimeError('The setup fixture is not in its marked disposable UEFI Live guest')
@@ -584,8 +601,7 @@ try:
     post()
     process=run_installer('install')
     state['process_exit']=process.returncode; post()
-    if process.returncode!=0: raise RuntimeError('Calamares or the input driver failed; inspect its real event/log evidence')
-    if CONFIG.get('completion','later')!='later':
+    if completion_requires_guest_reset(process.returncode):
         # Application exit alone is insufficient. The unchanged production
         # command must make QEMU report a genuine guest reset. The host owns
         # that evidence; keep observing until the guest shuts the fixture down.

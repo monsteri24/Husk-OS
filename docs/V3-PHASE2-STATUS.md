@@ -29,6 +29,28 @@ countdown and Restart Later/Restart Now order.
 
 ## Completed evidence
 
+The new test source `2fb96fc` passed 484 real GTK tests with zero skips, native
+sanitizers and 180 syntax checks in `39613704162`. Real Labwc `39613718500`
+passed every control/menu/confirmation check, maximized transparency and true
+fullscreen hide/restore. The confirmation focus wait is now verified on the
+real compositor. [Source/desktop summary](evidence/v3-phase2/2026-10-21-source-desktop-acceptance.json).
+
+The **Restart Now** VM in that matrix also passed: real click at26, actual QML
+request and stopped timer at26, genuine QMP guest-reset, all19 target checks,
+and independent normal-user UEFI/Husk Wayland login. Its result and actual
+installed screenshot were inspected. [Now acceptance](evidence/v3-phase2/2026-10-21-restart-now-acceptance.json).
+
+The **automatic** scenario failed in observation: it ran every real countdown
+tick 30..0 and started the production reboot, but the shutting-down XWayland
+made Qt exit1. The fixture classified that late exit as an installation error
+and stopped QEMU before final reset/installed-boot proof. The observer now
+retains late exit diagnostics after verified completion and still requires
+the actual QMP guest reset. Early failures remain fatal. Only this scenario is
+requested again, on a fresh disk with the same ISO. **Automatic acceptance is
+pending**. [Retained failure](evidence/v3-phase2/2026-10-21-automatic-restart-diagnostic.json).
+The observer/request correction passed all486 local tests (71 explicit
+environment skips), native sanitizers and181 syntax checks before this retry.
+
 The corrected `c677d21` image now passes the complete first-login gate in
 [39449998340](https://github.com/monsteri24/Husk-OS/actions/runs/39449998340):
 real Live UEFI startup, actual summary cancellation with zero QMP writes/unmaps,
@@ -118,7 +140,7 @@ second run `39448260566` reached the actual Authenticate dialog and root Calamar
 | Check | Observed result |
 | --- | --- |
 | Source/models/real GTK | [39384138078](https://github.com/monsteri24/Husk-OS/actions/runs/39384138078) passed at `22ed589`: 469 tests with zero failures or skips in the actual GTK run; 177 source/configuration checks and native sanitizer checks also passed. |
-| Local checks | The current full local run passed 484 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 180 source/configuration checks pass. |
+| Local checks | The current full local run passed 486 tests with 71 explicit graphical/environment skips, plus native sanitizer checks with local leak detection disabled. Real offscreen Qt checks cover actual launcher styles, completion actions, popup selection, navigation bounds, the patched partition renderer and login preserving seeded/remembered sessions against the actual SDDM theme in Basic/Fusion styles. All 181 source/configuration checks pass. |
 | Actual Labwc | The same `22ed589` run passed taskbar restore, normal panel pixels, maximized transparency/click-through, genuine fullscreen hide/restore, GTK window controls, menus, file navigation and app confirmation/Cancel. |
 | Real application packages | [39246817254](https://github.com/monsteri24/Husk-OS/actions/runs/39246817254) passed using the older `0ac564d` ISO, on the day after its build. Signed root-container transactions installed Firefox `158.0-1` and Steam `1.0.0.87-3`. This does not prove graphical authentication or Steam/game launch. |
 | Full V3 build | [39377861570](https://github.com/monsteri24/Husk-OS/actions/runs/39377861570) compiled patched Calamares, built signed packages and produced the UI-corrected ISO. Generic/V3 extracted-rootfs checks and the file-size gate passed. Final target inspection failed in the test fixture as described below. |

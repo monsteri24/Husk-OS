@@ -180,3 +180,32 @@ in 270.668 seconds, native ASAN/UBSAN with local leak detection disabled and
 Qt6 Widgets/Test/Quick and -Wall -Wextra -Werror; explicit exit 0.
 No minor findings were deferred. The image request now pins the already
 accepted c677d21 ISO for both actual restart modes; no runtime payload changed.
+
+## Task 5: Distinguish Qt display loss during actual automatic shutdown
+
+`39613704162` passed the real Now scenario: click at26, actual QML request and
+stopped timer at26, quit at26, clean QMP guest-reset and independent installed
+normal-user UEFI/Husk Wayland boot. All19 target checks and cancellation counters
+passed. Permanent Now evidence and the passing 484/zero-skip GTK plus real Labwc
+evidence are saved. The corrected focus wait passed the real compositor run.
+
+The automatic scenario ran all30 jobs and all19 checks, observed each real tick
+30..0 and invoked the unchanged production sync/systemctl reboot. XWayland closed
+during shutdown and Qt exited1. The observer treated that late display loss as
+an installation error; the host terminated QEMU before final reset proof.
+This failed run is preserved, not counted as automatic-restart acceptance.
+
+- [x] Reproduce the captured late Qt exit and automatic-only request selection
+  in failing regressions before changing either fixture.
+- [x] Preserve early/driver failures, retain late exit as diagnostics only after
+  verified completion and require the same independent QMP/countdown proof.
+- [x] Add validated request modes so the already passing Now VM is not repeated.
+- [ ] Run the complete suite, save progress, retry only automatic on a new disk
+  using the same accepted ISO, and inspect final UEFI/Wayland evidence.
+
+The captured late Qt exit and validated request selection regressions passed,
+followed by the complete local suite: 486 tests in 394.224 seconds, 71 explicit
+environment skips, native ASAN/UBSAN with local leak detection disabled, all181
+source/configuration checks, explicit exit0. No production runtime or C++ driver
+change was needed. The source and all completed/failed evidence are saved before
+the automatic-only retry; Now is not rerun.
