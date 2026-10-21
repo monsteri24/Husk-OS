@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "observed_utc": "2026-10-20T15:45:11Z",
+  "proof_scope": "Real Live GTK/password/polkit launch; no installation",
+  "test_source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
+  "runtime_source": "7a190ec010307676bf5b6b3c26235c2ed75bf4a5",
+  "acceptance_run": 39449998358,
+  "evidence_artifact": 12277782732,
+  "iso_sha256": "2bc0374737c0ea0225847db3a2a1b03282c6b6f6b5afc77f5f3dbb5264d725d8",
+  "iso_bytes": 2079227904,
+  "vm_results": {
+    "authorization": "PASSED",
+    "live_shutdown": "PASSED"
+  },
+  "checks": {
+    "initial_password_empty": true,
+    "live_session_active": true,
+    "unprivileged_launcher": true,
+    "password_was_set": true,
+    "root_calamares": true,
+    "pkexec_caller": true,
+    "no_test_injection": true,
+    "private_xauthority": true,
+    "qt_english": true,
+    "polkit_authenticated": true
+  },
+  "initial_password_state": "NP",
+  "final_password_state": "P",
+  "gtk": {
+    "uid": 1000,
+    "helper_pid": 1237,
+    "password_submitted": true,
+    "status": "Authorize the installer in the system dialog. Disk selection and final confirmation follow."
+  },
+  "pkexec_uid": "1000",
+  "qt_environment": {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "QT_QPA_PLATFORM": "xcb",
+    "QT_STYLE_OVERRIDE": "Fusion",
+    "QT_QUICK_CONTROLS_STYLE": "Basic"
+  },
+  "polkit_journal": [
+    {
+      "SYSLOG_IDENTIFIER": "polkitd",
+      "_PID": "612",
+      "MESSAGE": "Started polkitd version 128"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "pkexec",
+      "_PID": "1237",
+      "MESSAGE": "pam_unix(polkit-1:session): session opened for user root(uid=0) by live(uid=1000)"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "pkexec",
+      "_PID": "1237",
+      "MESSAGE": "live: Executing command [USER=root] [TTY=/dev/pts/0] [CWD=/home/live] [COMMAND=/usr/lib/ownos/husk-installer-root]"
+    }
+  ],
+  "target_blockstats": {
+    "unmap_operations": 0,
+    "unmap_merged": 0,
+    "failed_zone_append_operations": 0,
+    "flush_total_time_ns": 21520,
+    "wr_highest_offset": 0,
+    "wr_total_time_ns": 0,
+    "failed_wr_operations": 0,
+    "failed_rd_operations": 0,
+    "wr_merged": 0,
+    "wr_bytes": 0,
+    "timed_stats": [],
+    "failed_unmap_operations": 0,
+    "zone_append_merged": 0,
+    "failed_flush_operations": 0,
+    "account_invalid": true,
+    "rd_total_time_ns": 4871310,
+    "invalid_unmap_operations": 0,
+    "flush_operations": 1,
+    "wr_operations": 0,
+    "unmap_bytes": 0,
+    "rd_merged": 1,
+    "rd_bytes": 8957952,
+    "unmap_total_time_ns": 0,
+    "invalid_flush_operations": 0,
+    "account_failed": true,
+    "idle_time_ns": 6410243933,
+    "zone_append_total_time_ns": 0,
+    "zone_append_operations": 0,
+    "rd_operations": 218,
+    "zone_append_bytes": 0,
+    "invalid_zone_append_operations": 0,
+    "invalid_wr_operations": 0,
+    "invalid_rd_operations": 0
+  },
+  "screenshots": {
+    "authorized-calamares-welcome.png": "94bf67ce71ca8c0ab446e7b309db11293cf323e040890664ea03ed18621e52b5",
+    "system-authorization-before-password.png": "c8a0d8c4bd87abd113122274ce08e74f48e94bf0dd2d92ac20998ed599c5d844"
+  },
+  "limitations": [
+    "This existing image differs only in its installed SDDM seed. It is not accepted for fixing the default session.",
+    "No installation, Steam/game launch or physical hardware acceptance is inferred.",
+    "The observer used a test-only root serial console; it did not change credentials, policies or executable helpers."
+  ],
+  "release_authorized": false,
+  "main_modified": false
+}

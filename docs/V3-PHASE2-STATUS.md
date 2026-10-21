@@ -29,14 +29,50 @@ countdown and Restart Later/Restart Now order.
 
 ## Completed evidence
 
+The corrected `c677d21` image now passes the complete first-login gate in
+[39449998340](https://github.com/monsteri24/Husk-OS/actions/runs/39449998340):
+real Live UEFI startup, actual summary cancellation with zero QMP writes/unmaps,
+all 30 offline installation jobs and all 19 target checks. Restart Later
+cancelled the real 30-to-26 countdown and the Live boot remained unchanged for
+another 34 seconds. The installed disk then booted independently through UEFI,
+without ISO, kernel override or debug console. SDDM already selected **Husk
+Desktop (Experimental)**; the controller entered credentials without selecting
+a session. The normal UID-1000 Wayland report and actual screenshots confirm
+the native desktop/bridge/panel. Both safe shutdowns passed.
+
+- Source: `c677d2193a6cb542db9e3a60e8a1b91981b6fb17`
+- Size: **2,079,227,904 bytes**
+- SHA-256: `14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec`
+- [ISO and checksum artifact](https://github.com/monsteri24/Husk-OS/actions/runs/39449998340/artifacts/12279651558) (expires 2026-10-27; original UNVERIFIED filename retained)
+- [Build/Live/installation evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39449998340/artifacts/12280125234)
+- [Permanent first-default-login summary](evidence/v3-phase2/2026-10-20-default-session-acceptance.json)
+
+The separate normal Live authorization scenario also passed in
+[39449998358](https://github.com/monsteri24/Husk-OS/actions/runs/39449998358).
+Actual GTK UID 1000 set the temporary password NP-to-P; the real system
+Authenticate dialog authorized the unchanged pkexec helper. Its PID-bound audit,
+PKEXEC_UID, private Xauthority, English UTF-8 Qt environment and visible English
+Calamares Welcome were verified, without driver/preload injection. All ten
+checks, zero target writes/unmaps and safe shutdown passed. This scenario reused
+the preceding image with only the known installed SDDM-seed difference. A new
+request now repeats it against the corrected image above, without rebuilding.
+[Permanent authorization summary](evidence/v3-phase2/2026-10-20-live-authorization.json).
+
+The same corrected-image run passed 477 real GTK tests with zero skips,
+180 source checks, native sanitizers and actual Labwc maximized/fullscreen,
+window controls, menus and application-confirmation interactions. Actual
+Restart Now/automatic-zero reboots and physical hardware remain unverified.
+
+The following paragraphs retain the earlier diagnostic history and baseline.
+
 The next first-login refinement seeds SDDM's standard `Last/Session` with
 `/usr/share/wayland-sessions/ownos-wayland.desktop` only when its state file is absent. The packaged
 systemd-tmpfiles rule preserves existing remembered choices and does not
 enable autologin. Real package staging/tmpfiles and actual Qt theme tests
 pass locally. The VM login controller now leaves the session choice alone,
-so it cannot conceal a wrong image default. **A new image and full VM check
-are still pending for this runtime change**; the passing `812d74c` image
-below remains the immutable baseline.
+so it cannot conceal a wrong image default. The corrected image and full VM
+check above close this requirement; the passing `812d74c` image below remains
+the immutable earlier baseline.
 
 The first new image (`7a190ec`, run `39438711556`) used only the session basename.
 Further upstream tracing found that SDDM stores/compares the absolute session
@@ -45,7 +81,7 @@ source rule now uses the absolute path. The first image is **not accepted as
 fixing the default session**. Its VM result confirmed all 19 target checks,
 offline installation and Restart Later, but the greeter still selected Labwc
 and installed Husk-session acceptance failed. Its result is retained for diagnosis;
-the corrected runtime needs a fresh image after Live authorization investigation.
+the corrected runtime passed in the later `c677d21` image above.
 
 A separate test-only Live authorization workflow is being prepared. It launches
 the real GTK class from the active user's terminal, enters the temporary
@@ -72,7 +108,7 @@ second run `39448260566` reached the actual Authenticate dialog and root Calamar
 | Installed target | Recovery `39384138078` passed all 19 target checks: GPT/ESP/ext4, fstab, user/password presence, kernel/initramfs, GRUB/fallback, version, Live cleanup, actual job starts, IANA timezone, keyboard, English locale and hostname. Installation and Live ACPI shutdown were PASSED. |
 | Independent UEFI boot | The same run booted the installed disk with no ISO/kernel override and authenticated through SDDM into Husk Desktop. The actual normal-user report confirms UID 1000, `/dev/vda2` ext4, UEFI, no Live medium/debug shell, Wayland session on VT1, connected native bridge and mapped desktop/panel. Installed ACPI shutdown passed. |
 
-The latest completed ISO is preserved as an explicitly **unverified** Actions artifact.
+The earlier baseline ISO is preserved as an explicitly **unverified** Actions artifact.
 It includes the corrected summary/completion UI and existing artwork, passed
 payload validation, Live UEFI boot, real offline installation and target
 inspection, and fits the file-size limit. Independent installed UEFI boot,

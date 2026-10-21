@@ -39,9 +39,9 @@
 
 - [x] Make the actual-theme keyboard regression exercise login without session-selection keys and observe the old controller fail that requirement.
 - [x] Remove session manipulation from the VM login controller; retain actual active greeter and observed graphical VT handling.
-- [ ] Save the verified change, then request one new ISO because the installed runtime payload changes.
-- [ ] Verify Live UEFI, cancellation disk counters, offline installation, and independent normal-user UEFI/Wayland login to the default Husk session.
-- [ ] Save exact digest, artifact links, results and remaining hardware/authentication limits in the status report; do not merge or release.
+- [x] Save the verified change, then request one new ISO because the installed runtime payload changes.
+- [x] Verify Live UEFI, cancellation disk counters, offline installation, and independent normal-user UEFI/Wayland login to the default Husk session (`39449998340`, all passed).
+- [x] Save exact digest, artifact links, results and remaining hardware/authentication limits in the status report; do not merge or release.
 
 ## Task 3: Close the normal Live authorization coverage gap
 
@@ -51,7 +51,7 @@
 - [x] Implement an observer-only root fixture, actual unprivileged GTK launcher/password input, and QMP input to the real polkit dialog. Keep helpers, PAM/polkit rules and Calamares executable unmodified; forbid preload/test-driver injection.
 - [x] Require the active Live session, NP-to-P password state, successful polkit journal action, UID-0 real Calamares, private cookie, English Qt environment, zero QMP disk writes and safe shutdown. Local suite: 473 tests / 71 explicit skips; 180 syntax checks.
 - [ ] Save/review test code, then pin the completed new ISO's exact source/digest/size without rebuilding.
-- [ ] Run the real VM check and inspect its actual polkit/Calamares screenshots before claiming graphical startup acceptance.
+- [x] Run the real VM check and inspect its actual polkit/Calamares screenshots before claiming graphical startup acceptance (`39449998358`, all ten checks and shutdown passed).
 
 Review: the SDDM diff had no findings. Independent review of the new authorization
 fixture found an incorrect terminal shortcut before VM execution. The shipped
