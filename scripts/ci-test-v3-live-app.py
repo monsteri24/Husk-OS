@@ -21,7 +21,8 @@ REQUIRED_CHECKS = ('initial_package_absent', 'initial_password_empty', 'live_ses
     'unprivileged_launcher', 'confirmation_cancel_unchanged', 'password_cancel_unchanged',
     'authorization_cancel_unchanged', 'retry_existing_password', 'root_helper', 'pkexec_caller',
     'no_test_injection', 'polkit_authenticated', 'full_upgrade', 'signatures_required',
-    'package_installed', 'official_icon', 'gtk_verified', 'no_extra_terminal')
+    'package_installed', 'official_icon', 'gtk_verified', 'no_extra_terminal',
+    'live_write_space', 'matching_graphics')
 
 
 def authorized_application_audit(records, helper_pid):
@@ -168,7 +169,7 @@ Gtk.main()
 
 # Share only the strict audit parser with the delivered read-only observer.
 ROOT_OBSERVER = inspect.getsource(authorized_application_audit) + r'''
-import hashlib, json, os, subprocess, time, urllib.request
+import hashlib, json, os, shlex, subprocess, time, urllib.request
 from pathlib import Path as P
 state=dict(phase='installation',stage='starting',finished=False,success=False,checks={})
 def command(argv,check=True):
@@ -224,6 +225,14 @@ try:
     if P('/sys/class/block/vda/serial').read_text().strip()!='HUSK-DISPOSABLE':
         raise RuntimeError('Attached disk is not the new disposable image')
     checks=state['checks']; initial=package_snapshot()
+    cow=os.statvfs('/run/archiso/cowspace')
+    state['live_write_space']=dict(total_bytes=cow.f_blocks*cow.f_frsize,available_bytes=cow.f_bavail*cow.f_frsize,
+        mount=command(['/usr/bin/findmnt','-n','-o','FSTYPE,SIZE,AVAIL','/run/archiso/cowspace']).strip())
+    checks['live_write_space']=('cow_spacesize=50%' in P('/proc/cmdline').read_text().split() and
+        state['live_write_space']['total_bytes']>1024**3)
+    before_packages=set(command(['/usr/bin/pacman','-Qq']).splitlines())
+    if not {'vulkan-radeon','vulkan-intel'}<=before_packages or {'nvidia-utils','lib32-nvidia-utils'}&before_packages:
+        raise RuntimeError('The clean Live graphics inventory is not the expected Mesa stack')
     checks['initial_package_absent']=subprocess.run(['/usr/bin/pacman','-Q','steam'],capture_output=True).returncode!=0
     checks['initial_password_empty']=password_state()=='NP'
     if not checks['initial_package_absent'] or not checks['initial_password_empty']:
@@ -298,8 +307,15 @@ try:
             result=subprocess.run(['/usr/bin/pacman','-Q','steam'],capture_output=True,text=True)
             state['package']=result.stdout.strip(); checks['package_installed']=result.returncode==0
             output=info.get('transaction_output','')
-            checks['full_upgrade']=all(value in output for value in ('OWNOS-STAGE:preflight',
-                '/usr/bin/pacman -Syu --needed steam --noconfirm',':: Starting full system upgrade'))
+            prefix='Husk OS: verified full-system transaction: '
+            commands=[shlex.split(line[len(prefix):]) for line in output.splitlines() if line.startswith(prefix)]
+            checks['full_upgrade']=(commands==[['/usr/bin/pacman','-Syu','--needed','steam',
+                'lib32-vulkan-radeon','lib32-vulkan-intel','--noconfirm']] and
+                'OWNOS-STAGE:preflight' in output and ':: Starting full system upgrade' in output)
+            final_packages=set(command(['/usr/bin/pacman','-Qq']).splitlines())
+            checks['matching_graphics']=({'lib32-vulkan-radeon','lib32-vulkan-intel'}<=final_packages and
+                not {'nvidia-utils','lib32-nvidia-utils'}&final_packages and 'providers available for lib32-vulkan-driver' not in output)
+            state['graphics_packages']=sorted(name for name in final_packages if name.startswith(('vulkan-','lib32-vulkan-','nvidia','lib32-nvidia')))
             state['siglevel']=command(['/usr/bin/pacman-conf','SigLevel']).splitlines()
             checks['signatures_required']={'PackageRequired','PackageTrustedOnly'}<=set(state['siglevel'])
             icon=P('/usr/share/applications/steam.desktop')

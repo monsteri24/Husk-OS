@@ -60,7 +60,7 @@ jobs:
         run: |
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
           timeout 780 /usr/bin/python3 scripts/ci-test-system1.py \
-            --iso out/HuskOS-v3-phase2.iso --artifacts out/boot-v3 --expected-version v3-phase2
+            --iso out/HuskOS-v3-phase2.iso --artifacts out/boot-v3 --expected-version v3-phase2 --require-live-write-space
       - name: Install offline onto a new disposable disk and boot it through UEFI
         run: |
           timeout 3000 /usr/bin/python3 scripts/ci-test-v3-install.py \
@@ -68,6 +68,10 @@ jobs:
             --kernel .build/v3-iso-boot/vmlinuz-linux \
             --initrd .build/v3-iso-boot/initramfs-linux.img \
             --driver out/v3-installer-driver.so --timeout 1800 --boot-timeout 600
+      - name: Verify actual Live graphical Steam installation on the same completed ISO
+        run: |
+          (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
+          timeout 1800 /usr/bin/python3 scripts/ci-test-v3-live-app.py --timeout 1500
       - name: Preserve diagnostic evidence without disks, passwords or signing keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -83,5 +87,8 @@ jobs:
             out/install-v3/*.json
             out/install-v3/*.log
             out/install-v3/*.png
+            out/live-app-v3/*.json
+            out/live-app-v3/*.log
+            out/live-app-v3/*.png
           if-no-files-found: warn
           retention-days: 30

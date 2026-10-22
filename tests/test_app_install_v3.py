@@ -111,11 +111,18 @@ class TransactionTests(unittest.TestCase):
     def test_errors_preserve_authorization_dns_signature_and_transaction_distinctions(self):
         for status, text, kind in [(126, '', 'authorization'), (127, '', 'authorization'),
                                    (1, 'Could not resolve host: mirror.invalid', 'dns'),
+                                   (1, 'error: Partition / too full: 152870 blocks needed, 62830 blocks free\nerror: failed to commit transaction (not enough free disk space)', 'space'),
                                    (1, 'invalid or corrupted package (PGP signature)', 'signature'),
                                    (1, 'unable to lock database', 'locked'), (23, 'failed', 'transaction')]:
             with self.subTest(kind=kind):
                 self.assertEqual(install.transaction_problem(status, text).kind, kind)
         self.assertEqual(install.transaction_problem(127, '', native=False).kind, 'transaction')
+
+    def test_space_failure_explains_temporary_live_memory_and_has_a_real_remedy(self):
+        problem = install.transaction_problem(1, 'Checking package signatures...\nerror: failed to commit transaction (not enough free disk space)')
+        self.assertEqual(problem.kind, 'space')
+        self.assertIn('RAM', problem.detail)
+        self.assertIn('installed system', problem.detail)
 
     def test_progress_stages_come_only_from_actual_output(self):
         self.assertIsNone(install.transaction_stage('random diagnostic 54%'))
@@ -135,10 +142,12 @@ class TransactionTests(unittest.TestCase):
                 patch.object(admin.Path, 'exists', return_value=False), \
                 patch.object(admin.Path, 'mkdir'), patch.object(admin.Path, 'open', return_value=fake_file), \
                 patch.object(admin.fcntl, 'flock'), patch.object(admin, 'preflight_install') as checks, \
+                patch.object(admin.subprocess, 'run', return_value=SimpleNamespace(stdout='mesa\nvulkan-radeon\nvulkan-intel\n')), \
                 patch.object(admin.subprocess, 'call', return_value=0) as execute:
             self.assertEqual(admin.main(), 0)
         checks.assert_called_once()
-        self.assertEqual(execute.call_args.args[0], ['/usr/bin/pacman', '-Syu', '--needed', 'steam', '--noconfirm'])
+        self.assertEqual(execute.call_args.args[0], ['/usr/bin/pacman', '-Syu', '--needed', 'steam',
+                                                   'lib32-vulkan-radeon', 'lib32-vulkan-intel', '--noconfirm'])
         self.assertNotIn('nosignature', str(execute.call_args))
         with patch.object(admin.os, 'geteuid', return_value=0), \
                 patch.object(admin.sys, 'argv', ['own-admin', 'install-confirmed', '--noconfirm']), \
@@ -146,6 +155,29 @@ class TransactionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 admin.main()
             execute.assert_not_called()
+
+
+class SteamGraphicsTests(unittest.TestCase):
+    def test_32_bit_drivers_match_existing_64_bit_graphics_without_an_alphabetic_default(self):
+        select = getattr(install, 'steam_graphics_targets', None)
+        self.assertTrue(callable(select), 'Steam needs an explicit matching 32-bit Vulkan provider')
+        cases = [({'vulkan-radeon', 'vulkan-intel', 'mesa'}, ('lib32-vulkan-radeon', 'lib32-vulkan-intel')),
+                 ({'nvidia-utils'}, ('lib32-nvidia-utils',)),
+                 ({'vulkan-nouveau'}, ('lib32-vulkan-nouveau',)),
+                 ({'vulkan-virtio'}, ('lib32-vulkan-virtio',)),
+                 ({'vulkan-swrast'}, ('lib32-vulkan-swrast',)),
+                 ({'vulkan-intel', '--config=/tmp/untrusted'}, ('lib32-vulkan-intel',))]
+        for packages, expected in cases:
+            with self.subTest(packages=packages):
+                self.assertEqual(select(packages), expected)
+
+    def test_unknown_graphics_stops_the_noninteractive_transaction_instead_of_picking_nvidia(self):
+        select = getattr(install, 'steam_graphics_targets', None)
+        self.assertTrue(callable(select), 'Steam provider selection is missing')
+        for packages in (set(), {'mesa'}, {'unreviewed-vulkan-driver'}):
+            with self.subTest(packages=packages), self.assertRaises(install.InstallProblem) as caught:
+                select(packages)
+            self.assertEqual(caught.exception.kind, 'graphics')
 
 
 class LivePasswordTests(unittest.TestCase):

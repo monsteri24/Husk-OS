@@ -62,6 +62,26 @@ class InstallProblem(Exception):
         return self.message
 
 
+def steam_graphics_targets(installed):
+    """Match reviewed 32-bit Vulkan providers to the existing graphics stack.
+
+    A noninteractive pacman dependency prompt otherwise chooses the first
+    provider alphabetically, which can install NVIDIA libraries on Mesa hosts.
+    Unknown configurations require an informed driver choice, never a guess.
+    """
+    pairs = (('vulkan-radeon', 'lib32-vulkan-radeon'),
+             ('vulkan-intel', 'lib32-vulkan-intel'),
+             ('vulkan-nouveau', 'lib32-vulkan-nouveau'),
+             ('vulkan-virtio', 'lib32-vulkan-virtio'),
+             ('vulkan-swrast', 'lib32-vulkan-swrast'),
+             ('nvidia-utils', 'lib32-nvidia-utils'))
+    targets = tuple(target for driver, target in pairs if driver in installed)
+    if not targets:
+        raise InstallProblem('graphics', _('A supported Vulkan graphics driver must be configured before installing Steam.'),
+                             _('Review the graphics drivers in Husk Settings, then retry. Husk OS will not choose an unrelated driver automatically.'))
+    return targets
+
+
 def trusted_flathub():
     """Check disabled remotes too: remote-add must not reuse an unsafe one."""
     from ownos.catalog import FLATHUB_URLS
@@ -216,6 +236,9 @@ def transaction_problem(status, output, native=True):
         return _connection_problem(socket.gaierror())
     if any(text in lower for text in ('ownos-error:network', 'failed to connect', 'network is unreachable', 'connection timed out', 'could not connect')):
         return _connection_problem(OSError())
+    if any(text in lower for text in ('not enough free disk space', 'no space left on device', 'partition / too full')):
+        return InstallProblem('space', _('Not enough space for the package transaction.'),
+                              _('Free space on the system and retry. In Live mode, applications use temporary space in RAM; use the installed system for larger applications.'))
     if any(text in lower for text in ('invalid or corrupted package', 'signature', 'unknown trust')):
         return InstallProblem('signature', _('Package signature verification failed.'),
                               _('Review the transaction details and the system keyring. Signature checks remain enabled.'))
@@ -227,6 +250,9 @@ def transaction_problem(status, output, native=True):
     if 'db.lck' in lower or 'another pacman transaction' in lower or 'unable to lock database' in lower:
         return InstallProblem('locked', _('Another package transaction is active.'),
                               _('Wait for it to finish, then retry. The package lock will not be removed.'))
+    if 'ownos-error:graphics' in lower:
+        return InstallProblem('graphics', _('Steam needs a matching Vulkan graphics driver.'),
+                              _('Review the graphics drivers in Husk Settings, then retry. Details show the driver check; no unrelated driver was selected.'))
     return InstallProblem('transaction', _('Installation failed (exit status {status}).').format(status=status),
                           _('Review the transaction details, correct the reported problem, then retry.'))
 

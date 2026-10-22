@@ -100,7 +100,7 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
             ',server=on,wait=off,logfile=' + str(artifacts/'live-setup.log'),
             '-serial', 'chardev:setup', '-cdrom', str(iso), '-boot', 'order=d', '-kernel', str(kernel),
             '-initrd', str(initrd), '-append', 'archisobasedir=arch archisolabel=' + iso_label +
-            ' systemd.debug_shell=ttyS1 systemd.mask=serial-getty@ttyS1.service console=tty0 console=ttyS0,115200n8']
+            ' cow_spacesize=50% systemd.debug_shell=ttyS1 systemd.mask=serial-getty@ttyS1.service console=tty0 console=ttyS0,115200n8']
     else:
         command += ['-serial', 'file:' + str(artifacts/(stage + '-serial.log')), '-boot', 'order=c']
     return command

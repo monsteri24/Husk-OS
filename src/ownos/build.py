@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -203,6 +204,18 @@ airootfs_image_tool_options=(-comp zstd -Xcompression-level {compression_level} 
             text = text.replace('Arch Linux install medium', 'Husk OS live')
             text = text.replace('Arch Linux installation medium', 'Husk OS live')
             text = text.replace('Arch Linux archiso', 'Husk OS live')
+            if with_installer:
+                # Archiso's 256 MiB default cannot hold ordinary application
+                # transactions. A tmpfs limit scales with RAM without allocating
+                # it up front; retain half for the running Live desktop.
+                lines = []
+                for line in text.splitlines(keepends=True):
+                    if (re.match(r'\s*(options|linux|linuxefi|append)\s+', line, re.IGNORECASE)
+                            and re.search(r'\barchisobasedir=\S+', line)):
+                        ending = '\n' if line.endswith('\n') else ''
+                        line = re.sub(r'(?<!\S)cow_spacesize=\S+\s*', '', line).rstrip() + ' cow_spacesize=50%' + ending
+                    lines.append(line)
+                text = ''.join(lines)
             path.write_text(text)
     # The live ISO logs in as an unprivileged disposable live user.
     for name in ('getty@tty1.service.d/autologin.conf', 'sshd.service',

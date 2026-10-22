@@ -29,7 +29,8 @@ class LiveApplicationAcceptanceTests(unittest.TestCase):
                 root_helper=True, pkexec_caller=True, no_test_injection=True,
                 polkit_authenticated=True, full_upgrade=True,
                 signatures_required=True, package_installed=True,
-                official_icon=True, gtk_verified=True, no_extra_terminal=True))
+                official_icon=True, gtk_verified=True, no_extra_terminal=True,
+                live_write_space=True, matching_graphics=True))
 
     def test_root_only_or_partial_transactions_cannot_pass(self):
         report = self.report()

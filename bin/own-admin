@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, '/usr/lib/ownos')
 from ownos.updates import admin_command
 from ownos.catalog import app_by_id
-from ownos.app_install import preflight_install, InstallProblem
+from ownos.app_install import preflight_install, steam_graphics_targets, InstallProblem
 from ownos.i18n import _
 
 
@@ -22,8 +22,6 @@ def main():
     # the same root-owned catalogue is the only source of package targets.
     graphical = action == 'install-confirmed'
     command = admin_command('install' if graphical else action, choice)
-    if graphical:
-        command.append('--noconfirm')
     if Path('/var/lib/pacman/db.lck').exists():
         raise RuntimeError(_('Another pacman transaction is active. The lock will not be removed automatically.'))
     directory = Path('/var/lib/ownos'); directory.mkdir(mode=0o755, exist_ok=True)
@@ -32,6 +30,14 @@ def main():
         if graphical:
             print('OWNOS-STAGE:preflight', flush=True)
             preflight_install(app_by_id(choice), report=lambda message: print(message, flush=True))
+            if choice == 'steam':
+                try:
+                    installed = subprocess.run(['/usr/bin/pacman', '-Qq'], capture_output=True,
+                                               text=True, check=True, timeout=8).stdout.splitlines()
+                except (OSError, subprocess.SubprocessError) as exc:
+                    raise InstallProblem('graphics', _('The installed graphics driver packages could not be checked.')) from exc
+                command.extend(steam_graphics_targets(set(installed)))
+            command.append('--noconfirm')
         print(_('Husk OS: verified full-system transaction: {command}').format(command=' '.join(command)), flush=True)
         return subprocess.call(command, env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})
 

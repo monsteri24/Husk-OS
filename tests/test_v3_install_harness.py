@@ -66,6 +66,7 @@ class InstallHarnessTests(unittest.TestCase):
             installed = self.harness.make_qemu_command('installed', **values)
             self.assertIn('-kernel', live)
             self.assertIn('systemd.debug_shell=ttyS1', live[live.index('-append') + 1])
+            self.assertIn('cow_spacesize=50%', live[live.index('-append') + 1])
             self.assertIn('systemd.mask=serial-getty@ttyS1.service', live[live.index('-append') + 1])
             self.assertNotIn('console=ttyS1', live[live.index('-append') + 1])
             serial_ports = [live[i + 1] for i, value in enumerate(live[:-1]) if value == '-serial']

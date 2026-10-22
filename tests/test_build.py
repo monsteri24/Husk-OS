@@ -46,6 +46,25 @@ class ProfileTests(unittest.TestCase):
         self.assertIn('airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)', definition)
         self.assertEqual(self.build.validate_profile(out), [])
 
+    def test_installer_live_entries_have_memory_scaled_write_space_without_changing_other_boots(self):
+        entries = {
+            'efiboot/loader/entries/live.conf': 'title Arch Linux install medium\noptions archisobasedir=arch archisolabel=ARCH quiet\n',
+            'syslinux/live.cfg': 'LABEL live\n APPEND archisobasedir=arch archisosearchuuid=UUID cow_spacesize=256M\n',
+            'grub/grub.cfg': 'linux /arch/vmlinuz-linux archisobasedir=arch quiet\nlinux /other/vmlinuz root=UUID=installed quiet\n',
+        }
+        for relative, text in entries.items():
+            path = self.releng/relative; path.parent.mkdir(parents=True, exist_ok=True); path.write_text(text)
+        out = self.generate(with_installer=True, first_boot=True)
+        for relative in entries:
+            lines = (out/relative).read_text().splitlines()
+            live = next(line for line in lines if 'archisobasedir=' in line)
+            self.assertEqual(live.count('cow_spacesize='), 1)
+            self.assertIn('cow_spacesize=50%', live)
+            self.assertIn('archisobasedir=arch', live)
+        self.assertIn('linux /other/vmlinuz root=UUID=installed quiet\n', (out/'grub/grub.cfg').read_text())
+        plain = self.generate(self.root/'without-installer', first_boot=True)
+        self.assertNotIn('cow_spacesize=50%', (plain/'grub/grub.cfg').read_text())
+
     def test_default_profile_keeps_desktop_graphics_and_upstream_compression(self):
         from ownos.installer import GAME_PACKAGES, MESA_PACKAGES
         with (self.releng / 'profiledef.sh').open('a') as stream:

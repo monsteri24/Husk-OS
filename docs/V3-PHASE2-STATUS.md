@@ -29,9 +29,12 @@ countdown and Restart Later/Restart Now order.
 
 ## Verified acceptance
 
-The existing corrected ISO passed the complete disposable-VM acceptance chain.
-The final test source is 1e567c0; every installed runtime input still matches
-image source c677d21. No ISO rebuild was needed during this continuation.
+The existing corrected ISO passed the complete installer disposable-VM chain.
+Its installer acceptance source is 1e567c0 and image source is c677d21. These
+recorded installer results remain valid for that immutable image. Subsequent
+actual Live application testing found a separate runtime defect, described
+below; current source changes therefore require a new candidate and fresh
+image acceptance rather than claiming the older image contains the fixes.
 
 | Check | Actual result |
 | --- | --- |
@@ -88,18 +91,32 @@ mapping. Failed scenarios are preserved and superseded by the passing evidence.
 
 ## Remaining coverage
 
-The next bounded acceptance run reuses the accepted image and the existing
-guarded VM/Live-session bootstrap. It exercises actual Steam confirmation,
-temporary-password and system-authorization cancellation before an explicitly
-authorized signed full-system transaction and a separate client-startup probe.
-Only test fixtures/workflows change; no package is added to the ISO. Results
-remain pending until the actual run finishes and its observations are reviewed.
+The actual Live application run [39647788339](https://github.com/monsteri24/Husk-OS/actions/runs/39647788339)
+reused the exact accepted image. Actual confirmation, temporary-password and
+polkit cancellation preserved package databases/logs, and the normal Live
+password/PAM/polkit path authorized the actual root-owned application helper.
+No additional terminal was opened by installation. Network/DNS preflights and
+repository synchronization succeeded. Steam then failed safely before any
+package was upgraded: the default Live CoW was only 256 MiB, and unattended
+provider selection chose NVIDIA libraries on the clean Mesa system.
+[Permanent diagnostic](evidence/v3-phase2/2026-10-22-live-application-diagnostic.json).
+
+The source now explicitly matches Steam's 32-bit Vulkan providers to the
+installed graphics stack, rejects unknown stacks instead of guessing, sets
+installer Live boot entries to a RAM-scaled 50% temporary-write-space limit,
+and explains space failures distinctly in the native installer. Optional apps
+and 32-bit gaming libraries remain absent until the user requests them. Only
+Live kernel entries change; installed boot entries and non-installer profiles
+retain their existing options. The new candidate will run Live UEFI, offline
+installation/independent installed UEFI boot, and actual graphical Steam on
+the same completed ISO. Results are pending; no rebuild has yet been accepted.
 
 Physical Wi-Fi/Bluetooth adapters, GPU/firmware, actual USB removal and nonempty
 real-hardware targets need independent testing. The VM renderer is pixman.
-Normal graphical package authorization and Steam/Heroic/game launch remain
-unverified. Earlier signed Firefox/Steam package transactions on an older ISO
-are a narrower proof. The installer supports UEFI whole-drive erase only;
+Normal graphical package authorization is now observed on the old image;
+successful graphical Steam installation and Steam/Heroic/game launch remain
+unverified. Earlier root-container transactions are a narrower proof. The
+installer supports UEFI whole-drive erase only;
 alongside installation is not implemented or advertised.
 
 No V3 release has been published and no PR has been merged. The user's current

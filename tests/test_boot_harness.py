@@ -43,6 +43,21 @@ class BootHarnessTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 module.verified_recovered_boot(dict(build,**change),boot,'candidate-source','a'*64,2147778560)
 
+    def test_normal_iso_boot_must_observe_effective_half_ram_tmpfs_not_just_a_test_kernel_argument(self):
+        module = self.load_harness()
+        self.assertTrue(callable(getattr(module, 'validate_live_write_space', None)),
+                        'The real ISO boot needs effective temporary-write-space validation')
+        valid = dict(kernel_cmdline='archisobasedir=arch cow_spacesize=50%',
+                     memory_total_bytes=4*1024**3,
+                     live_write_space=dict(filesystem='tmpfs', total_bytes=2*1024**3))
+        self.assertEqual(module.validate_live_write_space(valid), [])
+        for changes in (dict(kernel_cmdline='archisobasedir=arch'),
+                        dict(live_write_space=dict(filesystem='tmpfs', total_bytes=256*1024**2)),
+                        dict(live_write_space=dict(filesystem='ext4', total_bytes=2*1024**3)),
+                        dict(memory_total_bytes=8*1024**3), dict(memory_total_bytes=None)):
+            self.assertTrue(module.validate_live_write_space(dict(valid, **changes)))
+        self.assertTrue(module.validate_live_write_space({}))
+
     def test_diagnostic_query_returns_to_the_compositor_vt(self):
         module = self.load_harness()
         self.assertTrue(hasattr(module, 'request_guest_evidence'))

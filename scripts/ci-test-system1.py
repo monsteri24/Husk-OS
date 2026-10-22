@@ -20,6 +20,22 @@ from ownos.live import validate_live_status
 OUT = ROOT / 'out/boot-system1'
 
 
+def validate_live_write_space(guest):
+    """Observe the normal ISO's effective mount, independently of kernel overrides."""
+    problems = []
+    commandline = guest.get('kernel_cmdline')
+    if not isinstance(commandline, str) or 'cow_spacesize=50%' not in commandline.split():
+        problems.append('Normal ISO boot did not use the requested Live write-space limit')
+    space = guest.get('live_write_space')
+    memory = guest.get('memory_total_bytes')
+    total = space.get('total_bytes') if isinstance(space, dict) else None
+    if (not isinstance(space, dict) or space.get('filesystem') != 'tmpfs' or
+            type(memory) is not int or memory <= 0 or type(total) is not int or
+            total <= 1024**3 or not 0.48 <= total/memory <= 0.52):
+        problems.append('Normal ISO boot did not provide an effective half-RAM Live tmpfs')
+    return problems
+
+
 def verified_recovered_boot(build, boot, source, sha256, size, version='v3-phase2'):
     """Reuse only successful Live proof for the identical inspected image.
 
@@ -42,6 +58,14 @@ def verified_recovered_boot(build, boot, source, sha256, size, version='v3-phase
 
 PROBE = r'''import json, os, pathlib, subprocess, urllib.request
 info = {'uid': os.getuid(), 'live': pathlib.Path('/run/archiso').is_dir(), 'terminals': []}
+try:
+    info['kernel_cmdline'] = pathlib.Path('/proc/cmdline').read_text().strip()
+    info['memory_total_bytes'] = int(next(line.split()[1] for line in pathlib.Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemTotal:'))) * 1024
+    space = os.statvfs('/run/archiso/cowspace')
+    filesystem = subprocess.run(['/usr/bin/findmnt','-n','-o','FSTYPE','/run/archiso/cowspace'], capture_output=True, text=True, check=True, timeout=5).stdout.strip()
+    info['live_write_space'] = dict(total_bytes=space.f_blocks*space.f_frsize, available_bytes=space.f_bavail*space.f_frsize, filesystem=filesystem)
+except (OSError, ValueError, StopIteration, subprocess.SubprocessError) as exc:
+    info['live_write_space_error'] = str(exc)
 env = os.environ.copy()
 for directory in pathlib.Path('/proc').iterdir():
     if not directory.name.isdigit(): continue
@@ -156,7 +180,7 @@ def request_guest_evidence(monitor):
         monitor.key('ctrl-alt-f1')
 
 
-def main(iso=None, artifacts=None, expected_version=None):
+def main(iso=None, artifacts=None, expected_version=None, require_live_write_space=False):
     global OUT
     if artifacts is not None:
         OUT = Path(artifacts).resolve()
@@ -207,8 +231,15 @@ def main(iso=None, artifacts=None, expected_version=None):
                     problems = validate_live_status(data.get('status'))
                     if expected_version and data.get('status', {}).get('version') != expected_version:
                         problems.append('Guest version differs from expected source: ' + expected_version)
+                    if require_live_write_space:
+                        space_problems = validate_live_write_space(data)
+                        if space_problems:
+                            raise RuntimeError('; '.join(space_problems))
                     if data.get('uid') == 1000 and data.get('live') is True and not problems and data.get('husk-live-smoke', {}).get('exit') == 0:
                         result.update(boot='PASSED', desktop_status=data['status'], problems=[])
+                        if require_live_write_space:
+                            result.update(live_write_space=data['live_write_space'], memory_total_bytes=data['memory_total_bytes'],
+                                          kernel_cmdline=data['kernel_cmdline'])
                         break
                     result['problems'] = problems
                 if elapsed >= next_probe:
@@ -267,5 +298,6 @@ if __name__ == '__main__':
     parser.add_argument('--iso', type=Path)
     parser.add_argument('--artifacts', type=Path)
     parser.add_argument('--expected-version')
+    parser.add_argument('--require-live-write-space', action='store_true')
     args = parser.parse_args()
-    raise SystemExit(main(args.iso, args.artifacts, args.expected_version))
+    raise SystemExit(main(args.iso, args.artifacts, args.expected_version, args.require_live_write_space))
