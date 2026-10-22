@@ -77,7 +77,7 @@ Version 3 is being developed separately from the published releases.
 
 The development branch has passed automated tests covering graphical authorization, disposable-disk installation, installed UEFI boot, Husk Desktop login and installation-completion restarts.
 
-Successful Steam installation in the actual Live environment, updated ISO acceptance and physical hardware testing remain outstanding.
+The current candidate passed normal Live UEFI boot, offline installation, independent installed UEFI login and actual graphical Steam package installation. Steam's separate first client startup failed acceptance and is under investigation; physical hardware testing remains outstanding. See the scoped [V3 acceptance status](docs/V3-PHASE2-STATUS.md).
 
 **No V3 release has been published.**
 

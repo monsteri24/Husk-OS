@@ -1,8 +1,8 @@
 {
-  "attempt": 1,
-  "source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
-  "run": 39449998340,
-  "sha256": "14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec",
+  "attempt": 2,
+  "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+  "run": 39720818758,
+  "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
   "bytes": 2079227904,
-  "scope": "Actual Live Steam GUI cancellation, PAM/polkit, signed packages and client startup; no game or hardware certification"
+  "scope": "Reuse the completed new ISO; preserve passing real GUI transaction and collect bounded read-only first-start diagnostics without changing executables or authorization"
 }

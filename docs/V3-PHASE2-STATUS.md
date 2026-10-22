@@ -27,7 +27,43 @@ resolves to IANA zones with DST; the installed keyboard layout/variant is
 retained. The completion view provides the requested decreasing 30-second
 countdown and Restart Later/Restart Now order.
 
-## Verified acceptance
+## Current candidate and remaining startup blocker
+
+[Candidate run 39720818758](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758)
+built source `285fb33`. Payload/signature/size checks, normal Live UEFI boot,
+effective half-RAM CoW, all 19 offline installation target checks, disk guards,
+actual Cancel without writes, Restart Later, and independent installed UEFI
+default Husk login all passed. The normal ISO boot observed 2,044,719,104 bytes
+of tmpfs on 4,089,434,112 bytes of usable guest RAM. No override supplied that
+normal boot's kernel options.
+
+The actual unprivileged Steam GUI passed all 20 checks: confirmation/password/
+polkit cancellation left package contents unchanged; real PAM/polkit granted
+the shipped helper; the signed full-system transaction installed Steam and
+matching 32-bit Mesa providers without NVIDIA; the package record, official
+icon and GUI success were verified. Live shutdown passed and the unused
+disposable disk still had zero writes/unmaps.
+
+The workflow nevertheless **failed the separate Steam client-startup gate**.
+The vendor launcher only reported setting up user content; no actual native
+client process or Steam window was observed within 240 seconds. This result
+must not be described as a fully accepted V3 candidate. The next bounded run
+reuses this completed ISO and adds only read-only process/bootstrap diagnostics
+and vendor launcher verbosity; no policy or executable is replaced.
+Optional observations tolerate files moving during Steam setup; a real
+temporary-filesystem rotation regression was observed failing and then passing.
+The diagnostic-only source checkpoint passed 500 local tests (72 explicit
+environment skips), 183 source checks and native sanitizers. This local result
+does not replace the recorded real-GTK/VM acceptance below.
+
+- [Current ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
+- Size: **2,079,227,904 bytes**
+- SHA-256: `3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05`
+- [Build/boot/install/application evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12402122296)
+- [Permanent scoped acceptance and startup failure](evidence/v3-phase2/2026-10-22-candidate-acceptance.json)
+- [Current source/GTK/Labwc proof](evidence/v3-phase2/2026-10-22-steam-source-acceptance.json): 498 real GTK tests, one explicit root-only skip; 183 source checks and real compositor tests passed.
+
+## Earlier installer/restart acceptance
 
 The existing corrected ISO passed the complete installer disposable-VM chain.
 Its installer acceptance source is 1e567c0 and image source is c677d21. These
@@ -53,7 +89,7 @@ normal-user report confirms UEFI, no Live medium, no debug shell, Husk Wayland,
 UID 1000 and the expected installed root. Installation tests used only new 32 GiB qcow2 disks;
 no physical user disk was attached or modified.
 
-## Exact existing ISO
+## Earlier immutable installer ISO
 
 - Runtime source: c677d2193a6cb542db9e3a60e8a1b91981b6fb17
 - Size: **2,079,227,904 bytes**
@@ -101,21 +137,22 @@ package was upgraded: the default Live CoW was only 256 MiB, and unattended
 provider selection chose NVIDIA libraries on the clean Mesa system.
 [Permanent diagnostic](evidence/v3-phase2/2026-10-22-live-application-diagnostic.json).
 
-The source now explicitly matches Steam's 32-bit Vulkan providers to the
+The source explicitly matches Steam's 32-bit Vulkan providers to the
 installed graphics stack, rejects unknown stacks instead of guessing, sets
 installer Live boot entries to a RAM-scaled 50% temporary-write-space limit,
 and explains space failures distinctly in the native installer. Optional apps
 and 32-bit gaming libraries remain absent until the user requests them. Only
 Live kernel entries change; installed boot entries and non-installer profiles
-retain their existing options. The new candidate will run Live UEFI, offline
-installation/independent installed UEFI boot, and actual graphical Steam on
-the same completed ISO. Results are pending; no rebuild has yet been accepted.
+retain their existing options. The current image passed those runtime repairs,
+normal Live UEFI and offline installation/independent installed UEFI boot. The
+remaining new-image failure is Steam's separate first client startup.
 
 Physical Wi-Fi/Bluetooth adapters, GPU/firmware, actual USB removal and nonempty
 real-hardware targets need independent testing. The VM renderer is pixman.
-Normal graphical package authorization is now observed on the old image;
-successful graphical Steam installation and Steam/Heroic/game launch remain
-unverified. Earlier root-container transactions are a narrower proof. The
+Normal graphical package authorization and successful Steam installation are
+now observed on the new image. Steam/Heroic/game client launch remains
+unverified; Steam's first startup is under investigation. Earlier root-container
+transactions are a narrower proof. The
 installer supports UEFI whole-drive erase only;
 alongside installation is not implemented or advertised.
 

@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "observed_utc": "2026-10-22T04:40:23Z",
+  "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+  "run": 39720818758,
+  "job": 119633596773,
+  "workflow_result": "FAILED solely at the separate Steam client-startup gate",
+  "iso": {
+    "artifact": 12401517977,
+    "expires": "2026-10-29",
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "rebuilt_for": "Verified runtime defects in Live space and Steam provider selection"
+  },
+  "evidence": {
+    "artifact": 12402122296,
+    "zip_sha256": "3bc447f83bf7a3dfcde57bcc9ec7445d394d14f5f6bcd4b8d5ea8051f8b846f8"
+  },
+  "payload": {
+    "source_commit": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "wallpaper_sha256": "e0f2ee190ff6c11a2102251d4fb13f3cad2690a8f3b9ef3bc5e963079aaeeaac",
+    "iso_bytes": 2079227904,
+    "rootfs": {
+      "status": "PASS",
+      "rootfs": ".build/v3-iso-root",
+      "boot": ".build/v3-iso-boot",
+      "problems": []
+    },
+    "v3_rootfs": {
+      "status": "PASS",
+      "proof_scope": "artifact-payloads-only",
+      "rootfs": ".build/v3-iso-root",
+      "boot": ".build/v3-iso-boot",
+      "problems": []
+    },
+    "release_file_limit_bytes": 2147483648,
+    "release_file_eligible": true
+  },
+  "normal_iso_uefi": {
+    "iso": "HuskOS-v3-phase2.iso",
+    "accelerator": "kvm",
+    "boot": "PASSED",
+    "shutdown": "PASSED",
+    "problems": [],
+    "iso_sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "iso_bytes": 2079227904,
+    "desktop_status": {
+      "backend": "wayland",
+      "bridge_connected": true,
+      "desktop": "Husk Desktop",
+      "desktop_surfaces": 1,
+      "keyring_ready": true,
+      "live": true,
+      "os": "Husk OS",
+      "panel_mapped": true,
+      "panel_mode": "desktop",
+      "panel_visible": true,
+      "renderer": "pixman",
+      "version": "v3-phase2",
+      "window_count": 0
+    },
+    "live_write_space": {
+      "total_bytes": 2044719104,
+      "available_bytes": 2042773504,
+      "filesystem": "tmpfs"
+    },
+    "memory_total_bytes": 4089434112,
+    "kernel_cmdline": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-22-04-09-36-00  cow_spacesize=50%",
+    "terminal": "PASSED",
+    "terminal_pids": [
+      1333
+    ],
+    "terminal_shortcut_sent": true
+  },
+  "offline_install": {
+    "result": "PASSED",
+    "target_checks": {
+      "efi_partition": true,
+      "root_partition": true,
+      "fstab": true,
+      "user": true,
+      "kernel": true,
+      "initramfs": true,
+      "grub": true,
+      "efi_fallback": true,
+      "version": true,
+      "live_cleanup": true,
+      "guard_job": true,
+      "copy_job": true,
+      "users_job": true,
+      "initramfs_job": true,
+      "bootloader_job": true,
+      "timezone": true,
+      "keyboard": true,
+      "english_locale": true,
+      "hostname": true
+    },
+    "guard_target_accepted": true,
+    "live_medium_rejected": true,
+    "offline": true,
+    "cancellation": true,
+    "qmp_before_authorization": {
+      "unmap_operations": 0,
+      "unmap_merged": 0,
+      "failed_zone_append_operations": 0,
+      "flush_total_time_ns": 34765,
+      "wr_highest_offset": 0,
+      "wr_total_time_ns": 0,
+      "failed_wr_operations": 0,
+      "failed_rd_operations": 0,
+      "wr_merged": 0,
+      "wr_bytes": 0,
+      "timed_stats": [],
+      "failed_unmap_operations": 0,
+      "zone_append_merged": 0,
+      "failed_flush_operations": 0,
+      "account_invalid": true,
+      "rd_total_time_ns": 5861384,
+      "invalid_unmap_operations": 0,
+      "flush_operations": 1,
+      "wr_operations": 0,
+      "unmap_bytes": 0,
+      "rd_merged": 3,
+      "rd_bytes": 21934080,
+      "unmap_total_time_ns": 0,
+      "invalid_flush_operations": 0,
+      "account_failed": true,
+      "idle_time_ns": 713674474,
+      "zone_append_total_time_ns": 0,
+      "zone_append_operations": 0,
+      "rd_operations": 228,
+      "zone_append_bytes": 0,
+      "invalid_zone_append_operations": 0,
+      "invalid_wr_operations": 0,
+      "invalid_rd_operations": 0
+    },
+    "restart_later_events": [
+      {
+        "elapsed_ms": 19795,
+        "event": "application-quit",
+        "time": "2026-10-22T04:31:15.088Z"
+      },
+      {
+        "elapsed_ms": 103280,
+        "event": "installation-success",
+        "seconds": 30,
+        "time": "2026-10-22T04:33:01.571Z",
+        "title": "Installation Complete"
+      },
+      {
+        "elapsed_ms": 103284,
+        "event": "countdown-tick",
+        "observed_ms": 4,
+        "seconds": 30,
+        "time": "2026-10-22T04:33:01.574Z"
+      },
+      {
+        "elapsed_ms": 104125,
+        "event": "countdown-tick",
+        "observed_ms": 845,
+        "seconds": 29,
+        "time": "2026-10-22T04:33:02.416Z"
+      },
+      {
+        "elapsed_ms": 105126,
+        "event": "countdown-tick",
+        "observed_ms": 1846,
+        "seconds": 28,
+        "time": "2026-10-22T04:33:03.416Z"
+      },
+      {
+        "elapsed_ms": 106126,
+        "event": "countdown-tick",
+        "observed_ms": 2846,
+        "seconds": 27,
+        "time": "2026-10-22T04:33:04.416Z"
+      },
+      {
+        "elapsed_ms": 107126,
+        "event": "countdown-tick",
+        "observed_ms": 3846,
+        "seconds": 26,
+        "time": "2026-10-22T04:33:05.417Z"
+      },
+      {
+        "elapsed_ms": 107283,
+        "event": "restart-later-click",
+        "seconds": 26,
+        "time": "2026-10-22T04:33:05.573Z"
+      },
+      {
+        "elapsed_ms": 107283,
+        "event": "application-quit",
+        "seconds": 26,
+        "time": "2026-10-22T04:33:05.574Z"
+      }
+    ]
+  },
+  "installed": {
+    "result": "PASSED",
+    "uid": 1000,
+    "user": "huskcheck",
+    "live": false,
+    "uefi": true,
+    "debug_shell": false,
+    "root_device": "/dev/vda2",
+    "root_fstype": "ext4",
+    "optical_media": [],
+    "status": {
+      "backend": "wayland",
+      "bridge_connected": true,
+      "desktop": "Husk Desktop",
+      "desktop_surfaces": 1,
+      "keyring_ready": false,
+      "live": false,
+      "os": "Husk OS",
+      "panel_mapped": true,
+      "panel_mode": "desktop",
+      "panel_visible": true,
+      "renderer": "pixman",
+      "version": "v3-phase2",
+      "window_count": 0
+    }
+  },
+  "actual_graphical_steam_install": {
+    "result": "PASSED",
+    "checks": {
+      "live_write_space": true,
+      "initial_package_absent": true,
+      "initial_password_empty": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "confirmation_cancel_unchanged": true,
+      "password_cancel_unchanged": true,
+      "authorization_cancel_unchanged": true,
+      "polkit_authenticated": true,
+      "root_helper": true,
+      "pkexec_caller": true,
+      "no_test_injection": true,
+      "retry_existing_password": true,
+      "package_installed": true,
+      "full_upgrade": true,
+      "matching_graphics": true,
+      "signatures_required": true,
+      "official_icon": true,
+      "gtk_verified": true
+    },
+    "package": "steam 1.0.0.87-3",
+    "live_write_space": {
+      "total_bytes": 2044715008,
+      "available_bytes": 2042798080,
+      "mount": "tmpfs  1.9G  1.9G"
+    },
+    "graphics_packages": [
+      "lib32-vulkan-icd-loader",
+      "lib32-vulkan-intel",
+      "lib32-vulkan-mesa-implicit-layers",
+      "lib32-vulkan-radeon",
+      "vulkan-icd-loader",
+      "vulkan-intel",
+      "vulkan-mesa-implicit-layers",
+      "vulkan-radeon",
+      "vulkan-tools"
+    ],
+    "siglevel": [
+      "PackageRequired",
+      "PackageTrustedOnly",
+      "DatabaseOptional",
+      "DatabaseTrustedOnly"
+    ],
+    "status": "Steam is installed (verified).",
+    "polkit_journal": [
+      {
+        "SYSLOG_IDENTIFIER": "polkitd",
+        "_PID": "614",
+        "MESSAGE": "Started polkitd version 128"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "polkit-agent-helper-1",
+        "_PID": "1315",
+        "MESSAGE": "pam_unix(polkit-1:auth): conversation failed"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "polkit-agent-helper-1",
+        "_PID": "1315",
+        "MESSAGE": "pam_unix(polkit-1:auth): auth could not identify password for [live]"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "polkitd",
+        "_PID": "614",
+        "MESSAGE": "Operator of unix-session:1 FAILED to authenticate to gain authorization for action org.ownos.admin for unix-process:1216:1797 [python3 huskappcheck.py] (owned by unix-user:live)"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "pkexec",
+        "_PID": "1294",
+        "MESSAGE": "live: Error executing command as another user: Request dismissed [USER=root] [TTY=unknown] [CWD=/home/live] [COMMAND=/usr/lib/ownos/own-admin install-confirmed steam]"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "polkit-agent-helper-1",
+        "_PID": "1315",
+        "MESSAGE": "polkit-agent-helper-1: pam_authenticate failed: Authentication token manipulation error"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "pkexec",
+        "_PID": "1352",
+        "MESSAGE": "pam_unix(polkit-1:session): session opened for user root(uid=0) by live(uid=1000)"
+      },
+      {
+        "SYSLOG_IDENTIFIER": "pkexec",
+        "_PID": "1352",
+        "MESSAGE": "live: Executing command [USER=root] [TTY=unknown] [CWD=/home/live] [COMMAND=/usr/lib/ownos/own-admin install-confirmed steam]"
+      }
+    ],
+    "live_shutdown": "PASSED",
+    "target_blockstats": {
+      "unmap_operations": 0,
+      "unmap_merged": 0,
+      "failed_zone_append_operations": 0,
+      "flush_total_time_ns": 0,
+      "wr_highest_offset": 0,
+      "wr_total_time_ns": 0,
+      "failed_wr_operations": 0,
+      "failed_rd_operations": 0,
+      "wr_merged": 0,
+      "wr_bytes": 0,
+      "timed_stats": [],
+      "failed_unmap_operations": 0,
+      "zone_append_merged": 0,
+      "failed_flush_operations": 0,
+      "account_invalid": true,
+      "rd_total_time_ns": 2796198,
+      "invalid_unmap_operations": 0,
+      "flush_operations": 0,
+      "wr_operations": 0,
+      "unmap_bytes": 0,
+      "rd_merged": 1,
+      "rd_bytes": 9469952,
+      "unmap_total_time_ns": 0,
+      "invalid_flush_operations": 0,
+      "account_failed": true,
+      "idle_time_ns": 243667103718,
+      "zone_append_total_time_ns": 0,
+      "zone_append_operations": 0,
+      "rd_operations": 136,
+      "zone_append_bytes": 0,
+      "invalid_zone_append_operations": 0,
+      "invalid_wr_operations": 0,
+      "invalid_rd_operations": 0
+    }
+  },
+  "steam_client": {
+    "result": "FAILED",
+    "observations": {
+      "windows": [],
+      "wrapper_pid": 1981,
+      "processes": [],
+      "scope": "Client startup only; no login-readiness, Steam account, downloaded game or GPU acceleration claim"
+    },
+    "client_output": "bin_steam.sh[1981]: Setting up Steam content in /home/live/.local/share/Steam\n",
+    "error": "No actual Steam native client process/window after the bounded 240-second first-start probe"
+  },
+  "limitations": [
+    "The complete workflow failed its client-startup acceptance gate; this is not a fully accepted V3 candidate.",
+    "Physical Wi-Fi/Bluetooth/GPU/firmware, real USB removal and nonempty real disks remain unverified.",
+    "Now/automatic restart evidence remains tied to the earlier immutable c677d21 image; this new run tested Restart Later.",
+    "No real user disk, Steam account, downloaded game, merge or release was used."
+  ]
+}

@@ -78,6 +78,31 @@ def validate_steam_launch(report):
     return problems
 
 
+def process_snapshot(proc_root, uid):
+    """Bounded public process metadata; never arguments, environment or FD data."""
+    rows = []
+    for process in sorted(proc_root.iterdir(), key=lambda path: path.name):
+        if not process.name.isdecimal():
+            continue
+        try:
+            if process.stat().st_uid != uid:
+                continue
+            status = dict(line.split(':', 1) for line in (process/'status').read_text().splitlines() if ':' in line)
+            row = dict(pid=int(process.name), uid=uid, comm=(process/'comm').read_text().strip()[:128],
+                       status={key:status[key].strip() for key in ('State','PPid','VmRSS','Threads') if key in status})
+            for key, relative in (('executable','exe'), ('stdin','fd/0')):
+                try: row[key] = str((process/relative).readlink())
+                except OSError: row[key] = None
+            try: row['wait_channel'] = (process/'wchan').read_text().strip()[:128]
+            except OSError: row['wait_channel'] = None
+            rows.append(row)
+        except OSError:
+            continue
+        if len(rows) >= 96:
+            break
+    return rows
+
+
 GTK_CLIENT = inspect.getsource(steam_window) + r'''
 import json, os, subprocess, sys, time
 from pathlib import Path
@@ -91,8 +116,8 @@ log=(directory/'client-output.log').open('a',buffering=1)
 os.dup2(log.fileno(),1); os.dup2(log.fileno(),2)
 window=AppInstallWindow('steam')
 state=dict(pid=os.getpid(),uid=os.getuid(),phase='starting',password_dialogs=0,
-           password_submitted=False,confirmations=[],windows=[])
-started=time.monotonic(); last_control=None; seen_dialog=None; bridge=None; launch_at=None
+           password_submitted=False,confirmations=[],windows=[],all_windows=[])
+started=time.monotonic(); last_control=None; seen_dialog=None; bridge=None; launch_at=None; steam_process=None
 def write():
     state.update(ui_state=window.state,status=window.status.get_text(),
         detail=window.explanation.get_text(),result_code=window.result_code)
@@ -105,7 +130,7 @@ def begin():
     window.install_button.clicked()
     return False
 def observe():
-    global last_control,seen_dialog,bridge,launch_at
+    global last_control,seen_dialog,bridge,launch_at,steam_process
     try:
         control=(directory/'control').read_text().strip() if (directory/'control').exists() else ''
         if control and control!=last_control:
@@ -116,8 +141,11 @@ def observe():
             elif control=='launch':
                 bridge_process=subprocess.Popen(['/usr/bin/own-toplevel'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
                 bridge=PipeLineReader(bridge_process.stdout.fileno())
-                process=launch_app('steam',window)
-                state.update(phase='launching',launch_pid=process.pid if process else None)
+                os.environ['STEAM_LAUNCHER_VERBOSE']='1'
+                state['launch_environment']={key:os.environ.get(key) for key in ('DISPLAY','WAYLAND_DISPLAY','GDK_BACKEND',
+                    'XDG_SESSION_TYPE','XDG_CURRENT_DESKTOP','XDG_RUNTIME_DIR','STEAM_RUNTIME','STEAM_LAUNCHER_VERBOSE')}
+                steam_process=launch_app('steam',window)
+                state.update(phase='launching',launch_pid=steam_process.pid if steam_process else None)
                 launch_at=time.monotonic()
         dialogs=[item for item in Gtk.Window.list_toplevels() if item is not window and item.get_mapped()]
         dialog=next((item for item in dialogs if isinstance(item,(ConfirmationDialog,LivePasswordDialog))),None)
@@ -154,9 +182,12 @@ def observe():
             lines,eof=bridge.read_ready()
             for line in lines:
                 value=json.loads(line)
+                if value.get('event')=='ready': state['bridge_ready']=True
+                if value.get('event')=='upsert': state['all_windows']=(state['all_windows']+[value])[-80:]
                 if value.get('event')=='upsert' and steam_window(value):
                     state['windows']=(state['windows']+[value])[-50:]
             state['launch_seconds']=round(time.monotonic()-launch_at)
+            state['wrapper_exit']=steam_process.poll() if steam_process else None
         if time.monotonic()-started>CONFIG['timeout']: raise RuntimeError('Actual GTK application deadline expired')
         write()
     except Exception as exc:
@@ -168,7 +199,7 @@ Gtk.main()
 '''
 
 # Share only the strict audit parser with the delivered read-only observer.
-ROOT_OBSERVER = inspect.getsource(authorized_application_audit) + r'''
+ROOT_OBSERVER = inspect.getsource(authorized_application_audit) + inspect.getsource(process_snapshot) + r'''
 import hashlib, json, os, shlex, subprocess, time, urllib.request
 from pathlib import Path as P
 state=dict(phase='installation',stage='starting',finished=False,success=False,checks={})
@@ -219,6 +250,56 @@ def native_steam_processes():
             if elf: result.append(dict(pid=int(process.name),uid=uid,executable=str(executable),elf=True))
         except OSError: pass
     return result
+def bootstrap_diagnostics():
+    result=dict(processes=[],logs={},scripts={},bootstrap_files=[],errors=[])
+    def unavailable(path,error):
+        if len(result['errors'])<40:
+            result['errors'].append(dict(path=str(path),error=type(error).__name__))
+    try: result['processes']=process_snapshot(P('/proc'),uid)
+    except OSError as error: unavailable('/proc',error)
+    try: raw=command(['/usr/bin/journalctl','-b','--no-pager','-n','100','-o','json','_UID='+str(uid)])
+    except (OSError,subprocess.SubprocessError) as error:
+        raw=''; unavailable('session_service_journal',error)
+    identifiers={'dbus-daemon','systemd','xdg-desktop-portal','xdg-desktop-portal-gtk','zenity'}
+    result['session_service_journal']=[]
+    for line in raw.splitlines():
+        if not line.strip(): continue
+        try: entry=json.loads(line)
+        except ValueError as error:
+            unavailable('session_service_journal',error); continue
+        if isinstance(entry,dict) and entry.get('SYSLOG_IDENTIFIER') in identifiers:
+            result['session_service_journal'].append({key:entry.get(key) for key in ('SYSLOG_IDENTIFIER','_PID','MESSAGE')})
+    try:
+        space=os.statvfs('/run/archiso/cowspace')
+        result['live_write_space']=dict(total_bytes=space.f_blocks*space.f_frsize,available_bytes=space.f_bavail*space.f_frsize)
+    except OSError as error: unavailable('/run/archiso/cowspace',error)
+    for relative in ('logs/bootstrap_log.txt','logs/console-linux.txt'):
+        path=P('/home/live/.local/share/Steam')/relative
+        try:
+            if path.is_file(): result['logs'][relative]=path.read_text(errors='replace')[-24000:]
+        except OSError as error: unavailable(path,error)
+    root=P('/home/live/.local/share/Steam')
+    try: paths=sorted(root.glob('*')) if root.is_dir() else []
+    except OSError as error:
+        paths=[]; unavailable(root,error)
+    for path in paths:
+        try:
+            if path.is_file(): result['bootstrap_files'].append(dict(path=str(path.relative_to(root)),bytes=path.stat().st_size))
+        except OSError as error: unavailable(path,error)
+        if len(result['bootstrap_files'])>=40: break
+    for filename in ('/usr/bin/steam','/usr/lib/steam/steam','/usr/lib/steam/bin_steam.sh'):
+        path=P(filename)
+        try:
+            if not path.is_file() or path.stat().st_uid!=0: continue
+            data=path.read_bytes()
+        except OSError as error:
+            unavailable(path,error); continue
+        if not data.startswith(b'#!') or len(data)>100000: continue
+        lines=data.decode(errors='replace').splitlines()
+        index=next((number for number,line in enumerate(lines) if 'Setting up Steam content' in line),None)
+        result['scripts'][filename]=dict(sha256=hashlib.sha256(data).hexdigest(),
+            setup_context=lines[max(0,index-8):index+35] if index is not None else lines[:35])
+    return result
 try:
     if os.getuid()!=0 or not P('/run/archiso').is_dir() or not P('/sys/firmware/efi').is_dir():
         raise RuntimeError('A disposable UEFI Live VM is required')
@@ -259,7 +340,7 @@ try:
     state['stage']='terminal-needed'; post()
     while time.monotonic()<deadline and not (list(processes(b'foot',uid))+list(processes(b'/usr/bin/foot',uid))): time.sleep(1)
     state['stage']='terminal-ready'; post()
-    probe=directory/'client.json'; control_sent=False; baseline_terminals=None; installed_since=None
+    probe=directory/'client.json'; control_sent=False; baseline_terminals=None; installed_since=None; diagnostic_at=0
     while time.monotonic()<deadline:
         if not probe.exists(): post(); time.sleep(1); continue
         info=json.loads(probe.read_text()); state['gtk']=info
@@ -335,10 +416,13 @@ try:
                 state['steam_launch']=dict(windows=info.get('windows',[]),wrapper_pid=info.get('launch_pid'),
                     processes=native_steam_processes(),
                     scope='Client startup only; no login-readiness, Steam account, downloaded game or GPU acceleration claim')
+                if time.monotonic()-diagnostic_at>=10:
+                    state['bootstrap_diagnostics']=bootstrap_diagnostics(); diagnostic_at=time.monotonic()
             if phase=='launching' and (info.get('launch_seconds',0)>=240 or
                     info.get('launch_seconds',0)>=60 and state['steam_launch']['windows'] and state['steam_launch']['processes']):
                 log=directory/'client-output.log'
                 if log.exists(): state['client_output']=log.read_text(errors='replace')[-64000:]
+                state['bootstrap_diagnostics']=bootstrap_diagnostics()
                 state.update(stage='launch-observed',finished=True,success=True); post(); break
         post(); time.sleep(1)
     if not state['success']: raise RuntimeError('Bounded application acceptance deadline expired')

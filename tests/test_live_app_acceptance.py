@@ -1,9 +1,12 @@
 """Reject package/authentication claims unsupported by the actual Live run."""
 import ast
+import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import tempfile
+import subprocess
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -114,6 +117,61 @@ class LiveApplicationAcceptanceTests(unittest.TestCase):
              patch.object(self.harness.time, 'sleep'), self.assertRaisesRegex(RuntimeError, 'deadline'):
             self.harness.ApplicationAcceptance.live_authorization(window)
         self.assertEqual(keys, [('ret', True)])
+
+    def test_bootstrap_process_diagnostics_omit_arguments_environment_and_unrelated_status(self):
+        snapshot = getattr(self.harness, 'process_snapshot', None)
+        self.assertTrue(callable(snapshot), 'The bounded bootstrap probe needs safe process observations')
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); process = root/'1500'; process.mkdir()
+            (process/'fd').mkdir()
+            (process/'comm').write_text('tar\n')
+            (process/'status').write_text('Name:\ttar\nState:\tS (sleeping)\nPPid:\t1499\nVmRSS:\t1024 kB\nPrivateField:\tstatus-secret\n')
+            (process/'environ').write_text('PASSWORD=environment-secret')
+            (process/'cmdline').write_text('argument-secret')
+            (process/'wchan').write_text('pipe_read\n')
+            (process/'exe').symlink_to('/usr/bin/tar')
+            (process/'fd/0').symlink_to('/dev/pts/1')
+            result = snapshot(root, os.getuid())
+            self.assertEqual(len(result), 1)
+            self.assertEqual(result[0]['pid'], 1500)
+            self.assertEqual(result[0]['comm'], 'tar')
+            self.assertEqual(result[0]['wait_channel'], 'pipe_read')
+            self.assertEqual(result[0]['stdin'], '/dev/pts/1')
+            text = json.dumps(result)
+            for secret in ('status-secret', 'environment-secret', 'argument-secret'):
+                self.assertNotIn(secret, text)
+
+    def test_optional_bootstrap_log_rotation_preserves_other_diagnostics(self):
+        source = ast.parse(self.harness.ROOT_OBSERVER)
+        functions = [node for node in source.body if isinstance(node, ast.FunctionDef)
+                     and node.name == 'bootstrap_diagnostics']
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            steam = root/'home/live/.local/share/Steam'
+            (steam/'logs').mkdir(parents=True)
+            (steam/'logs/bootstrap_log.txt').write_text('first-start bootstrap')
+            (steam/'logs/console-linux.txt').write_text('remaining observation')
+            (root/'proc').mkdir()
+
+            class RotatingPath(type(Path())):
+                def read_text(path, *args, **kwargs):
+                    if path.name == 'bootstrap_log.txt':
+                        path.unlink()
+                    return super().read_text(*args, **kwargs)
+
+            namespace = dict(P=lambda filename: RotatingPath(root/str(filename).lstrip('/')),
+                uid=os.getuid(), process_snapshot=self.harness.process_snapshot,
+                command=lambda args: '', json=json, hashlib=hashlib, subprocess=subprocess,
+                os=SimpleNamespace(statvfs=lambda path: os.statvfs(root)))
+            exec(compile(ast.Module(body=functions, type_ignores=[]), 'bootstrap-diagnostics', 'exec'), namespace)
+            try:
+                result = namespace['bootstrap_diagnostics']()
+            except OSError as error:
+                self.fail('An optional log rotation aborted diagnostics: '+type(error).__name__)
+            self.assertEqual(result['processes'], [])
+            self.assertGreater(result['live_write_space']['total_bytes'], 0)
+            self.assertEqual(result['logs']['logs/console-linux.txt'], 'remaining observation')
+            self.assertNotIn('logs/bootstrap_log.txt', result['logs'])
 
 
 if __name__ == '__main__':
