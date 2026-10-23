@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "test_source": "2fb96fc799a7f113ca015a1b3886cadc72de9496",
+  "real_gtk": {
+    "run": 39613704162,
+    "job": 119268985175,
+    "tests": 484,
+    "skips": 0,
+    "result": "PASSED",
+    "source_checks": 180,
+    "native_sanitizers": "PASSED"
+  },
+  "real_labwc": {
+    "run": 39613718500,
+    "job": 119269033194,
+    "evidence_artifact": 12350907816,
+    "result": "PASSED",
+    "checks": [
+      "wayland-desktop-started",
+      "01-desktop-wallpaper",
+      "desktop-normal-panel-background",
+      "desktop-native-context-menu-keyboard-and-outside-click",
+      "start-pointer-search-launch",
+      "legacy-regression-reproduced",
+      "saved-config-migration-X-fixed",
+      "foot-keyboard-command-roundtrip",
+      "06-foot-close-minimize-maximize",
+      "panel-maximized-transparent-click-through-and-launcher",
+      "panel-true-fullscreen-hide-and-restore",
+      "files-real-folder-location-Home-Up-navigation",
+      "07-files-close-minimize-maximize",
+      "07-control-close-minimize-maximize",
+      "missing-app-default-keyboard-Cancel",
+      "missing-app-cross-button-drag-and-fresh-Cancel",
+      "confirmation-inherited-pointer-release-over-OK-rejected",
+      "confirmation-inherited-pointer-release-over-Cancel-rejected",
+      "missing-app-deliberate-pointer-OK-opens-native-installer",
+      "missing-app-deliberate-keyboard-OK-opens-native-installer",
+      "08-wallpaper-after-output-resize",
+      "desktop-survives-all-app-controls"
+    ]
+  },
+  "limitations": [
+    "These are actual source/GTK and compositor jobs; the automatic restart matrix scenario failed separately and is not accepted by this summary.",
+    "No physical Wi-Fi/Bluetooth/GPU hardware or Steam/game launch claim."
+  ]
+}

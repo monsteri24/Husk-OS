@@ -1,0 +1,60 @@
+name: Husk OS V3 real package transactions
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/v3-phase2]
+    paths: [.github/v3-apps-request]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  signed-application-transactions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      HUSK_IMAGE_SOURCE: 0ac564dbd141f00bcfd68503fbe75f9065041e51
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Recover the exact image and require identical application backend source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src/ownos/app_install.py \
+            src/ownos/catalog.py src/ownos/updates.py src/ownos/live_password.py \
+            src/ownos/ui/app_install.py src/ownos/ui/common.py bin/own-admin data/org.ownos.admin.policy
+          mkdir -p out
+          gh run download 39123206803 --repo "$GITHUB_REPOSITORY" \
+            --name HuskOS-v3-UNVERIFIED-candidate-39123206803 --dir out
+          test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2214559744
+          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 7597f76451ed19829e4e8b4fe6879d7ce11f95cee43901aa38ceae6fbedd6088
+          (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
+      - name: Extract only signed packages, public keys and repository configuration
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xorriso squashfs-tools
+          mkdir -p .build
+          xorriso -osirrox on -indev out/HuskOS-v3-phase2.iso \
+            -extract /arch/x86_64/airootfs.sfs "$PWD/.build/v3-app-root.sfs"
+          sudo unsquashfs -processors 2 -d .build/v3-app-root .build/v3-app-root.sfs \
+            etc/pacman.conf opt/ownos/repo usr/share/pacman/keyrings
+      - name: Exercise the actual signed Firefox and Steam transactions in an isolated container
+        run: |
+          set -euo pipefail
+          timeout 1800 docker run --rm -v "$GITHUB_WORKSPACE:/src" \
+            -e HUSK_CI_APP_TEST=1 -e HUSK_IMAGE_SOURCE \
+            -e HUSK_HOST_UID="$(id -u)" -e HUSK_HOST_GID="$(id -g)" \
+            archlinux:base-devel bash /src/scripts/ci-test-v3-apps.sh
+          (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
+      - name: Preserve transaction output and explicit test limits
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-application-transactions-${{ github.run_id }}
+          path: out/v3-app-*
+          if-no-files-found: warn
+          retention-days: 30

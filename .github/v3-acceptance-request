@@ -1,0 +1,6 @@
+image_run=39377861570
+attempt=14-active-greeter-husk-session-and-observed-graphical-vt
+image_source=812d74c248ca4696fd6cda27f87ffaef0f9a14ec
+image_sha256=860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21
+image_bytes=2079227904
+request=Reuse the UI-corrected ISO and its passed Live UEFI proof; actual native input and independent QEMU cancellation counters; no release or merge

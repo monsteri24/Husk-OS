@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+  "run": 39720818758,
+  "source_job": 119633596835,
+  "desktop_job": 119633596888,
+  "local": {
+    "tests": 498,
+    "skips": 72,
+    "syntax_checks": 183,
+    "native_sanitizers": "PASSED",
+    "leak_detection": false
+  },
+  "github_source": {
+    "tests": 498,
+    "skips": 72,
+    "syntax_checks": 183,
+    "native_sanitizers": "PASSED"
+  },
+  "github_actual_gtk": {
+    "tests": 498,
+    "skips": 1,
+    "skip_reason": "Cross-UID ownership test requires root; the GTK runner is unprivileged"
+  },
+  "real_labwc": {
+    "result": "PASSED",
+    "artifact": 12400474839,
+    "artifact_zip_sha256": "5201bdbf2a3ed0528f30ba70a79b7a449bc5293340c9f658a1d25a9a35ffa295",
+    "maximized_transparency_clickthrough_launcher": "PASSED",
+    "true_fullscreen_hide_restore": "PASSED",
+    "desktop_context_menus_keyboard_outsideclick": "PASSED",
+    "controls_and_confirmation": "PASSED",
+    "inspected_screenshots": [
+      "panel-maximized-transparent.png",
+      "panel-fullscreen-no-icons.png"
+    ]
+  },
+  "static_review": {
+    "blockers": 0,
+    "scope": "Allowlisted Steam provider selection, Live boot options, space diagnostics and effective normal-ISO-boot acceptance gate"
+  },
+  "new_image_build_and_vm_acceptance": "PARTIAL: build, normal UEFI, offline installed UEFI and graphical signed Steam installation passed; separate client-startup gate failed. See 2026-10-22-candidate-acceptance.json.",
+  "limitations": [
+    "Physical Wi-Fi/Bluetooth/GPU/firmware not certified.",
+    "Steam/Heroic/game startup is not established by these source tests.",
+    "Previously accepted installer/restart evidence refers to the immutable c677d21 image."
+  ]
+}

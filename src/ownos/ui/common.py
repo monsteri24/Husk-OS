@@ -37,6 +37,11 @@ def create_style_provider(settings=None, override_path=None):
 
 
 def load_style(settings=None, override_path=None):
+    if settings is None:
+        settings = ConfigStore().load()
+    gtk_settings = Gtk.Settings.get_default()
+    if gtk_settings:
+        gtk_settings.set_property('gtk-application-prefer-dark-theme', True)
     provider = create_style_provider(settings, override_path)
     Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     return provider
@@ -192,6 +197,15 @@ def _icon_theme():
     directory = str(_icon_directory())
     if directory not in theme.get_search_path():
         theme.append_search_path(directory)
+    # Optional-app artwork is shipped independently of the optional app. Keep
+    # upstream brand art separate from Husk's original interface icon set.
+    source = Path(__file__).resolve().parents[3] / 'data/app-icons'
+    artwork = str(source if source.is_dir() else Path('/usr/share/ownos/app-icons'))
+    if artwork not in theme.get_search_path():
+        theme.append_search_path(artwork)
+    installer = Path(__file__).resolve().parents[3] / 'installer'
+    if installer.is_dir() and str(installer) not in theme.get_search_path():
+        theme.append_search_path(str(installer))
     return theme
 
 
@@ -251,10 +265,11 @@ def installed(app):
 def launch_app(appid, parent=None):
     app = app_by_id(appid)
     if installed(app): return spawn(app.command, parent)
-    detail = (_('Install from Flathub as a Flatpak for this user. The installer will show dependencies and ask for confirmation.')
-              if app.flatpak_id else _('Install signed Arch packages with a full system upgrade. Pacman will show the changes and ask for confirmation.'))
-    if confirm(parent, _('Install {application}?').format(application=app.name), detail):
-        return terminal(['/usr/bin/husk-install-app', appid], parent, hold=True)
+    from ownos.ui.app_install import AppInstallWindow, installation_detail
+    if confirm(parent, _('Install {application}?').format(application=app.name), installation_detail(app)):
+        window = AppInstallWindow(appid, parent)
+        window.begin()
+        return window
 
 
 def open_path(path, parent=None):
