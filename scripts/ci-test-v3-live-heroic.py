@@ -95,13 +95,23 @@ def native_heroic_processes(proc_root, uid):
     return rows
 
 
+def user_flatpak_snapshot(user_query, package_snapshot, repository_snapshot):
+    # Even `info --user` may initialize/normalize an empty writable repository.
+    # Compare GUI cancellation with the state after our own backend query.
+    before = repository_snapshot()
+    absent = user_query('info', '--user', APP_ID).returncode != 0
+    return dict(app_absent=absent, packages=package_snapshot(), repository=repository_snapshot(),
+                repository_before_query=before)
+
+
 # Reuse the existing delivered observer's transport/query helpers verbatim.
 _helpers = {'command', 'post', 'environment', 'processes', 'package_snapshot', 'acknowledge', 'password_state'}
 _tree = ast.parse(steam.ROOT_OBSERVER)
 _nodes = [node for node in _tree.body if isinstance(node, ast.FunctionDef) and node.name in _helpers]
 if {node.name for node in _nodes} != _helpers:
     raise RuntimeError('The existing read-only Live observer helpers are incomplete')
-ROOT_OBSERVER = ast.unparse(ast.Module(body=_nodes, type_ignores=[])) + '\n' + inspect.getsource(native_heroic_processes) + r'''
+ROOT_OBSERVER = (ast.unparse(ast.Module(body=_nodes, type_ignores=[])) + '\n' +
+    inspect.getsource(native_heroic_processes) + inspect.getsource(user_flatpak_snapshot)) + r'''
 import configparser, hashlib, json, os, subprocess, time, urllib.request
 from pathlib import Path as P
 APP_ID='com.heroicgameslauncher.hgl'
@@ -119,9 +129,13 @@ try:
         raise RuntimeError('A disposable UEFI Live VM is required')
     if P('/sys/class/block/vda/serial').read_text().strip()!='HUSK-DISPOSABLE':
         raise RuntimeError('Attached disk is not the new disposable image')
-    checks=state['checks']; initial_packages=package_snapshot(); initial_repo=repository_snapshot()
+    checks=state['checks']
+    initial=user_flatpak_snapshot(user_query,package_snapshot,repository_snapshot)
+    initial_packages=initial['packages']; initial_repo=initial['repository']
+    state['initial_observation']=initial
+    state['flatpak_version']=command(['/usr/bin/flatpak','--version']).strip()
     initial_password=password_state()
-    checks['initial_app_absent']=user_query('info','--user',APP_ID).returncode!=0
+    checks['initial_app_absent']=initial['app_absent']
     checks['initial_system_app_absent']=system_absent()
     if not checks['initial_app_absent'] or not checks['initial_system_app_absent'] or initial_password!='NP':
         raise RuntimeError('The fresh Live image must have no Heroic and no account password')
@@ -163,8 +177,15 @@ try:
         phase=info.get('phase'); state['stage']=phase
         if info.get('dialog')=='confirmation': state['stage']=phase+'-confirmation'
         if phase=='confirmation-cancelled' and not checks.get('confirmation_cancel_unchanged'):
-            checks['confirmation_cancel_unchanged']=(package_snapshot()==initial_packages and
-                repository_snapshot()==initial_repo and user_query('info','--user',APP_ID).returncode!=0)
+            cancelled=user_flatpak_snapshot(user_query,package_snapshot,repository_snapshot)
+            state['cancel_observation']=dict(**cancelled,
+                system_packages_unchanged=cancelled['packages']==initial_packages,
+                repository_unchanged_before_query=cancelled['repository_before_query']==initial_repo,
+                repository_unchanged=cancelled['repository']==initial_repo)
+            checks['confirmation_cancel_unchanged']=(cancelled['app_absent'] and
+                state['cancel_observation']['system_packages_unchanged'] and
+                state['cancel_observation']['repository_unchanged_before_query'] and
+                state['cancel_observation']['repository_unchanged'])
             if not checks['confirmation_cancel_unchanged']: raise RuntimeError('Cancel changed package/repository state')
             acknowledge('install')
         if info.get('ui_state')=='failed':

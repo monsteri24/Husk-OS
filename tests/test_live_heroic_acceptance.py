@@ -1,6 +1,7 @@
 """Require real user Flatpak installation and current native Heroic startup."""
 import ast
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -91,6 +92,58 @@ class LiveHeroicAcceptanceTests(unittest.TestCase):
             gate.result = acceptance.result
             with patch.object(self.harness.auth.AuthorizationAcceptance, 'run', return_value=0):
                 self.assertEqual(gate.run(), 1)
+
+    def test_cancel_baseline_includes_initialization_by_the_observers_own_query(self):
+        self.assertTrue(hasattr(self.harness, 'user_flatpak_snapshot'),
+                        'Snapshot after the backend query that may initialize an empty user repository')
+        with tempfile.TemporaryDirectory() as temporary:
+            config = Path(temporary)/'config'
+            def query(*args):
+                self.assertEqual(args, ('info', '--user', 'com.heroicgameslauncher.hgl'))
+                if not config.exists(): config.write_text('[core]\nrepo_version=1\n')
+                return SimpleNamespace(returncode=1)
+            def repository():
+                return hashlib.sha256(config.read_bytes()).hexdigest() if config.exists() else None
+            self.assertIsNone(repository())
+            snapshot = self.harness.user_flatpak_snapshot
+            initial = snapshot(query, lambda: 'unchanged-system-packages', repository)
+            self.assertTrue(initial['app_absent'])
+            self.assertIsNotNone(initial['repository'])
+            self.assertIsNone(initial['repository_before_query'])
+            repeated = snapshot(query, lambda: 'unchanged-system-packages', repository)
+            self.assertEqual(repeated['repository_before_query'], initial['repository'])
+            self.assertEqual({key: repeated[key] for key in ('app_absent', 'packages', 'repository')},
+                             {key: initial[key] for key in ('app_absent', 'packages', 'repository')})
+            config.write_text('[remote "unexpected"]\nurl=https://example.invalid\n')
+            self.assertNotEqual(snapshot(query, lambda: 'unchanged-system-packages', repository), initial)
+            self.assertNotEqual(snapshot(query, lambda: 'changed-system-packages', repository), initial)
+            installed = snapshot(lambda *args: SimpleNamespace(returncode=0),
+                                 lambda: 'unchanged-system-packages', repository)
+            self.assertFalse(installed['app_absent'])
+
+    def test_cancel_cannot_hide_deleted_repository_behind_the_final_query(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            config = Path(temporary)/'config'
+            def query(*args):
+                if not config.exists(): config.write_text('[core]\nrepo_version=1\n')
+                return SimpleNamespace(returncode=1)
+            def repository():
+                return hashlib.sha256(config.read_bytes()).hexdigest() if config.exists() else None
+            packages = lambda: 'unchanged-system-packages'
+            initial = self.harness.user_flatpak_snapshot(query, packages, repository)
+            config.unlink()
+            tree = ast.parse(self.harness.ROOT_OBSERVER)
+            block = next(node for node in ast.walk(tree) if isinstance(node, ast.If) and
+                         any(isinstance(value, ast.Constant) and value.value == 'confirmation-cancelled'
+                             for value in ast.walk(node.test)))
+            namespace = dict(user_flatpak_snapshot=self.harness.user_flatpak_snapshot,
+                user_query=query, package_snapshot=packages, repository_snapshot=repository,
+                initial_packages=initial['packages'], initial_repo=initial['repository'],
+                state={}, checks={}, acknowledge=Mock())
+            with self.assertRaisesRegex(RuntimeError, 'Cancel changed'):
+                exec(compile(ast.Module(body=block.body, type_ignores=[]), 'actual-cancel-observer', 'exec'), namespace)
+            self.assertFalse(namespace['checks']['confirmation_cancel_unchanged'])
+            namespace['acknowledge'].assert_not_called()
 
     def test_current_heroic_windows_follow_the_existing_native_store(self):
         from ownos.toplevel import ToplevelStore

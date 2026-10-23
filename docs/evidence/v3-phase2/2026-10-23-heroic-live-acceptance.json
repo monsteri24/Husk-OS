@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "latest_status": "Heroic NOT TESTED beyond actual confirmation cancellation; corrected observer retry pending",
+  "iso": {
+    "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "run": 39720818758,
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "rebuilt": false
+  },
+  "initial_run": {
+    "run": 39985820566,
+    "job": 120524596465,
+    "source": "621eddb5603ff69e08bb3c93b5db163cf4cd4534",
+    "memory_mib": 12288,
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/39985820566",
+    "artifact": {
+      "id": 12515423742,
+      "bytes": 543508,
+      "sha256": "74f62d240f5e41a8b9ea7fda448d28303b7c6297ec608c1436b5f3c7fc8fe99a",
+      "download_hash_verified": true
+    },
+    "package_installation": "FAILED",
+    "client_startup": "NOT TESTED",
+    "live_shutdown": "NOT TESTED",
+    "guest": {
+      "phase": "installation",
+      "stage": "confirmation-cancelled",
+      "finished": true,
+      "success": false,
+      "checks": {
+        "initial_app_absent": true,
+        "initial_system_app_absent": true,
+        "live_session_active": true,
+        "unprivileged_launcher": true,
+        "no_extra_terminal": true,
+        "confirmation_cancel_unchanged": false
+      },
+      "app_id": "com.heroicgameslauncher.hgl",
+      "live_session": [
+        "Name=live",
+        "Remote=no",
+        "Active=yes"
+      ],
+      "gtk": {
+        "pid": 1254,
+        "uid": 1000,
+        "phase": "confirmation-cancelled",
+        "password_dialogs": 0,
+        "password_submitted": false,
+        "confirmations": [
+          "confirm-cancel"
+        ],
+        "windows": [],
+        "all_windows": [],
+        "dialog": null,
+        "ui_state": "ready",
+        "status": "Ready to install.",
+        "detail": "",
+        "result_code": 1,
+        "begun": true
+      },
+      "error": "RuntimeError: Cancel changed package/repository state",
+      "client_output": ""
+    },
+    "interpretation": [
+      "Actual GTK confirmation was cancelled before begin/preflight; the UI remained ready, result code 1, no password dialog or transaction output.",
+      "The combined cancellation check failed. The old observer did not retain separate package/repository/absence comparisons, so this artifact alone cannot identify which differed.",
+      "A confirmed harness ordering defect records repository configuration before its own first Flatpak info query. Flatpak may initialize a writable empty repository during that query.",
+      "The retry captures a post-query baseline and compares both pre-query and post-query Cancel hashes with it. This also rejects a deleted repository recreated by the final query. Package state and app absence remain independently required; no trust/native/capacity/stability gate is waived."
+    ]
+  },
+  "source_trace": {
+    "ref": "1.16.1",
+    "urls": [
+      "https://github.com/flatpak/flatpak/blob/1.16.1/app/flatpak-builtins-info.c",
+      "https://github.com/flatpak/flatpak/blob/1.16.1/app/flatpak-builtins-utils.c",
+      "https://github.com/flatpak/flatpak/blob/1.16.1/common/flatpak-dir.c"
+    ],
+    "path": [
+      "flatpak_builtin_info",
+      "flatpak_find_installed_pref",
+      "flatpak_dir_find_installed_ref",
+      "flatpak_dir_get_all_installed_refs",
+      "flatpak_dir_maybe_ensure_repo",
+      "_flatpak_dir_ensure_repo",
+      "ostree_repo_create"
+    ],
+    "scope": "Explains the possible query side effect; the original artifact did not record its installed Flatpak version."
+  },
+  "validation": {
+    "source_run": 39985820566,
+    "source_job": 120524597171,
+    "source_tests": 511,
+    "source_environment_skips": 72,
+    "actual_gtk_tests": 511,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 185,
+    "native_sanitizers": "PASSED",
+    "real_wayland_run": 39985826976,
+    "real_wayland_job": 120524640293,
+    "real_wayland": "PASSED"
+  },
+  "exclusions": [
+    "No Heroic deployment/startup/account/game acceptance from the failed run.",
+    "No administrator authorization claim for the user Flatpak flow.",
+    "No target installation, main/release changes, or general minimum-RAM claim."
+  ],
+  "corrected_observer_validation": {
+    "local_source_tests": 513,
+    "environment_skips": 72,
+    "syntax_checks": 185,
+    "focused_tests": 63,
+    "focused_environment_skips": 1,
+    "local_native_asan_ubsan": "PASSED with sandbox leak detection disabled",
+    "scoped_review": "No open findings; both query initialization and deletion-regeneration regressions observed RED then GREEN",
+    "actual_retry": "PENDING"
+  }
+}

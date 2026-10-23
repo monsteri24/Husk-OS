@@ -77,7 +77,17 @@ Its test reuses the existing guarded VM transport, real GTK installer and
 native window store, and independently checks user deployment, trusted
 Flathub/GPG, unchanged system packages/password, current native process/UI
 and free Live space. No account, game or administrator authorization is
-claimed by that user-only test. Actual acceptance remains pending.
+claimed by that user-only test. [First actual Heroic run 39985820566](https://github.com/monsteri24/Husk-OS/actions/runs/39985820566)
+stopped after real confirmation cancellation, before any transaction. The
+combined package/repository/absence check failed without separate diagnostics.
+The observer incorrectly took its repository baseline before its own first
+Flatpak query, which can initialize an empty repository. A regression now
+requires the post-query baseline and still rejects changed packages, changed
+repository configuration or an installed app after Cancel. The retry records
+each comparison separately and compares Cancel hashes both before and after
+the final query, so query-driven recreation cannot hide a deletion. Actual
+Heroic acceptance remains pending.
+[Heroic diagnostic and scope](evidence/v3-phase2/2026-10-23-heroic-live-acceptance.json).
 
 - [Current ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
 - Size: **2,079,227,904 bytes**
@@ -91,8 +101,8 @@ The existing corrected ISO passed the complete installer disposable-VM chain.
 Its installer acceptance source is 1e567c0 and image source is c677d21. These
 recorded installer results remain valid for that immutable image. Subsequent
 actual Live application testing found a separate runtime defect, described
-below; current source changes therefore require a new candidate and fresh
-image acceptance rather than claiming the older image contains the fixes.
+below. Those corrections produced the current `285fb33` candidate and its
+fresh acceptance above; the older image does not contain those fixes.
 
 | Check | Actual result |
 | --- | --- |

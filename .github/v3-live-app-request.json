@@ -1,10 +1,10 @@
 {
-  "attempt": 6,
+  "attempt": 7,
   "memory_mib": 12288,
   "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
   "run": 39720818758,
   "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
   "bytes": 2079227904,
-  "scope": "Continue after actual healthy Steam acceptance 39982142093: verify the existing Heroic user Flatpak GUI, cancellation, trusted signed user deployment and current native startup on a fresh VM using the same ISO. No account/game or administrator-authentication claim.",
+  "scope": "Retry the unchanged Heroic user GUI after correcting the observer baseline taken before its own Flatpak info query. Preserve all cancellation/deployment/trust/native UI and duration gates; retain separate comparison diagnostics. Same verified ISO; no account/game or admin-authorization claim.",
   "application": "heroic"
 }
