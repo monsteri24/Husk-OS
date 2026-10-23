@@ -63,6 +63,11 @@ def steam_window(entry):
             entry.get('title', '').strip().lower() != 'install steam')
 
 
+def observe_steam_windows(store, message):
+    store.apply(message)
+    return [entry for entry in store.entries.values() if steam_window(entry) and not entry['minimized']]
+
+
 def validate_steam_launch(report):
     if not isinstance(report, dict):
         return ['No Steam client observation']
@@ -103,13 +108,47 @@ def process_snapshot(proc_root, uid):
     return rows
 
 
-GTK_CLIENT = inspect.getsource(steam_window) + r'''
+def validate_steam_bootstrap(diagnostics):
+    """A mapped older client cannot conceal a failed or unfinished self-update."""
+    if not isinstance(diagnostics, dict):
+        return ['No Steam bootstrap health observation']
+    problems = []
+    space = diagnostics.get('live_write_space', {})
+    available = space.get('available_bytes') if isinstance(space, dict) else None
+    if type(available) is not int or available <= 0:
+        problems.append('Steam exhausted Live write space or its capacity could not be verified')
+    logs = diagnostics.get('logs', {})
+    bootstrap = logs.get('logs/bootstrap_log.txt', '') if isinstance(logs, dict) else ''
+    if not isinstance(bootstrap, str):
+        bootstrap = ''
+    bootstrap = bootstrap.lower()
+    completed = bootstrap.rfind('update complete, launching...')
+    pending = max(bootstrap.rfind(marker) for marker in
+                  ('downloading update (', 'extracting package...', 'error: failed to unzip'))
+    if completed < 0 or pending > completed:
+        problems.append('Steam self-update has not completed successfully')
+    return problems
+
+
+def validate_steam_startup(report):
+    if not isinstance(report, dict):
+        return ['No actual Steam startup report']
+    launch = report.get('steam_launch')
+    problems = validate_steam_launch(launch) + validate_steam_bootstrap(report.get('bootstrap_diagnostics'))
+    duration = launch.get('healthy_seconds') if isinstance(launch, dict) else None
+    if type(duration) not in (int, float) or not 30 <= duration <= 240:
+        problems.append('Steam native UI was not observed healthy for 30 continuous seconds')
+    return problems
+
+
+GTK_CLIENT = inspect.getsource(steam_window) + inspect.getsource(observe_steam_windows) + r'''
 import json, os, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0,'/usr/lib/ownos')
 from ownos.ui.app_install import AppInstallWindow, LivePasswordDialog
 from ownos.ui.common import Gtk, GLib, ConfirmationDialog, launch_app
 from ownos.bridge import PipeLineReader
+from ownos.toplevel import ToplevelStore
 directory=Path('/run/husk-v3-auth')
 CONFIG=json.loads((directory/'client-config.json').read_text())
 log=(directory/'client-output.log').open('a',buffering=1)
@@ -118,6 +157,7 @@ window=AppInstallWindow('steam')
 state=dict(pid=os.getpid(),uid=os.getuid(),phase='starting',password_dialogs=0,
            password_submitted=False,confirmations=[],windows=[],all_windows=[])
 started=time.monotonic(); last_control=None; seen_dialog=None; bridge=None; launch_at=None; steam_process=None
+steam_toplevels=ToplevelStore()
 def write():
     state.update(ui_state=window.state,status=window.status.get_text(),
         detail=window.explanation.get_text(),result_code=window.result_code)
@@ -184,8 +224,8 @@ def observe():
                 value=json.loads(line)
                 if value.get('event')=='ready': state['bridge_ready']=True
                 if value.get('event')=='upsert': state['all_windows']=(state['all_windows']+[value])[-80:]
-                if value.get('event')=='upsert' and steam_window(value):
-                    state['windows']=(state['windows']+[value])[-50:]
+                state['windows']=observe_steam_windows(steam_toplevels,value)
+            if eof: state['windows']=[]
             state['launch_seconds']=round(time.monotonic()-launch_at)
             state['wrapper_exit']=steam_process.poll() if steam_process else None
         if time.monotonic()-started>CONFIG['timeout']: raise RuntimeError('Actual GTK application deadline expired')
@@ -198,8 +238,9 @@ GLib.timeout_add(100,observe)
 Gtk.main()
 '''
 
-# Share only the strict audit parser with the delivered read-only observer.
-ROOT_OBSERVER = inspect.getsource(authorized_application_audit) + inspect.getsource(process_snapshot) + r'''
+# Share the audit and read-only health probes with the delivered observer.
+ROOT_OBSERVER = (inspect.getsource(authorized_application_audit) + inspect.getsource(process_snapshot) +
+                 inspect.getsource(validate_steam_bootstrap)) + r'''
 import hashlib, json, os, shlex, subprocess, time, urllib.request
 from pathlib import Path as P
 state=dict(phase='installation',stage='starting',finished=False,success=False,checks={})
@@ -340,7 +381,7 @@ try:
     state['stage']='terminal-needed'; post()
     while time.monotonic()<deadline and not (list(processes(b'foot',uid))+list(processes(b'/usr/bin/foot',uid))): time.sleep(1)
     state['stage']='terminal-ready'; post()
-    probe=directory/'client.json'; control_sent=False; baseline_terminals=None; installed_since=None; diagnostic_at=0
+    probe=directory/'client.json'; control_sent=False; baseline_terminals=None; installed_since=None; diagnostic_at=0; healthy_since=None
     while time.monotonic()<deadline:
         if not probe.exists(): post(); time.sleep(1); continue
         info=json.loads(probe.read_text()); state['gtk']=info
@@ -418,11 +459,17 @@ try:
                     scope='Client startup only; no login-readiness, Steam account, downloaded game or GPU acceleration claim')
                 if time.monotonic()-diagnostic_at>=10:
                     state['bootstrap_diagnostics']=bootstrap_diagnostics(); diagnostic_at=time.monotonic()
+                healthy=(info.get('launch_seconds',0)>=60 and state['steam_launch']['windows'] and
+                    state['steam_launch']['processes'] and
+                    not validate_steam_bootstrap(state.get('bootstrap_diagnostics')))
+                if not healthy: healthy_since=None
+                elif healthy_since is None: healthy_since=time.monotonic()
             if phase=='launching' and (info.get('launch_seconds',0)>=240 or
-                    info.get('launch_seconds',0)>=60 and state['steam_launch']['windows'] and state['steam_launch']['processes']):
+                    healthy_since is not None and time.monotonic()-healthy_since>=30):
                 log=directory/'client-output.log'
                 if log.exists(): state['client_output']=log.read_text(errors='replace')[-64000:]
                 state['bootstrap_diagnostics']=bootstrap_diagnostics()
+                state['steam_launch']['healthy_seconds']=time.monotonic()-healthy_since if healthy_since is not None else 0
                 state.update(stage='launch-observed',finished=True,success=True); post(); break
         post(); time.sleep(1)
     if not state['success']: raise RuntimeError('Bounded application acceptance deadline expired')
@@ -503,7 +550,10 @@ class ApplicationAcceptance(auth.AuthorizationAcceptance):
                         self.monitor.capture(self.artifacts/'steam-client-startup.png')
                         self.result['target_blockstats']=vm.cancellation_blockstats(self.monitor.command('query-blockstats'))
                         self.result['steam_launch']=report.get('steam_launch',{})
-                        launch_problems=validate_steam_launch(self.result['steam_launch'])
+                        diagnostics=report.get('bootstrap_diagnostics',{})
+                        self.result['steam_bootstrap']=dict(live_write_space=diagnostics.get('live_write_space'),
+                            log_tail=diagnostics.get('logs',{}).get('logs/bootstrap_log.txt','')[-8000:])
+                        launch_problems=validate_steam_startup(report)
                         self.result['client_startup']='FAILED' if launch_problems else 'PASSED'
                         self.result['problems'].extend(launch_problems)
                         self.resources['cleanup']=b'CLEANUP\n'; captured=True
@@ -521,7 +571,7 @@ def main():
                          ('firmware-code','/usr/share/OVMF/OVMF_CODE_4M.fd'),('firmware-vars','/usr/share/OVMF/OVMF_VARS_4M.fd')]:
         parser.add_argument('--'+name,type=Path,default=Path(default))
     parser.add_argument('--timeout',type=int,default=1500)
-    parser.add_argument('--memory-mib',type=int,choices=(4096,8192),default=4096,
+    parser.add_argument('--memory-mib',type=int,choices=(4096,8192,12288),default=4096,
                         help='Bounded guest RAM for the immutable-image capacity experiment')
     args=parser.parse_args(); args.username='live'; args.expected_version='v3-phase2'
     if not 300<=args.timeout<=2400: parser.error('Bounded Live application timeout must be 300–2400 seconds')

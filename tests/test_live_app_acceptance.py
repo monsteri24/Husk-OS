@@ -10,6 +10,7 @@ import subprocess
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from ownos.toplevel import ToplevelStore
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -117,6 +118,62 @@ class LiveApplicationAcceptanceTests(unittest.TestCase):
              patch.object(self.harness.time, 'sleep'), self.assertRaisesRegex(RuntimeError, 'deadline'):
             self.harness.ApplicationAcceptance.live_authorization(window)
         self.assertEqual(keys, [('ret', True)])
+
+    def test_a_visible_native_client_cannot_hide_a_full_live_filesystem_or_failed_update(self):
+        validate = getattr(self.harness, 'validate_steam_startup', None)
+        self.assertTrue(callable(validate), 'The real 8 GiB observation needs a bootstrap-health gate')
+        native = dict(healthy_seconds=30, windows=[dict(app_id='steam', title='Sign in to Steam')],
+            processes=[dict(pid=3937, uid=1000, elf=True,
+                executable='/home/live/.local/share/Steam/ubuntu12_32/steam')])
+        complete = '[15:27:05] Update complete, launching...\n'
+        failed = ('[15:27:14] Extracting package...\n'
+                  '[15:27:24] Error: Failed to unzip item 26 (package/tmp/ubuntu12_32/steamui.so_)\n')
+        def observation(available, log):
+            return dict(steam_launch=native, bootstrap_diagnostics=dict(
+                live_write_space=dict(total_bytes=4155494400, available_bytes=available),
+                logs={'logs/bootstrap_log.txt': log}))
+        self.assertEqual(validate(observation(512000000, complete)), [])
+        self.assertTrue(validate(observation(0, complete+failed)))
+        self.assertTrue(validate(observation(512000000, complete+failed)))
+        self.assertTrue(validate(observation(512000000, complete+'Extracting package...\n')))
+        self.assertTrue(validate(observation(512000000, 'Downloading update (1 of 2 KB)...\n')))
+        self.assertTrue(validate(dict(steam_launch=native)))
+        for invalid in (None, -1, True, '512000000'):
+            with self.subTest(available=invalid):
+                self.assertTrue(validate(observation(invalid, complete)))
+        # A later successful vendor retry supersedes its historical error.
+        self.assertEqual(validate(observation(512000000, complete+failed+complete)), [])
+        missing_native = observation(512000000, complete)
+        missing_native['steam_launch'] = dict(windows=[], processes=[])
+        self.assertTrue(validate(missing_native))
+
+    def test_the_startup_deadline_cannot_replace_thirty_seconds_of_healthy_ui(self):
+        report = dict(steam_launch=dict(healthy_seconds=1,
+            windows=[dict(app_id='steam', title='Sign in to Steam')],
+            processes=[dict(pid=3937, uid=1000, elf=True,
+                executable='/home/live/.local/share/Steam/ubuntu12_32/steam')]),
+            bootstrap_diagnostics=dict(live_write_space=dict(available_bytes=512000000),
+                logs={'logs/bootstrap_log.txt':'Update complete, launching...\n'}))
+        for seconds in (None, 0, 1, 29, True, '30', 241, float('nan'), float('inf')):
+            with self.subTest(healthy_seconds=seconds):
+                report['steam_launch']['healthy_seconds'] = seconds
+                self.assertTrue(self.harness.validate_steam_startup(report),
+                                'A final healthy snapshot cannot prove 30 continuous healthy seconds')
+        report['steam_launch']['healthy_seconds'] = 30
+        self.assertEqual(self.harness.validate_steam_startup(report), [])
+
+    def test_a_closed_or_minimized_steam_window_is_not_a_current_startup_observation(self):
+        observe = getattr(self.harness, 'observe_steam_windows', None)
+        self.assertTrue(callable(observe), 'Startup stability must follow current native toplevel events')
+        store = ToplevelStore()
+        opened = dict(event='upsert', id=9, app_id='steam', title='Sign in to Steam',
+                      active=True, minimized=False)
+        self.assertEqual(len(observe(store, opened)), 1)
+        self.assertEqual(observe(store, dict(event='closed', id=9)), [])
+        self.assertEqual(len(observe(store, opened)), 1)
+        self.assertEqual(observe(store, dict(opened, minimized=True)), [])
+        self.assertEqual(len(observe(store, opened)), 1)
+        self.assertEqual(observe(store, dict(opened, app_id='python3', title='Install Steam')), [])
 
     def test_bootstrap_process_diagnostics_omit_arguments_environment_and_unrelated_status(self):
         snapshot = getattr(self.harness, 'process_snapshot', None)

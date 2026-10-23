@@ -116,12 +116,13 @@ class InstallHarnessTests(unittest.TestCase):
                 kernel=directory/'vmlinuz-linux', initrd=directory/'initramfs-linux.img',
                 iso_label='HUSK_TEST', kvm=False)
             baseline = self.harness.make_qemu_command('live', **values)
-            expanded = self.harness.make_qemu_command('live', **values, memory_mib=8192)
             index = baseline.index('-m')+1
             self.assertEqual(baseline[index], '4096')
-            self.assertEqual(expanded[index], '8192')
-            expanded[index] = baseline[index]
-            self.assertEqual(expanded, baseline)
+            for memory in (8192, 12288):
+                expanded = self.harness.make_qemu_command('live', **values, memory_mib=memory)
+                self.assertEqual(expanded[index], str(memory))
+                expanded[index] = baseline[index]
+                self.assertEqual(expanded, baseline)
             for invalid in (True, 0, -1, 4000, 65536, '8192', '8192 -drive /dev/sda'):
                 with self.subTest(memory=invalid), self.assertRaises(ValueError):
                     self.harness.make_qemu_command('live', **values, memory_mib=invalid)

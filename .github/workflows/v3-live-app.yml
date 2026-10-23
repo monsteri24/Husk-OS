@@ -28,7 +28,7 @@ jobs:
           from pathlib import Path
           request=json.loads(Path('.github/v3-live-app-request.json').read_text())
           memory=request.get('memory_mib',4096)
-          if type(memory) is not int or memory not in (4096,8192): raise ValueError('Invalid bounded guest memory')
+          if type(memory) is not int or memory not in (4096,8192,12288): raise ValueError('Invalid bounded guest memory')
           with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_VM_MEMORY_MIB='+str(memory)+'\n')
           for name,pattern in [('source','[0-9a-f]{40}'),('sha256','[0-9a-f]{64}'),('run','[1-9][0-9]{8,15}'),('bytes','[1-9][0-9]{8,12}')]:
               value=str(request[name])

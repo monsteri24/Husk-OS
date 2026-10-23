@@ -68,8 +68,8 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
                       kernel, initrd, iso_label, kvm, memory_mib=4096):
     if stage not in ('live', 'installed'):
         raise ValueError('Unknown VM phase')
-    if type(memory_mib) is not int or memory_mib not in (4096, 8192):
-        raise ValueError('Guest memory must be the bounded 4096 or 8192 MiB test configuration')
+    if type(memory_mib) is not int or memory_mib not in (4096, 8192, 12288):
+        raise ValueError('Guest memory must be the bounded 4096, 8192 or 12288 MiB test configuration')
     artifacts = Path(artifacts).resolve(strict=True)
     disk = Path(disk)
     if (disk.is_symlink() or disk.resolve() != artifacts/'install-target.qcow2' or

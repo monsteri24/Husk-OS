@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "test_source": "0375a8b40553402ff95bb8ed807ba99cb9958dcd",
+  "run": 39977581321,
+  "job": 120496115071,
+  "artifact": 12510959987,
+  "artifact_zip_sha256": "99927e0b8d3194290941ff29e17d46ae3961fd8706580c379e2d5bdde01fcd28",
+  "image": {
+    "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "run": 39720818758,
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "rebuilt": false
+  },
+  "guest_memory_mib": 8192,
+  "workflow_result": "SUCCESS",
+  "native_client_gate": "PASSED",
+  "startup_health": "FAILED",
+  "checks": {
+    "live_write_space": true,
+    "initial_package_absent": true,
+    "initial_password_empty": true,
+    "live_session_active": true,
+    "unprivileged_launcher": true,
+    "no_extra_terminal": true,
+    "confirmation_cancel_unchanged": true,
+    "password_cancel_unchanged": true,
+    "authorization_cancel_unchanged": true,
+    "polkit_authenticated": true,
+    "root_helper": true,
+    "pkexec_caller": true,
+    "no_test_injection": true,
+    "retry_existing_password": true,
+    "package_installed": true,
+    "full_upgrade": true,
+    "matching_graphics": true,
+    "signatures_required": true,
+    "official_icon": true,
+    "gtk_verified": true
+  },
+  "initial_live_write_space": {
+    "total_bytes": 4155494400,
+    "available_bytes": 4154732544,
+    "mount": "tmpfs  3.9G  3.9G"
+  },
+  "final_live_write_space": {
+    "total_bytes": 4155494400,
+    "available_bytes": 0
+  },
+  "steam_launch": {
+    "windows": [
+      {
+        "event": "upsert",
+        "id": 9,
+        "title": "Sign in to Steam",
+        "app_id": "steam",
+        "active": true,
+        "minimized": false,
+        "maximized": false,
+        "fullscreen": false,
+        "outputs": [
+          {
+            "name": "Virtual-1",
+            "x": 0,
+            "y": 0,
+            "width": 1280,
+            "height": 800
+          }
+        ]
+      }
+    ],
+    "wrapper_pid": 2568,
+    "processes": [
+      {
+        "pid": 3937,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_32/steam",
+        "elf": true
+      },
+      {
+        "pid": 4525,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4531,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4532,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4534,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4570,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4572,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4619,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4650,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      },
+      {
+        "pid": 4652,
+        "uid": 1000,
+        "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+        "elf": true
+      }
+    ],
+    "scope": "Client startup only; no login-readiness, Steam account, downloaded game or GPU acceleration claim"
+  },
+  "target_blockstats": {
+    "unmap_operations": 0,
+    "unmap_merged": 0,
+    "failed_zone_append_operations": 0,
+    "flush_total_time_ns": 0,
+    "wr_highest_offset": 0,
+    "wr_total_time_ns": 0,
+    "failed_wr_operations": 0,
+    "failed_rd_operations": 0,
+    "wr_merged": 0,
+    "wr_bytes": 0,
+    "timed_stats": [],
+    "failed_unmap_operations": 0,
+    "zone_append_merged": 0,
+    "failed_flush_operations": 0,
+    "account_invalid": true,
+    "rd_total_time_ns": 3634128,
+    "invalid_unmap_operations": 0,
+    "flush_operations": 0,
+    "wr_operations": 0,
+    "unmap_bytes": 0,
+    "rd_merged": 2,
+    "rd_bytes": 9469952,
+    "unmap_total_time_ns": 0,
+    "invalid_flush_operations": 0,
+    "account_failed": true,
+    "idle_time_ns": 89872618835,
+    "zone_append_total_time_ns": 0,
+    "zone_append_operations": 0,
+    "rd_operations": 136,
+    "zone_append_bytes": 0,
+    "invalid_zone_append_operations": 0,
+    "invalid_wr_operations": 0,
+    "invalid_rd_operations": 0
+  },
+  "live_shutdown": "PASSED",
+  "host_resources_kib": {
+    "MemTotal": 16372440,
+    "MemAvailable": 14932144,
+    "SwapTotal": 3145724
+  },
+  "vendor_events": [
+    "[2026-10-23 15:27:05] Update complete, launching...",
+    "[2026-10-23 15:27:24] Error: Failed to unzip item 26 (package/tmp/ubuntu12_32/steamui.so_)",
+    "[2026-10-23 15:27:24] Error: Failed to unzip package (/home/live/.local/share/Steam/package/bins_steamrt64.zip.vz.e06c518d148b245b6d442113caf221c2e0a9d2b4_43958791)."
+  ],
+  "assessment": "At 8 GiB the first update completed and a real native Steam sign-in UI appeared. The subsequent steamrt64 self-update exhausted Live CoW and failed extraction. The original window/process gate passed, but this is not healthy startup acceptance.",
+  "next_experiment": "Keep the immutable ISO and all 20 authorization/package gates; require completed vendor update, positive Live write space and 30 seconds of healthy native UI. Test 12 GiB under the existing host-headroom guard.",
+  "source_verification": {
+    "run": 39977581321,
+    "job": 120496114987,
+    "tests": 501,
+    "local_environment_skips": 72,
+    "actual_gtk_tests": 501,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 183,
+    "native_sanitizers": "PASSED",
+    "real_labwc_run": 39977587103,
+    "real_labwc_job": 120496133598,
+    "real_labwc": "PASSED"
+  },
+  "limits": [
+    "No Steam account or game was used.",
+    "No universal minimum RAM or physical GPU compatibility is established.",
+    "Main, releases, runtime files and .hpk plans are unchanged."
+  ]
+}
