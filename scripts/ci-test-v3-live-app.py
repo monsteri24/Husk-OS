@@ -122,9 +122,11 @@ def validate_steam_bootstrap(diagnostics):
     if not isinstance(bootstrap, str):
         bootstrap = ''
     bootstrap = bootstrap.lower()
-    completed = bootstrap.rfind('update complete, launching...')
+    completed = max(bootstrap.rfind(marker) for marker in
+                    ('update complete, launching...', 'update complete, launching steam...'))
     pending = max(bootstrap.rfind(marker) for marker in
-                  ('downloading update (', 'extracting package...', 'error: failed to unzip'))
+                  ('downloading update (', 'extracting package...', 'installing update...',
+                   'cleaning up...', 'error: failed to unzip'))
     if completed < 0 or pending > completed:
         problems.append('Steam self-update has not completed successfully')
     return problems

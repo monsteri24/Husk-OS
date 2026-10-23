@@ -175,6 +175,20 @@ class LiveApplicationAcceptanceTests(unittest.TestCase):
         self.assertEqual(len(observe(store, opened)), 1)
         self.assertEqual(observe(store, dict(opened, app_id='python3', title='Install Steam')), [])
 
+    def test_steamrt64_successful_completion_is_recognized_after_the_initial_update(self):
+        log = ('[15:45:38] Update complete, launching...\n'
+               '[15:45:46] Downloading update (424455 of 424455 KB)...\n'
+               '[15:45:47] Extracting package...\n'
+               '[15:46:15] Installing update...\n'
+               '[15:46:21] Cleaning up...\n'
+               '[15:46:21] Update complete, launching Steam...\n'
+               '[15:46:22] Verification complete\n'
+               '[15:48:23] Download skipped: installed version 1792618285\n'
+               '[15:48:23] Nothing to do\n')
+        diagnostics = dict(live_write_space=dict(available_bytes=2911047680),
+            logs={'logs/bootstrap_log.txt':log})
+        self.assertEqual(self.harness.validate_steam_bootstrap(diagnostics), [])
+
     def test_bootstrap_process_diagnostics_omit_arguments_environment_and_unrelated_status(self):
         snapshot = getattr(self.harness, 'process_snapshot', None)
         self.assertTrue(callable(snapshot), 'The bounded bootstrap probe needs safe process observations')

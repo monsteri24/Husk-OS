@@ -1,9 +1,9 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "memory_mib": 12288,
   "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
   "run": 39720818758,
   "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
   "bytes": 2079227904,
-  "scope": "Same ISO at 12 GiB: the 8 GiB run mapped a real Steam sign-in window but its subsequent steamrt64 self-update filled CoW. Require completed vendor update, positive write space and stable native UI; preserve all 20 GUI package checks."
+  "scope": "Repeat the unchanged 12 GiB guest and ISO. Both vendor updates completed with 2.9 GB free, but the new gate missed the real steamrt64 completion message. Recognize both observed success messages; retain positive capacity, current native UI and measured 30-second stability."
 }

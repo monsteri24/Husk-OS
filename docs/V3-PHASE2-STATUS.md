@@ -59,8 +59,14 @@ The strengthened gate retains native processes/window and additionally requires
 a successfully completed vendor update, positive free Live write space and
 30 seconds of healthy native UI. It rejects the actual 8 GiB observation and
 an in-progress update even if a previous client is visible. A subsequent
-successful vendor retry supersedes its earlier error. The next bounded run
-uses 12 GiB under the same guest-plus-2-GiB host-headroom guard. Installer VMs
+successful vendor retry supersedes its earlier error. [The 12 GiB run](https://github.com/monsteri24/Husk-OS/actions/runs/39980304446)
+completed both vendor updates and retained 2,911,047,680 free bytes, with an
+actual current Steam sign-in UI. The strengthened parser incorrectly missed
+Valve's observed `Update complete, launching Steam...` variant, so healthy
+duration remained zero and the run failed. The regression reproduces that
+message and the parser now recognizes both observed completion variants. The
+next run repeats 12 GiB and the unchanged ISO under the same host-headroom
+guard; capacity, current windows and measured stability remain required. Installer VMs
 remain 4 GiB by default; no general Steam RAM minimum is claimed.
 No runtime files changed and no ISO rebuild is needed.
 

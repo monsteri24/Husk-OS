@@ -199,5 +199,136 @@
     "No Steam account or game was used.",
     "No universal minimum RAM or physical GPU compatibility is established.",
     "Main, releases, runtime files and .hpk plans are unchanged."
-  ]
+  ],
+  "follow_up_12g": {
+    "test_source": "249ad57ca5579493931cb3acd9890c942ee5554c",
+    "run": 39980304446,
+    "job": 120505549822,
+    "artifact": 12512938495,
+    "artifact_zip_sha256": "bdc70b8ad59c6294d80f59bf7b3cb7eb3de8943586caacfd30b8a97fa72da68b",
+    "guest_memory_mib": 12288,
+    "checks": {
+      "live_write_space": true,
+      "initial_package_absent": true,
+      "initial_password_empty": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "confirmation_cancel_unchanged": true,
+      "password_cancel_unchanged": true,
+      "authorization_cancel_unchanged": true,
+      "polkit_authenticated": true,
+      "root_helper": true,
+      "pkexec_caller": true,
+      "no_test_injection": true,
+      "retry_existing_password": true,
+      "package_installed": true,
+      "full_upgrade": true,
+      "matching_graphics": true,
+      "signatures_required": true,
+      "official_icon": true,
+      "gtk_verified": true
+    },
+    "live_write_space": {
+      "total_bytes": 6263656448,
+      "available_bytes": 2911047680
+    },
+    "steam_launch": {
+      "windows": [
+        {
+          "id": 7,
+          "title": "Sign in to Steam",
+          "app_id": "steam",
+          "active": true,
+          "minimized": false,
+          "maximized": false,
+          "fullscreen": false,
+          "outputs": [
+            {
+              "name": "Virtual-1",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 800
+            }
+          ]
+        }
+      ],
+      "wrapper_pid": 2547,
+      "processes": [
+        {
+          "pid": 4088,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_32/steam",
+          "elf": true
+        },
+        {
+          "pid": 4547,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4552,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4553,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4555,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4589,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4592,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4613,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4640,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4642,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        }
+      ],
+      "scope": "Client startup only; no login-readiness, Steam account, downloaded game or GPU acceleration claim",
+      "healthy_seconds": 0
+    },
+    "reported_problems": [
+      "Steam self-update has not completed successfully",
+      "Steam native UI was not observed healthy for 30 continuous seconds"
+    ],
+    "live_shutdown": "PASSED",
+    "vendor_events": [
+      "[2026-10-23 15:45:38] Update complete, launching...",
+      "[2026-10-23 15:46:21] Update complete, launching Steam..."
+    ],
+    "assessment": "Both updates completed and 2,911,047,680 bytes remained free. A real current native sign-in window was observed. The new health parser recognized the older launching... message but missed the actual launching Steam... variant, so it measured no healthy duration and correctly did not certify stability. The narrow parser correction requires a new actual run; this artifact is not retroactively accepted."
+  }
 }
