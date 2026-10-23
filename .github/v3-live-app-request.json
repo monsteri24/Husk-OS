@@ -1,9 +1,10 @@
 {
-  "attempt": 5,
+  "attempt": 6,
   "memory_mib": 12288,
   "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
   "run": 39720818758,
   "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
   "bytes": 2079227904,
-  "scope": "Repeat the unchanged 12 GiB guest and ISO. Both vendor updates completed with 2.9 GB free, but the new gate missed the real steamrt64 completion message. Recognize both observed success messages; retain positive capacity, current native UI and measured 30-second stability."
+  "scope": "Continue after actual healthy Steam acceptance 39982142093: verify the existing Heroic user Flatpak GUI, cancellation, trusted signed user deployment and current native startup on a fresh VM using the same ISO. No account/game or administrator-authentication claim.",
+  "application": "heroic"
 }

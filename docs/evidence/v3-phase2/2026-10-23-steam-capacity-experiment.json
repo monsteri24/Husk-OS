@@ -1,4 +1,206 @@
 {
+  "latest_status": {
+    "steam_startup": "PASSED",
+    "heroic_startup": "NOT TESTED",
+    "run": 39982142093
+  },
+  "healthy_acceptance": {
+    "test_source": "edbc8ce3dc2f5abdec433e19241b06265d2185a2",
+    "run": 39982142093,
+    "job": 120515510049,
+    "artifact": 12515220896,
+    "artifact_zip_sha256": "fd2ef63bc1e2b19f504cfd8bb5e1841b40f9b0478bc817c4b8bad834fcace707",
+    "guest_memory_mib": 12288,
+    "image": {
+      "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+      "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+      "bytes": 2079227904,
+      "rebuilt": false
+    },
+    "results": {
+      "client_startup": "PASSED",
+      "package_installation": "PASSED",
+      "authorization": "PASSED",
+      "live_shutdown": "PASSED",
+      "problems": []
+    },
+    "checks": {
+      "live_write_space": true,
+      "initial_package_absent": true,
+      "initial_password_empty": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "confirmation_cancel_unchanged": true,
+      "password_cancel_unchanged": true,
+      "authorization_cancel_unchanged": true,
+      "polkit_authenticated": true,
+      "root_helper": true,
+      "pkexec_caller": true,
+      "no_test_injection": true,
+      "retry_existing_password": true,
+      "package_installed": true,
+      "full_upgrade": true,
+      "matching_graphics": true,
+      "signatures_required": true,
+      "official_icon": true,
+      "gtk_verified": true
+    },
+    "steam_launch": {
+      "windows": [
+        {
+          "id": 7,
+          "title": "Sign in to Steam",
+          "app_id": "steam",
+          "active": true,
+          "minimized": false,
+          "maximized": false,
+          "fullscreen": false,
+          "outputs": [
+            {
+              "name": "Virtual-1",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 800
+            }
+          ]
+        }
+      ],
+      "wrapper_pid": 2546,
+      "processes": [
+        {
+          "pid": 4108,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_32/steam",
+          "elf": true
+        },
+        {
+          "pid": 4557,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4562,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4563,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4565,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4599,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4600,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4623,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4651,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        },
+        {
+          "pid": 4653,
+          "uid": 1000,
+          "executable": "/home/live/.local/share/Steam/ubuntu12_64/steamwebhelper",
+          "elf": true
+        }
+      ],
+      "scope": "Client startup only; no login-readiness, Steam account, downloaded game or GPU acceleration claim",
+      "healthy_seconds": 30.587877900000024
+    },
+    "initial_live_write_space": {
+      "total_bytes": 6263136256,
+      "available_bytes": 6261219328,
+      "mount": "tmpfs  5.8G  5.8G"
+    },
+    "final_live_write_space": {
+      "total_bytes": 6263136256,
+      "available_bytes": 2914762752
+    },
+    "target_blockstats": {
+      "unmap_operations": 0,
+      "unmap_merged": 0,
+      "failed_zone_append_operations": 0,
+      "flush_total_time_ns": 0,
+      "wr_highest_offset": 0,
+      "wr_total_time_ns": 0,
+      "failed_wr_operations": 0,
+      "failed_rd_operations": 0,
+      "wr_merged": 0,
+      "wr_bytes": 0,
+      "timed_stats": [],
+      "failed_unmap_operations": 0,
+      "zone_append_merged": 0,
+      "failed_flush_operations": 0,
+      "account_invalid": true,
+      "rd_total_time_ns": 3484621,
+      "invalid_unmap_operations": 0,
+      "flush_operations": 0,
+      "wr_operations": 0,
+      "unmap_bytes": 0,
+      "rd_merged": 3,
+      "rd_bytes": 9469952,
+      "unmap_total_time_ns": 0,
+      "invalid_flush_operations": 0,
+      "account_failed": true,
+      "idle_time_ns": 144908223327,
+      "zone_append_total_time_ns": 0,
+      "zone_append_operations": 0,
+      "rd_operations": 136,
+      "zone_append_bytes": 0,
+      "invalid_zone_append_operations": 0,
+      "invalid_wr_operations": 0,
+      "invalid_rd_operations": 0
+    },
+    "vendor_completion_events": [
+      "[2026-10-23 16:05:26] Update complete, launching...",
+      "[2026-10-23 16:06:14] Update complete, launching Steam..."
+    ],
+    "screenshot_inspected": true,
+    "source_verification": {
+      "run": 39982142093,
+      "job": 120515510593,
+      "tests": 505,
+      "local_skips": 72,
+      "actual_gtk_tests": 505,
+      "actual_gtk_skips": 1,
+      "syntax_checks": 183,
+      "native_sanitizers": "PASSED",
+      "real_labwc_run": 39982149739,
+      "real_labwc_job": 120511907024,
+      "real_labwc": "PASSED"
+    },
+    "limits": [
+      "12 GiB is the tested Live VM resource configuration, not a universal minimum.",
+      "No Steam account, game or physical GPU was tested.",
+      "Default installer VMs remain 4 GiB."
+    ]
+  },
   "schema_version": 1,
   "test_source": "0375a8b40553402ff95bb8ed807ba99cb9958dcd",
   "run": 39977581321,

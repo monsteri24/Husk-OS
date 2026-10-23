@@ -1,4 +1,4 @@
-name: Husk OS V3 actual Live graphical Steam installation
+name: Husk OS V3 actual Live graphical application acceptance
 on:
   workflow_dispatch:
   push:
@@ -27,6 +27,9 @@ jobs:
           import json, os, re
           from pathlib import Path
           request=json.loads(Path('.github/v3-live-app-request.json').read_text())
+          application=request.get('application','steam')
+          if application not in ('steam','heroic'): raise ValueError('Invalid application acceptance target')
+          with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_TEST_APPLICATION='+application+'\n')
           memory=request.get('memory_mib',4096)
           if type(memory) is not int or memory not in (4096,8192,12288): raise ValueError('Invalid bounded guest memory')
           with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_VM_MEMORY_MIB='+str(memory)+'\n')
@@ -73,8 +76,15 @@ jobs:
           mkdir -p .build
           xorriso -osirrox on -indev out/HuskOS-v3-phase2.iso \
             -extract /arch/boot/x86_64 "$PWD/.build/v3-iso-boot" > out/application-kernel-extraction.log 2>&1
-      - name: Exercise actual Live GTK, cancellation, authorization and Steam
-        run: timeout 1800 /usr/bin/python3 scripts/ci-test-v3-live-app.py --timeout 1500 --memory-mib "$HUSK_VM_MEMORY_MIB"
+      - name: Exercise the actual requested Live application
+        run: |
+          set -euo pipefail
+          case "$HUSK_TEST_APPLICATION" in
+            steam) harness=scripts/ci-test-v3-live-app.py ;;
+            heroic) harness=scripts/ci-test-v3-live-heroic.py ;;
+            *) exit 1 ;;
+          esac
+          timeout 1800 /usr/bin/python3 "$harness" --timeout 1500 --memory-mib "$HUSK_VM_MEMORY_MIB"
       - name: Preserve observations without disks, credentials or a release
         if: always()
         uses: actions/upload-artifact@v4

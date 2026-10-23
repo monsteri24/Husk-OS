@@ -63,9 +63,12 @@ def steam_window(entry):
             entry.get('title', '').strip().lower() != 'install steam')
 
 
-def observe_steam_windows(store, message):
+def observe_client_windows(store, message, application='steam'):
     store.apply(message)
-    return [entry for entry in store.entries.values() if steam_window(entry) and not entry['minimized']]
+    return [entry for entry in store.entries.values() if not entry['minimized'] and
+            (steam_window(entry) if application == 'steam' else application == 'heroic' and
+             entry['app_id'].lower() in ('heroic', 'com.heroicgameslauncher.hgl') and
+             not entry['title'].lower().startswith('install heroic'))]
 
 
 def validate_steam_launch(report):
@@ -143,7 +146,7 @@ def validate_steam_startup(report):
     return problems
 
 
-GTK_CLIENT = inspect.getsource(steam_window) + inspect.getsource(observe_steam_windows) + r'''
+GTK_CLIENT = inspect.getsource(steam_window) + inspect.getsource(observe_client_windows) + r'''
 import json, os, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0,'/usr/lib/ownos')
@@ -155,7 +158,7 @@ directory=Path('/run/husk-v3-auth')
 CONFIG=json.loads((directory/'client-config.json').read_text())
 log=(directory/'client-output.log').open('a',buffering=1)
 os.dup2(log.fileno(),1); os.dup2(log.fileno(),2)
-window=AppInstallWindow('steam')
+window=AppInstallWindow(CONFIG.get('application','steam'))
 state=dict(pid=os.getpid(),uid=os.getuid(),phase='starting',password_dialogs=0,
            password_submitted=False,confirmations=[],windows=[],all_windows=[])
 started=time.monotonic(); last_control=None; seen_dialog=None; bridge=None; launch_at=None; steam_process=None
@@ -186,7 +189,7 @@ def observe():
                 os.environ['STEAM_LAUNCHER_VERBOSE']='1'
                 state['launch_environment']={key:os.environ.get(key) for key in ('DISPLAY','WAYLAND_DISPLAY','GDK_BACKEND',
                     'XDG_SESSION_TYPE','XDG_CURRENT_DESKTOP','XDG_RUNTIME_DIR','STEAM_RUNTIME','STEAM_LAUNCHER_VERBOSE')}
-                steam_process=launch_app('steam',window)
+                steam_process=launch_app(CONFIG.get('application','steam'),window)
                 state.update(phase='launching',launch_pid=steam_process.pid if steam_process else None)
                 launch_at=time.monotonic()
         dialogs=[item for item in Gtk.Window.list_toplevels() if item is not window and item.get_mapped()]
@@ -226,7 +229,7 @@ def observe():
                 value=json.loads(line)
                 if value.get('event')=='ready': state['bridge_ready']=True
                 if value.get('event')=='upsert': state['all_windows']=(state['all_windows']+[value])[-80:]
-                state['windows']=observe_steam_windows(steam_toplevels,value)
+                state['windows']=observe_client_windows(steam_toplevels,value,CONFIG.get('application','steam'))
             if eof: state['windows']=[]
             state['launch_seconds']=round(time.monotonic()-launch_at)
             state['wrapper_exit']=steam_process.poll() if steam_process else None

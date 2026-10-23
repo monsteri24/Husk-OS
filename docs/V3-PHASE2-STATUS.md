@@ -27,54 +27,57 @@ resolves to IANA zones with DST; the installed keyboard layout/variant is
 retained. The completion view provides the requested decreasing 30-second
 countdown and Restart Later/Restart Now order.
 
-## Current candidate and Steam recovery
+## Current candidate and verified Steam startup
 
-[Candidate run 39720818758](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758)
-built source `285fb33`. Payload/signature/size checks, normal Live UEFI boot,
-effective half-RAM CoW, all 19 offline installation target checks, disk guards,
-actual Cancel without writes, Restart Later and independent installed UEFI boot and
-default Husk login passed. Its graphical Steam installation passed all 20
-cancellation/PAM/polkit/helper/signed full-upgrade/package/icon checks, installing
-matching Mesa providers without NVIDIA. The original 4 GiB guest failed the
-independent native Steam process/window gate.
+The existing [candidate 39720818758](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758),
+runtime source `285fb33`, retains its normal Live UEFI boot, all 19 offline
+installation target checks, disk guards, actual Cancel without writes,
+Restart Later and independent installed UEFI/default Husk login acceptance.
+No runtime files have changed during this recovery and no ISO was rebuilt.
 
-[Diagnostic retry 39725599486](https://github.com/monsteri24/Husk-OS/actions/runs/39725599486)
-again passed all 20 package checks. Valve finished downloading, then failed
-extracting `libcef.so_` with zero free bytes in the approximately 2 GiB Live CoW.
-The downloaded ZIP's SHA-256 matches GitHub; the freshly downloaded guest
-report matches the analyzed report byte-for-byte. No policy or executable was
-replaced. [Permanent diagnostic](evidence/v3-phase2/2026-10-22-steam-bootstrap-diagnostic.json).
+[Steam startup run 39982142093](https://github.com/monsteri24/Husk-OS/actions/runs/39982142093)
+**passed** on that exact ISO. All 20 real graphical cancellation/password/PAM/
+polkit/helper/signed full-upgrade/package/icon checks passed. Both vendor
+self-updates completed. Actual unprivileged ELF `steam` and `steamwebhelper`
+processes accompanied the current **Sign in to Steam** window for
+**30.5878779 continuous healthy seconds**, with **2,914,762,752 bytes free**.
+The screenshot was inspected. Live shutdown passed; the unused disposable
+disk had zero data writes/unmaps. No Steam account or game was used.
+[Permanent evidence and preserved failed experiments](evidence/v3-phase2/2026-10-23-steam-capacity-experiment.json).
 
-[Capacity experiment 39977581321](https://github.com/monsteri24/Husk-OS/actions/runs/39977581321)
-changed only guest RAM to 8 GiB on the same verified ISO. All 20 package checks,
-zero disposable-disk writes/unmaps and Live shutdown passed. Actual native
-`steam` and `steamwebhelper` processes and a mapped **Sign in to Steam** window
-were recorded and the screenshot was inspected. The original startup gate
-therefore passed. **Further log analysis found that the following steamrt64
-self-update filled the approximately 4 GiB CoW and failed extracting
-`steamui.so_`. Healthy startup is still unaccepted despite the green workflow.**
-[Permanent experiment evidence](evidence/v3-phase2/2026-10-23-steam-capacity-experiment.json).
+The original failure was Live temporary-write-space exhaustion, not missing
+package authorization or an absent launcher. The verified experiments were:
 
-The strengthened gate retains native processes/window and additionally requires
-a successfully completed vendor update, positive free Live write space and
-30 seconds of healthy native UI. It rejects the actual 8 GiB observation and
-an in-progress update even if a previous client is visible. A subsequent
-successful vendor retry supersedes its earlier error. [The 12 GiB run](https://github.com/monsteri24/Husk-OS/actions/runs/39980304446)
-completed both vendor updates and retained 2,911,047,680 free bytes, with an
-actual current Steam sign-in UI. The strengthened parser incorrectly missed
-Valve's observed `Update complete, launching Steam...` variant, so healthy
-duration remained zero and the run failed. The regression reproduces that
-message and the parser now recognizes both observed completion variants. The
-next run repeats 12 GiB and the unchanged ISO under the same host-headroom
-guard; capacity, current windows and measured stability remain required. Installer VMs
-remain 4 GiB by default; no general Steam RAM minimum is claimed.
-No runtime files changed and no ISO rebuild is needed.
+| Guest RAM | Actual observation |
+| --- | --- |
+| 4 GiB | Approximately 2 GiB CoW filled while extracting `libcef.so_`; no native client/window. All 20 package checks passed. |
+| 8 GiB | Native sign-in UI appeared, but the following steamrt64 self-update filled approximately 4 GiB CoW. The old window-only gate passed; startup health failed. |
+| 12 GiB | Both updates completed with approximately 2.91 GB free, current native UI and measured 30-second stability; strict startup acceptance passed. |
 
-Fresh recovery CI passed 501 real GTK tests with one root-only skip, 183 source
-checks and native sanitizers; [real Labwc](https://github.com/monsteri24/Husk-OS/actions/runs/39977587103)
-also passed. Local source tests passed 501 with 72 environment skips. Local
-LeakSanitizer cannot inspect sandbox process tasks; ASan/UBSan passed with
-local leak detection disabled, while unchanged CI sanitizer checks passed.
+These are bounded VM observations, not a general Steam minimum or hardware
+certification. Installer VMs still default to 4 GiB. The stronger gate rejects
+full/missing write space, pending/failed updates, a lone wrapper, old or closed
+windows and unmeasured stability. Its first 12 GiB retry exposed a narrow
+parser error for Valve's actual `Update complete, launching Steam...` form;
+the real-log regression and final VM run verified the correction. Earlier
+failed evidence is preserved without retroactively declaring it passed.
+[Original diagnostic](evidence/v3-phase2/2026-10-22-steam-bootstrap-diagnostic.json).
+
+Fresh recovery CI passed **505 real GTK tests** with one root-only skip,
+183 syntax checks and native sanitizers. [Real Labwc 39982149739](https://github.com/monsteri24/Husk-OS/actions/runs/39982149739)
+passed as well. Local source verification passed 505 tests with 72 environment
+skips. Local LeakSanitizer cannot inspect sandbox process tasks; ASan/UBSan
+passed with local leak detection disabled. Local GUI startup is separately
+blocked by D-Bus socket creation permissions; the actual GTK proof is CI.
+An earlier source job exhausted its 20-minute budget after Ubuntu downloaded
+46.8 MB in 19m38s; the final run completed all normal source/GTK checks.
+
+The next unfinished task is actual **Heroic user Flatpak installation/startup**.
+Its test reuses the existing guarded VM transport, real GTK installer and
+native window store, and independently checks user deployment, trusted
+Flathub/GPG, unchanged system packages/password, current native process/UI
+and free Live space. No account, game or administrator authorization is
+claimed by that user-only test. Actual acceptance remains pending.
 
 - [Current ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
 - Size: **2,079,227,904 bytes**
@@ -164,14 +167,14 @@ and 32-bit gaming libraries remain absent until the user requests them. Only
 Live kernel entries change; installed boot entries and non-installer profiles
 retain their existing options. The current image passed those runtime repairs,
 normal Live UEFI and offline installation/independent installed UEFI boot. The
-remaining new-image failure is healthy Steam startup/self-update in Live write space.
+Steam first-start failure is now resolved in the tested 12 GiB Live VM configuration.
 
 Physical Wi-Fi/Bluetooth adapters, GPU/firmware, actual USB removal and nonempty
 real-hardware targets need independent testing. The VM renderer is pixman.
 Normal graphical package authorization and successful Steam installation are
 now observed on the new image. A native Steam sign-in window is also observed,
-but healthy self-update/startup remains under investigation. Heroic/game client
-launch is still unverified. Earlier root-container
+and healthy self-update/startup passed the scoped VM gate. Heroic/game client
+launch remains unverified until the separate acceptance run. Earlier root-container
 transactions are a narrower proof. The
 installer supports UEFI whole-drive erase only;
 alongside installation is not implemented or advertised.

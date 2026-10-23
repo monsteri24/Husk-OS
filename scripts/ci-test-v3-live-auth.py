@@ -241,6 +241,7 @@ finally:
 
 
 class AuthorizationAcceptance(vm.Acceptance):
+    success_key = 'authorization'
     client_source = GTK_CLIENT
     observer_source = ROOT_OBSERVER
     required_checks = REQUIRED_CHECKS
@@ -292,8 +293,8 @@ class AuthorizationAcceptance(vm.Acceptance):
                            '; checks='+json.dumps(last.get('checks',{}),sort_keys=True))
 
     def run(self):
-        self.result=dict(authorization='FAILED',live_shutdown='NOT TESTED',problems=[],
-            accelerator='kvm' if self.kvm else 'tcg',proof_scope=self.proof_scope)
+        self.result={self.success_key:'FAILED', 'live_shutdown':'NOT TESTED', 'problems':[],
+            'accelerator':'kvm' if self.kvm else 'tcg', 'proof_scope':self.proof_scope}
         server=None
         try:
             for path in (self.args.iso,self.args.kernel,self.args.initrd,self.args.firmware_code,self.args.firmware_vars):
@@ -332,7 +333,7 @@ class AuthorizationAcceptance(vm.Acceptance):
                 path.write_text(vm.redact_artifact_text(path.read_text(errors='replace'),self.password))
             safe=vm.redact_artifact_text(json.dumps(self.result,indent=2),self.password)
             (self.artifacts/'result.json').write_text(safe+'\n'); print(safe,flush=True)
-        return 0 if self.result['authorization']=='PASSED' and self.result['live_shutdown']=='PASSED' else 1
+        return 0 if self.result[self.success_key]=='PASSED' and self.result['live_shutdown']=='PASSED' else 1
 
 
 def main():

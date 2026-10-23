@@ -163,7 +163,7 @@ class LiveApplicationAcceptanceTests(unittest.TestCase):
         self.assertEqual(self.harness.validate_steam_startup(report), [])
 
     def test_a_closed_or_minimized_steam_window_is_not_a_current_startup_observation(self):
-        observe = getattr(self.harness, 'observe_steam_windows', None)
+        observe = getattr(self.harness, 'observe_client_windows', None)
         self.assertTrue(callable(observe), 'Startup stability must follow current native toplevel events')
         store = ToplevelStore()
         opened = dict(event='upsert', id=9, app_id='steam', title='Sign in to Steam',
