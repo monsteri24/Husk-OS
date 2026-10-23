@@ -521,6 +521,8 @@ def main():
                          ('firmware-code','/usr/share/OVMF/OVMF_CODE_4M.fd'),('firmware-vars','/usr/share/OVMF/OVMF_VARS_4M.fd')]:
         parser.add_argument('--'+name,type=Path,default=Path(default))
     parser.add_argument('--timeout',type=int,default=1500)
+    parser.add_argument('--memory-mib',type=int,choices=(4096,8192),default=4096,
+                        help='Bounded guest RAM for the immutable-image capacity experiment')
     args=parser.parse_args(); args.username='live'; args.expected_version='v3-phase2'
     if not 300<=args.timeout<=2400: parser.error('Bounded Live application timeout must be 300–2400 seconds')
     for name in ('iso','kernel','initrd','firmware_code','firmware_vars'): setattr(args,name,getattr(args,name).resolve())

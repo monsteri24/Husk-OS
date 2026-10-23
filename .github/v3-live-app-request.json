@@ -1,8 +1,9 @@
 {
-  "attempt": 2,
+  "attempt": 3,
+  "memory_mib": 8192,
   "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
   "run": 39720818758,
   "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
   "bytes": 2079227904,
-  "scope": "Reuse the completed new ISO; preserve passing real GUI transaction and collect bounded read-only first-start diagnostics without changing executables or authorization"
+  "scope": "Change only guest RAM from 4 to 8 GiB on the same ISO: 4 GiB passed all 20 GUI package checks but filled its 2 GiB Live CoW while extracting Valve's first-start update"
 }

@@ -1,5 +1,6 @@
 """Acceptance orchestration contracts; these tests never boot or install a VM."""
 import importlib.util
+import inspect
 import ast
 import json
 import io
@@ -103,6 +104,27 @@ class InstallHarnessTests(unittest.TestCase):
         guest.close()
         with self.assertRaisesRegex(RuntimeError,'serial console'):
             console.read()
+
+    def test_live_capacity_experiment_changes_only_bounded_guest_memory(self):
+        self.assertIn('memory_mib', inspect.signature(self.harness.make_qemu_command).parameters,
+                      'The capacity experiment needs an explicit bounded memory parameter')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            disk = directory/'install-target.qcow2'; disk.touch()
+            values = dict(artifacts=directory, disk=disk, iso=directory/'live.iso',
+                firmware_code=directory/'code.fd', firmware_vars=directory/'vars.fd',
+                kernel=directory/'vmlinuz-linux', initrd=directory/'initramfs-linux.img',
+                iso_label='HUSK_TEST', kvm=False)
+            baseline = self.harness.make_qemu_command('live', **values)
+            expanded = self.harness.make_qemu_command('live', **values, memory_mib=8192)
+            index = baseline.index('-m')+1
+            self.assertEqual(baseline[index], '4096')
+            self.assertEqual(expanded[index], '8192')
+            expanded[index] = baseline[index]
+            self.assertEqual(expanded, baseline)
+            for invalid in (True, 0, -1, 4000, 65536, '8192', '8192 -drive /dev/sda'):
+                with self.subTest(memory=invalid), self.assertRaises(ValueError):
+                    self.harness.make_qemu_command('live', **values, memory_mib=invalid)
 
     def test_uart_commands_are_paced_and_only_probe_input_can_be_reset(self):
         connection = Mock()

@@ -27,6 +27,9 @@ jobs:
           import json, os, re
           from pathlib import Path
           request=json.loads(Path('.github/v3-live-app-request.json').read_text())
+          memory=request.get('memory_mib',4096)
+          if type(memory) is not int or memory not in (4096,8192): raise ValueError('Invalid bounded guest memory')
+          with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_VM_MEMORY_MIB='+str(memory)+'\n')
           for name,pattern in [('source','[0-9a-f]{40}'),('sha256','[0-9a-f]{64}'),('run','[1-9][0-9]{8,15}'),('bytes','[1-9][0-9]{8,12}')]:
               value=str(request[name])
               if re.fullmatch(pattern,value) is None: raise ValueError('Invalid image '+name)
@@ -50,6 +53,17 @@ jobs:
       - name: Prepare disposable UEFI VM tools and the exact image kernel
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          memory={key:int(value.split()[0]) for key,value in
+              (line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines())
+              if key in ('MemTotal','MemAvailable','SwapTotal')}
+          Path('out/application-host-resources.txt').write_text(json.dumps(memory,indent=2)+'\n')
+          required=(int(os.environ['HUSK_VM_MEMORY_MIB'])+2048)*1024
+          if min(memory['MemTotal'],memory['MemAvailable'])<required:
+              raise RuntimeError('The host does not have guest RAM plus 2 GiB of host headroom')
+          PY
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 qemu-utils ovmf python3-pil xorriso
           if [ -c /dev/kvm ]; then
@@ -60,7 +74,7 @@ jobs:
           xorriso -osirrox on -indev out/HuskOS-v3-phase2.iso \
             -extract /arch/boot/x86_64 "$PWD/.build/v3-iso-boot" > out/application-kernel-extraction.log 2>&1
       - name: Exercise actual Live GTK, cancellation, authorization and Steam
-        run: timeout 1800 /usr/bin/python3 scripts/ci-test-v3-live-app.py --timeout 1500
+        run: timeout 1800 /usr/bin/python3 scripts/ci-test-v3-live-app.py --timeout 1500 --memory-mib "$HUSK_VM_MEMORY_MIB"
       - name: Preserve observations without disks, credentials or a release
         if: always()
         uses: actions/upload-artifact@v4

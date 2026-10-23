@@ -65,9 +65,11 @@ def create_disposable_disk(directory):
 
 
 def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_vars,
-                      kernel, initrd, iso_label, kvm):
+                      kernel, initrd, iso_label, kvm, memory_mib=4096):
     if stage not in ('live', 'installed'):
         raise ValueError('Unknown VM phase')
+    if type(memory_mib) is not int or memory_mib not in (4096, 8192):
+        raise ValueError('Guest memory must be the bounded 4096 or 8192 MiB test configuration')
     artifacts = Path(artifacts).resolve(strict=True)
     disk = Path(disk)
     if (disk.is_symlink() or disk.resolve() != artifacts/'install-target.qcow2' or
@@ -82,7 +84,7 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
         raise ValueError('The QMP socket path is too long')
     command = ['qemu-system-x86_64', '-nodefaults', '-machine', 'q35',
         '-accel', 'kvm' if kvm else 'tcg', '-cpu', 'host' if kvm else 'max',
-        '-m', '4096', '-smp', '2', '-no-reboot',
+        '-m', str(memory_mib), '-smp', '2', '-no-reboot',
         '-drive', 'if=pflash,format=raw,readonly=on,file=' + str(firmware_code),
         '-drive', 'if=pflash,format=raw,file=' + str(firmware_vars),
         '-drive', 'if=none,id=target,format=qcow2,file=' + str(disk),
@@ -826,7 +828,8 @@ class Acceptance:
     def start_vm(self, stage, disk, variables, label):
         command = make_qemu_command(stage, artifacts=self.artifacts, disk=disk, iso=self.args.iso,
             firmware_code=self.args.firmware_code, firmware_vars=variables, kernel=self.args.kernel,
-            initrd=self.args.initrd, iso_label=label, kvm=self.kvm)
+            initrd=self.args.initrd, iso_label=label, kvm=self.kvm,
+            memory_mib=getattr(self.args,'memory_mib',4096))
         (self.artifacts/(stage+'-qemu-command.json')).write_text(json.dumps(command,indent=2)+'\n')
         self.qemu_log = (self.artifacts/(stage+'-qemu.log')).open('wb')
         self.process = subprocess.Popen(command,stdout=self.qemu_log,stderr=subprocess.STDOUT)

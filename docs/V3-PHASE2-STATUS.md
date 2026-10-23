@@ -45,16 +45,30 @@ icon and GUI success were verified. Live shutdown passed and the unused
 disposable disk still had zero writes/unmaps.
 
 The workflow nevertheless **failed the separate Steam client-startup gate**.
-The vendor launcher only reported setting up user content; no actual native
-client process or Steam window was observed within 240 seconds. This result
-must not be described as a fully accepted V3 candidate. The next bounded run
-reuses this completed ISO and adds only read-only process/bootstrap diagnostics
-and vendor launcher verbosity; no policy or executable is replaced.
+The vendor launcher's captured output only reported setting up user content;
+no surviving native client process with a Steam window passed the 240-second gate. This result
+must not be described as a fully accepted V3 candidate. The diagnostic retry
+reused this completed ISO and added only read-only process/bootstrap diagnostics
+and vendor launcher verbosity; no policy or executable was replaced.
 Optional observations tolerate files moving during Steam setup; a real
 temporary-filesystem rotation regression was observed failing and then passing.
 The diagnostic-only source checkpoint passed 500 local tests (72 explicit
 environment skips), 183 source checks and native sanitizers. This local result
 does not replace the recorded real-GTK/VM acceptance below.
+
+[Diagnostic retry 39725599486](https://github.com/monsteri24/Husk-OS/actions/runs/39725599486)
+again passed all 20 actual package/authorization checks. Its new read-only logs
+show that Valve's bootstrap did start and downloaded its update, then failed
+extracting `libcef.so_`; the 4 GiB guest's approximately 2 GiB Live write space
+had **zero available bytes**. The wrapper returned 0 despite that failure, so
+the independent native-process/window gate correctly remained failed.
+The next experiment changes only guest RAM to 8 GiB on the exact same ISO;
+it does not change boot options, graphics, authentication or the startup gate.
+The default installer VM remains 4 GiB. No 8 GiB success or universal Steam
+minimum is claimed before that experiment finishes.
+[Permanent diagnostic](evidence/v3-phase2/2026-10-22-steam-bootstrap-diagnostic.json).
+The retry also passed 500 real GTK tests with one root-only skip, 183 source
+checks, native sanitizers and real Labwc controls/menus/fullscreen scenarios.
 
 - [Current ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
 - Size: **2,079,227,904 bytes**
