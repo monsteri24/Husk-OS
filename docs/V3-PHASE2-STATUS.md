@@ -27,7 +27,7 @@ resolves to IANA zones with DST; the installed keyboard layout/variant is
 retained. The completion view provides the requested decreasing 30-second
 countdown and Restart Later/Restart Now order.
 
-## Current candidate and verified Steam startup
+## Current candidate and verified application startup
 
 The existing [candidate 39720818758](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758),
 runtime source `285fb33`, retains its normal Live UEFI boot, all 19 offline
@@ -72,22 +72,36 @@ blocked by D-Bus socket creation permissions; the actual GTK proof is CI.
 An earlier source job exhausted its 20-minute budget after Ubuntu downloaded
 46.8 MB in 19m38s; the final run completed all normal source/GTK checks.
 
-The next unfinished task is actual **Heroic user Flatpak installation/startup**.
-Its test reuses the existing guarded VM transport, real GTK installer and
-native window store, and independently checks user deployment, trusted
-Flathub/GPG, unchanged system packages/password, current native process/UI
-and free Live space. No account, game or administrator authorization is
-claimed by that user-only test. [First actual Heroic run 39985820566](https://github.com/monsteri24/Husk-OS/actions/runs/39985820566)
-stopped after real confirmation cancellation, before any transaction. The
-combined package/repository/absence check failed without separate diagnostics.
-The observer incorrectly took its repository baseline before its own first
-Flatpak query, which can initialize an empty repository. A regression now
-requires the post-query baseline and still rejects changed packages, changed
-repository configuration or an installed app after Cancel. The retry records
-each comparison separately and compares Cancel hashes both before and after
-the final query, so query-driven recreation cannot hide a deletion. Actual
-Heroic acceptance remains pending.
-[Heroic diagnostic and scope](evidence/v3-phase2/2026-10-23-heroic-live-acceptance.json).
+The next unfinished application task also **passed**: [Heroic run 39988433895](https://github.com/monsteri24/Husk-OS/actions/runs/39988433895),
+source `de87760`, reused the same ISO in a fresh bounded 12 GiB Live VM.
+All **13 checks** passed: actual confirmation cancellation, UID-1000 GTK
+installation, trusted Flathub/GPG user deployment, unchanged password/system
+packages, no system installation, official icon and verified GUI completion.
+Heroic 2.22.4's rendered native launcher remained current for **30.561342121
+healthy seconds**, with **946,995,200 bytes free**. ELF processes belonged to
+the exact `com.heroicgameslauncher.hgl` Flatpak namespace. Zero target writes/
+unmaps and clean shutdown passed. Both screenshots and the downloaded ZIP's
+SHA-256 were verified. No account, game or administrator authentication was
+used or claimed by this user-only flow.
+
+Its first run stopped at a combined cancellation assertion before any
+transaction. The observer had measured its repository hash before its own
+initial query. The corrected real run directly confirmed **Flatpak 1.18.4
+created an empty user repository during that query**: the pre-query hash was
+absent, the post-query hash existed, and both Cancel hashes matched it while
+packages remained unchanged. Regressions also reject repository deletion
+hidden by final-query recreation. All original cancellation/trust/native UI/
+capacity/stability requirements remain. [Permanent Heroic evidence, including
+the failed run](evidence/v3-phase2/2026-10-23-heroic-live-acceptance.json).
+
+Current application CI passed **513 real GTK tests** (one root-only skip),
+185 syntax checks and unchanged normal native sanitizers. [Real Labwc
+39988440075](https://github.com/monsteri24/Husk-OS/actions/runs/39988440075)
+passed. Local verification passed 513 tests (72 environment skips), the same
+syntax checks and ASan/UBSan; focused review has no open findings. Heroic's
+first-start tool/Proton installation completed before acceptance, but the
+virtual GPU reported no Vulkan 1.1 support. Game, DXVK/VKD3D and physical-GPU
+compatibility require separate testing.
 
 - [Current ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
 - Size: **2,079,227,904 bytes**
@@ -183,10 +197,10 @@ Physical Wi-Fi/Bluetooth adapters, GPU/firmware, actual USB removal and nonempty
 real-hardware targets need independent testing. The VM renderer is pixman.
 Normal graphical package authorization and successful Steam installation are
 now observed on the new image. A native Steam sign-in window is also observed,
-and healthy self-update/startup passed the scoped VM gate. Heroic/game client
-launch remains unverified until the separate acceptance run. Earlier root-container
-transactions are a narrower proof. The
-installer supports UEFI whole-drive erase only;
+and healthy self-update/startup passed the scoped VM gate. Heroic's user
+installation and native launcher also passed separately. Account/game launches
+and physical GPU compatibility remain unverified. Earlier root-container
+transactions are a narrower proof. The installer supports UEFI whole-drive erase only;
 alongside installation is not implemented or advertised.
 
 No V3 release has been published and no PR has been merged. The user's current
