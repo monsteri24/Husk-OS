@@ -1,10 +1,10 @@
 {
-  "attempt": 8,
+  "attempt": 9,
   "memory_mib": 12288,
-  "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
-  "run": 39720818758,
-  "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
-  "bytes": 2079227904,
-  "scope": "Actual accountless SuperTuxKart 1.5 gameplay through Husk game policy: human QMP controls in original engine history, normal-race virtual HDA audio, rendered OpenGL profile and continuous native UI/process stability. Reuse the unchanged verified ISO; no physical GPU/latency/account claim.",
+  "source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
+  "run": 40172519876,
+  "sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+  "bytes": 2080997376,
+  "scope": "Actual accountless SuperTuxKart 1.5 gameplay through the fresh default Husk game policy, corrected for absent optional GameMode: original-engine QMP controls, attributed virtual HDA audio, rendered OpenGL profile and continuous native UI/process stability. Reuse the verified replacement candidate; no physical GPU/latency/account claim.",
   "application": "gaming"
 }

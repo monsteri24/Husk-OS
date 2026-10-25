@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "latest_status": "Actual game launch blocked by missing optional GameMode helper in the original ISO; fresh-default fix and replacement candidate verification pending",
+  "latest_status": "Replacement candidate build, Live UEFI, offline installation, installed UEFI and strict Steam acceptance passed; actual gameplay on the fixed image pending",
   "original_image": {
     "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
     "run": 39720818758,
@@ -96,7 +96,93 @@
     "technically_required": true,
     "reason": "The verified default-launch fix changes src/ownos/config.py; the original SHA-locked ISO does not contain it and cannot be reused as proof of the fixed runtime.",
     "old_artifact_preserved": true,
-    "new_candidate": "PENDING",
+    "new_candidate": {
+      "source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
+      "run": 40172519876,
+      "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40172519876",
+      "iso_bytes": 2080997376,
+      "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+      "iso_hash_verified_by_build_and_each_vm_harness": true,
+      "iso_artifact": {
+        "id": 12590858411,
+        "bytes": 2080997916,
+        "sha256": "02c0a047d27bd006dfa1ad895d00bde256242831cb33e8c5d7077d611c29f636",
+        "expires_at": "2026-11-01T07:43:14Z"
+      },
+      "evidence_artifact": {
+        "id": 12591716882,
+        "bytes": 10689089,
+        "sha256": "d105cec33c1f8e9d86c0b96e7b7f391716f14d69a8bc751516c1378366d7a568",
+        "download_hash_verified": true
+      },
+      "rootfs_payload_checks": "PASSED",
+      "live_uefi": "PASSED",
+      "offline_installation": {
+        "result": "PASSED",
+        "target_checks": {
+          "efi_partition": true,
+          "root_partition": true,
+          "fstab": true,
+          "user": true,
+          "kernel": true,
+          "initramfs": true,
+          "grub": true,
+          "efi_fallback": true,
+          "version": true,
+          "live_cleanup": true,
+          "guard_job": true,
+          "copy_job": true,
+          "users_job": true,
+          "initramfs_job": true,
+          "bootloader_job": true,
+          "timezone": true,
+          "keyboard": true,
+          "english_locale": true,
+          "hostname": true
+        },
+        "offline": true,
+        "cancel_zero_target_data_writes": true,
+        "restart_later": true
+      },
+      "installed_uefi": "PASSED",
+      "live_shutdown": "PASSED",
+      "installed_shutdown": "PASSED",
+      "steam": {
+        "package_installation": "PASSED",
+        "client_startup": "PASSED",
+        "checks": {
+          "live_write_space": true,
+          "initial_package_absent": true,
+          "initial_password_empty": true,
+          "live_session_active": true,
+          "unprivileged_launcher": true,
+          "no_extra_terminal": true,
+          "confirmation_cancel_unchanged": true,
+          "password_cancel_unchanged": true,
+          "authorization_cancel_unchanged": true,
+          "polkit_authenticated": true,
+          "root_helper": true,
+          "pkexec_caller": true,
+          "no_test_injection": true,
+          "retry_existing_password": true,
+          "package_installed": true,
+          "full_upgrade": true,
+          "matching_graphics": true,
+          "signatures_required": true,
+          "official_icon": true,
+          "gtk_verified": true
+        },
+        "healthy_seconds": 30.795566442999984,
+        "live_write_space": {
+          "total_bytes": 6263656448,
+          "available_bytes": 2978816000
+        },
+        "zero_target_data_writes_and_unmaps": true,
+        "live_shutdown": "PASSED",
+        "screenshot_inspected": true
+      },
+      "actual_gameplay": "PENDING"
+    },
     "release_authorized": false
   },
   "source_validation": {
@@ -124,6 +210,19 @@
     "local_asan_ubsan": "PASSED with sandbox leak detection disabled",
     "focused_tests": 78,
     "review": "No open findings in the targeted runtime-default fix",
-    "new_iso": "PENDING"
+    "new_iso": "Candidate build/UEFI/offline/installed/Steam gates PASSED; actual game pending"
+  },
+  "latest_source_validation": {
+    "source": "73ba484574d3a803bdfd18504f42f4fb0bfb3d98",
+    "run": 40173149553,
+    "source_job": 121108077876,
+    "source_tests": 524,
+    "environment_skips": 72,
+    "actual_gtk_tests": 524,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 187,
+    "native_sanitizers": "PASSED",
+    "real_wayland_run": 40173149563,
+    "real_wayland": "PASSED"
   }
 }

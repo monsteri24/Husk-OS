@@ -33,7 +33,8 @@ The existing [candidate 39720818758](https://github.com/monsteri24/Husk-OS/actio
 runtime source `285fb33`, retains its normal Live UEFI boot, all 19 offline
 installation target checks, disk guards, actual Cancel without writes,
 Restart Later and independent installed UEFI/default Husk login acceptance.
-No runtime files have changed during this recovery and no ISO was rebuilt.
+That accepted image is preserved. The later actual gaming continuation found
+a fresh GameMode default mismatch and requires the separate candidate below.
 
 [Steam startup run 39982142093](https://github.com/monsteri24/Husk-OS/actions/runs/39982142093)
 **passed** on that exact ISO. All 20 real graphical cancellation/password/PAM/
@@ -112,8 +113,8 @@ compatibility require separate testing.
 ## Actual gameplay continuation in progress
 
 The 2026-10-25 continuation adds accountless SuperTuxKart 1.5 gameplay tests
-on the same immutable ISO. The signed user Flatpak runs through the existing
-Husk game entry point/default policy. A normal race records actual keyboard
+initially on the preserved immutable ISO. The signed user Flatpak runs through
+the existing Husk game entry point/default policy. A normal race records actual keyboard
 acceleration/steering in the game's own history and a game-attributed virtual
 HDA/WAV audio segment. A separate profile race must render OpenGL geometry,
 remain continuously observed for at least 60 wall seconds and exit naturally.
@@ -131,9 +132,21 @@ used. A new ISO candidate is technically required to verify this runtime fix;
 the original candidate and all its scoped accepted evidence are preserved.
 [Permanent game diagnostic](evidence/v3-phase2/2026-10-25-gaming-acceptance.json).
 
-Local source verification passed 523 tests (72 environment skips), 187 syntax
-checks and ASan/UBSan. Actual game, graphics, input, audio and stability
-acceptance are **not yet claimed**. VM software rendering
+The necessary replacement [candidate 40172519876](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876),
+source `96a0a02`, passed payload checks, normal Live UEFI, all 19 offline target
+checks, zero-write Cancel, Restart Later, independent installed UEFI/default
+Husk login and both shutdowns. Its exact ISO is **2,080,997,376 bytes**, SHA-256
+`496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715`.
+All 20 graphical Steam checks and strict startup passed again in the bounded
+12 GiB guest: **30.795566443 healthy seconds**, **2,978,816,000 free bytes**,
+zero target data writes/unmaps and clean shutdown. The downloaded evidence
+archive digest and Steam screenshot were inspected. The game workflow reuses
+this exact replacement artifact; no further rebuild is needed.
+
+Latest CI passed **524 real GTK tests** (one root-only skip), 187 syntax checks,
+normal native sanitizers and real Labwc. Local checks passed 524 tests with 72
+environment skips and ASan/UBSan. Actual game, graphics, input, audio and
+stability acceptance are **not yet claimed**. VM software rendering
 will not establish physical GPU performance, Vulkan, gamepad support, perceived
 audio quality, input latency, online/account or proprietary-game compatibility.
 
