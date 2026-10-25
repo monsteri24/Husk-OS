@@ -169,3 +169,14 @@ class LiveGamingAcceptanceTests(unittest.TestCase):
         invalid=copy.deepcopy(report)
         invalid['audio_capture']['observations']=invalid['audio_capture']['observations'][:2]
         self.assertTrue(self.harness.validate_gameplay_report(invalid))
+
+    def test_unattempted_audio_is_distinct_from_failure_but_cannot_make_success(self):
+        for status,want in ((1,'NOT TESTED'),(0,'FAILED')):
+            with self.subTest(status=status),tempfile.TemporaryDirectory() as temporary:
+                acceptance=object.__new__(self.harness.GamingAcceptance)
+                acceptance.artifacts=Path(temporary);acceptance.password='not-an-account-password'
+                acceptance.audio_interval=None
+                acceptance.result=dict(gameplay='FAILED' if status else 'PASSED',problems=[])
+                with patch.object(self.harness.auth.AuthorizationAcceptance,'run',return_value=status):
+                    self.assertNotEqual(acceptance.run(),0)
+                self.assertEqual(acceptance.result['virtual_audio'],want)

@@ -458,7 +458,10 @@ class GamingAcceptance(auth.AuthorizationAcceptance):
             self.result['virtual_audio']='FAILED' if problems else 'PASSED'
             self.result['problems'].extend(problems)
         except (OSError,ValueError,wave.Error) as error:
-            self.result['virtual_audio']='FAILED';self.result['problems'].append('Virtual audio: '+str(error))
+            if self.audio_interval is None and status:
+                self.result['virtual_audio']='NOT TESTED'
+            else:
+                self.result['virtual_audio']='FAILED';self.result['problems'].append('Virtual audio: '+str(error))
         safe=vm.redact_artifact_text(json.dumps(self.result,indent=2),self.password)
         (self.artifacts/'result.json').write_text(safe+'\n');print(safe,flush=True)
         return 0 if status==0 and self.result['virtual_audio']=='PASSED' else 1
