@@ -65,7 +65,7 @@ def create_disposable_disk(directory):
 
 
 def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_vars,
-                      kernel, initrd, iso_label, kvm, memory_mib=4096):
+                      kernel, initrd, iso_label, kvm, memory_mib=4096, audio_path=None):
     if stage not in ('live', 'installed'):
         raise ValueError('Unknown VM phase')
     if type(memory_mib) is not int or memory_mib not in (4096, 8192, 12288):
@@ -105,6 +105,14 @@ def make_qemu_command(stage, *, artifacts, disk, iso, firmware_code, firmware_va
             ' cow_spacesize=50% systemd.debug_shell=ttyS1 systemd.mask=serial-getty@ttyS1.service console=tty0 console=ttyS0,115200n8']
     else:
         command += ['-serial', 'file:' + str(artifacts/(stage + '-serial.log')), '-boot', 'order=c']
+    if audio_path is not None:
+        audio_path = Path(audio_path)
+        if (audio_path.is_symlink() or audio_path.exists() or
+                audio_path.resolve() != artifacts/'game-audio.wav' or
+                any(character in str(audio_path) for character in (',', '\n', '\0'))):
+            raise ValueError('Audio capture must be a new game-audio.wav in this run directory')
+        command += ['-audiodev', 'wav,id=gaming,path='+str(audio_path),
+                    '-device', 'ich9-intel-hda', '-device', 'hda-output,audiodev=gaming']
     return command
 
 
@@ -829,7 +837,8 @@ class Acceptance:
         command = make_qemu_command(stage, artifacts=self.artifacts, disk=disk, iso=self.args.iso,
             firmware_code=self.args.firmware_code, firmware_vars=variables, kernel=self.args.kernel,
             initrd=self.args.initrd, iso_label=label, kvm=self.kvm,
-            memory_mib=getattr(self.args,'memory_mib',4096))
+            memory_mib=getattr(self.args,'memory_mib',4096),
+            audio_path=getattr(self.args,'audio_path',None))
         (self.artifacts/(stage+'-qemu-command.json')).write_text(json.dumps(command,indent=2)+'\n')
         self.qemu_log = (self.artifacts/(stage+'-qemu.log')).open('wb')
         self.process = subprocess.Popen(command,stdout=self.qemu_log,stderr=subprocess.STDOUT)

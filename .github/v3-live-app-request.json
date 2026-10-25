@@ -1,10 +1,10 @@
 {
-  "attempt": 7,
+  "attempt": 8,
   "memory_mib": 12288,
   "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
   "run": 39720818758,
   "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
   "bytes": 2079227904,
-  "scope": "Retry the unchanged Heroic user GUI after correcting the observer baseline taken before its own Flatpak info query. Preserve all cancellation/deployment/trust/native UI and duration gates; retain separate comparison diagnostics. Same verified ISO; no account/game or admin-authorization claim.",
-  "application": "heroic"
+  "scope": "Actual accountless SuperTuxKart 1.5 gameplay through Husk game policy: human QMP controls in original engine history, normal-race virtual HDA audio, rendered OpenGL profile and continuous native UI/process stability. Reuse the unchanged verified ISO; no physical GPU/latency/account claim.",
+  "application": "gaming"
 }

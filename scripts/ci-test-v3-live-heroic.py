@@ -67,7 +67,7 @@ def validate_heroic_report(report):
     return problems
 
 
-def native_heroic_processes(proc_root, uid):
+def native_heroic_processes(proc_root, uid, app_id='com.heroicgameslauncher.hgl'):
     import configparser
     rows = []
     for process in proc_root.iterdir():
@@ -84,10 +84,10 @@ def native_heroic_processes(proc_root, uid):
                     continue
             info = configparser.ConfigParser(interpolation=None)
             info.read(process/'root/.flatpak-info')
-            if info.get('Application', 'name', fallback='') != 'com.heroicgameslauncher.hgl':
+            if info.get('Application', 'name', fallback='') != app_id:
                 continue
             rows.append(dict(pid=int(process.name), uid=uid, elf=True,
-                flatpak_id='com.heroicgameslauncher.hgl', executable=executable[:1000]))
+                flatpak_id=app_id, executable=executable[:1000]))
         except (OSError, configparser.Error):
             continue
         if len(rows) >= 64:

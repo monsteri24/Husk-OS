@@ -28,7 +28,7 @@ jobs:
           from pathlib import Path
           request=json.loads(Path('.github/v3-live-app-request.json').read_text())
           application=request.get('application','steam')
-          if application not in ('steam','heroic'): raise ValueError('Invalid application acceptance target')
+          if application not in ('steam','heroic','gaming'): raise ValueError('Invalid application acceptance target')
           with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_TEST_APPLICATION='+application+'\n')
           memory=request.get('memory_mib',4096)
           if type(memory) is not int or memory not in (4096,8192,12288): raise ValueError('Invalid bounded guest memory')
@@ -82,6 +82,7 @@ jobs:
           case "$HUSK_TEST_APPLICATION" in
             steam) harness=scripts/ci-test-v3-live-app.py ;;
             heroic) harness=scripts/ci-test-v3-live-heroic.py ;;
+            gaming) harness=scripts/ci-test-v3-live-gaming.py ;;
             *) exit 1 ;;
           esac
           timeout 1800 /usr/bin/python3 "$harness" --timeout 1500 --memory-mib "$HUSK_VM_MEMORY_MIB"
@@ -96,5 +97,6 @@ jobs:
             out/live-app-v3/*.json
             out/live-app-v3/*.log
             out/live-app-v3/*.png
+            out/live-app-v3/game-audio-clip.wav
           if-no-files-found: warn
           retention-days: 30

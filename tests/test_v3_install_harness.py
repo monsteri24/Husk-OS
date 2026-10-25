@@ -127,6 +127,27 @@ class InstallHarnessTests(unittest.TestCase):
                 with self.subTest(memory=invalid), self.assertRaises(ValueError):
                     self.harness.make_qemu_command('live', **values, memory_mib=invalid)
 
+    def test_virtual_game_audio_is_explicit_and_cannot_overwrite_or_escape_run_directory(self):
+        self.assertIn('audio_path', inspect.signature(self.harness.make_qemu_command).parameters)
+        with tempfile.TemporaryDirectory() as temporary:
+            directory=Path(temporary); disk=directory/'install-target.qcow2';disk.touch()
+            values=dict(artifacts=directory,disk=disk,iso=directory/'live.iso',
+                firmware_code=directory/'code.fd',firmware_vars=directory/'vars.fd',
+                kernel=directory/'vmlinuz-linux',initrd=directory/'initramfs-linux.img',
+                iso_label='HUSK_TEST',kvm=False)
+            original=self.harness.make_qemu_command('live',**values)
+            self.assertNotIn('-audiodev',original)
+            path=directory/'game-audio.wav'
+            audible=self.harness.make_qemu_command('live',**values,audio_path=path)
+            self.assertEqual(audible[:len(original)],original)
+            self.assertIn('wav,id=gaming,path='+str(path),audible)
+            self.assertIn('hda-output,audiodev=gaming',audible)
+            for invalid in (directory.parent/'game-audio.wav',directory/'other.wav'):
+                with self.assertRaises(ValueError): self.harness.make_qemu_command('live',**values,audio_path=invalid)
+            path.write_bytes(b'preserve')
+            with self.assertRaises(ValueError): self.harness.make_qemu_command('live',**values,audio_path=path)
+            self.assertEqual(path.read_bytes(),b'preserve')
+
     def test_uart_commands_are_paced_and_only_probe_input_can_be_reset(self):
         connection = Mock()
         console = self.harness.SerialConsole(connection=connection)

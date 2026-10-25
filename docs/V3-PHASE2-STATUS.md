@@ -109,6 +109,22 @@ compatibility require separate testing.
 - [Build/boot/install/application evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12402122296)
 - [Permanent scoped installer acceptance](evidence/v3-phase2/2026-10-22-candidate-acceptance.json)
 
+## Actual gameplay continuation in progress
+
+The 2026-10-25 continuation adds accountless SuperTuxKart 1.5 gameplay tests
+on the same immutable ISO. The signed user Flatpak runs through the existing
+Husk game entry point/default policy. A normal race records actual keyboard
+acceleration/steering in the game's own history and a game-attributed virtual
+HDA/WAV audio segment. A separate profile race must render OpenGL geometry,
+remain continuously observed for at least 60 wall seconds and exit naturally.
+No Steam/Heroic or installer scenario is repeated by this test.
+
+Local source verification passed 521 tests (72 environment skips), 187 syntax
+checks and ASan/UBSan. Actual game, graphics, input, audio and stability
+acceptance are **not yet claimed**. VM software rendering
+will not establish physical GPU performance, Vulkan, gamepad support, perceived
+audio quality, input latency, online/account or proprietary-game compatibility.
+
 ## Earlier installer/restart acceptance
 
 The existing corrected ISO passed the complete installer disposable-VM chain.

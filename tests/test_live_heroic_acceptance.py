@@ -166,7 +166,7 @@ class LiveHeroicAcceptanceTests(unittest.TestCase):
                     if step.get('name') == 'Validate the immutable image request')
         script = step['run'].split("python3 - <<'PY'\n", 1)[1].rsplit('\nPY', 1)[0]
         for selection, expected in (('missing', 'steam'), ('heroic', 'heroic'),
-                                    ('steam', 'steam'), ('unreviewed', None),
+                                    ('steam', 'steam'), ('gaming', 'gaming'), ('unreviewed', None),
                                     ('heroic\nINJECTED=1', None)):
             with self.subTest(selection=selection), tempfile.TemporaryDirectory() as temporary:
                 directory = Path(temporary); (directory/'.github').mkdir()
