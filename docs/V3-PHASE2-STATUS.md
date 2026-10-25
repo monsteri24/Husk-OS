@@ -119,7 +119,19 @@ HDA/WAV audio segment. A separate profile race must render OpenGL geometry,
 remain continuously observed for at least 60 wall seconds and exit naturally.
 No Steam/Heroic or installer scenario is repeated by this test.
 
-Local source verification passed 521 tests (72 environment skips), 187 syntax
+The first [actual game run 40171192165](https://github.com/monsteri24/Husk-OS/actions/runs/40171192165)
+verified the unchanged original ISO, completed the user Flatpak install command
+and reported STK 1.5, then stopped before launching a race: the actual fresh
+configuration enabled GameMode but `gamemoderun` was absent. This is a runtime
+default mismatch, not a graphics/audio result. The clean-profile/installer
+policy intentionally excludes that optional tool. Fresh defaults now enable it
+only when available; explicit saved choices and the enabled-but-missing error
+remain. No test-only configuration override or optional-app preinstallation is
+used. A new ISO candidate is technically required to verify this runtime fix;
+the original candidate and all its scoped accepted evidence are preserved.
+[Permanent game diagnostic](evidence/v3-phase2/2026-10-25-gaming-acceptance.json).
+
+Local source verification passed 523 tests (72 environment skips), 187 syntax
 checks and ASan/UBSan. Actual game, graphics, input, audio and stability
 acceptance are **not yet claimed**. VM software rendering
 will not establish physical GPU performance, Vulkan, gamepad support, perceived

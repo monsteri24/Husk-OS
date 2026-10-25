@@ -71,7 +71,17 @@ jobs:
       - name: Verify actual Live graphical Steam installation on the same completed ISO
         run: |
           (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
-          timeout 1800 /usr/bin/python3 scripts/ci-test-v3-live-app.py --timeout 1500
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          memory={key:int(value.split()[0]) for key,value in
+              (line.split(':',1) for line in Path('/proc/meminfo').read_text().splitlines())
+              if key in ('MemTotal','MemAvailable','SwapTotal')}
+          Path('out/candidate-app-host-resources.txt').write_text(json.dumps(memory,indent=2)+'\n')
+          if min(memory['MemTotal'],memory['MemAvailable'])<(12288+2048)*1024:
+              raise RuntimeError('The host lacks the previously accepted Steam RAM plus 2 GiB headroom')
+          PY
+          timeout 1800 /usr/bin/python3 scripts/ci-test-v3-live-app.py --timeout 1500 --memory-mib 12288
       - name: Preserve diagnostic evidence without disks, passwords or signing keys
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,8 +1,10 @@
 import importlib
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 class CoreTests(unittest.TestCase):
@@ -18,7 +20,33 @@ class CoreTests(unittest.TestCase):
 
     def test_corrupt_config_uses_defaults(self):
         p = self.root / 'settings.json'; p.write_text('{broken')
-        self.assertTrue(self.config.ConfigStore(p).load()['gaming_mode'])
+        binaries=self.root/'bin';binaries.mkdir()
+        with patch.dict(os.environ,PATH=str(binaries)):
+            self.assertFalse(self.config.ConfigStore(p).load()['gaming_mode'])
+
+    def test_clean_game_launch_does_not_require_an_excluded_optional_helper(self):
+        binaries=self.root/'bin';binaries.mkdir()
+        with patch.dict(os.environ,PATH=str(binaries)):
+            settings=self.config.ConfigStore(self.root/'fresh/settings.json').load()
+            self.assertFalse(settings['gaming_mode'])
+            self.assertEqual(self.gaming.game_command(['/usr/bin/test-game','a b'],settings),
+                             ['/usr/bin/test-game','a b'])
+
+    def test_available_helper_default_keeps_explicit_user_gaming_choices(self):
+        binaries=self.root/'bin';binaries.mkdir()
+        helper=binaries/'gamemoderun';helper.write_text('#!/bin/sh\nexit 0\n');helper.chmod(0o755)
+        store=self.config.ConfigStore(self.root/'settings.json')
+        with patch.dict(os.environ,PATH=str(binaries)):
+            settings=store.load()
+            self.assertTrue(settings['gaming_mode'])
+            self.assertEqual(self.gaming.game_command(['/usr/bin/test-game'],settings),
+                             [str(helper),'/usr/bin/test-game'])
+            settings['gaming_mode']=False;store.save(settings)
+            self.assertFalse(store.load()['gaming_mode'])
+            settings['gaming_mode']=True;store.save(settings);helper.unlink()
+            self.assertTrue(store.load()['gaming_mode'])
+            with self.assertRaises(FileNotFoundError):
+                self.gaming.game_command(['/usr/bin/test-game'],store.load())
 
     def test_settings_persist_and_have_private_permissions(self):
         store = self.config.ConfigStore(self.root / 'config/settings.json')
@@ -41,7 +69,7 @@ class CoreTests(unittest.TestCase):
         self.assertTrue(settings['overlay'])
 
     def test_game_wrapper_preserves_literal_arguments(self):
-        settings = self.config.defaults(); settings['overlay'] = True
+        settings = self.config.defaults(); settings.update(gaming_mode=True,overlay=True)
         command = self.gaming.game_command(['game', '$(touch /tmp/no)', 'a b'], settings,
                                          available=lambda name: '/usr/bin/' + name)
         self.assertEqual(command, ['/usr/bin/gamemoderun', '/usr/bin/mangohud', 'game', '$(touch /tmp/no)', 'a b'])
@@ -51,8 +79,9 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(self.gaming.game_command(['game'], cfg), ['game'])
 
     def test_enabled_but_missing_game_tool_reports_error(self):
+        settings=self.config.defaults();settings['gaming_mode']=True
         with self.assertRaises(FileNotFoundError):
-            self.gaming.game_command(['game'], self.config.defaults(), available=lambda _: None)
+            self.gaming.game_command(['game'], settings, available=lambda _: None)
 
     def test_empty_game_command_is_rejected(self):
         with self.assertRaises(ValueError):

@@ -1,5 +1,5 @@
 request=V3 Phase 2 guarded installer candidate
-attempt=9-live-write-space-and-matching-steam-graphics
+attempt=10-optional-gamemode-default-game-launch-fix
 acceptance=source,GTK,Labwc,LiveUEFI,offlineDisposableInstall,installedUEFI,actualGraphicalSteam
-changes=RAM-scaled-Live-write-space,match-32-bit-Vulkan-to-existing-stack,clear-space-error
+changes=availability-aware-fresh-GameMode-default,preserve-explicit-gaming-choices,no-optional-app-preinstallation
 release=forbidden-by-user-no-publish-no-merge-no-main-changes

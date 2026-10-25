@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "latest_status": "Actual game launch blocked by missing optional GameMode helper in the original ISO; fresh-default fix and replacement candidate verification pending",
+  "original_image": {
+    "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "run": 39720818758,
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "reused_without_rebuild": true
+  },
+  "game": {
+    "name": "SuperTuxKart",
+    "version": "1.5",
+    "app_id": "net.supertuxkart.SuperTuxKart",
+    "account_required": false,
+    "source": "Signed user Flathub deployment of official STK release; source/asset licenses retained upstream",
+    "upstream": [
+      "https://github.com/supertuxkart/stk-code/blob/1.5/COPYING",
+      "https://github.com/flathub/net.supertuxkart.SuperTuxKart/blob/master/net.supertuxkart.SuperTuxKart.yml"
+    ]
+  },
+  "first_run": {
+    "run": 40171192165,
+    "job": 121102169910,
+    "source": "550b4ada4c7b91709793bad29af4b67825dff59d",
+    "memory_mib": 12288,
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40171192165",
+    "artifact": {
+      "id": 12590486069,
+      "bytes": 527257,
+      "sha256": "9755f70fa44009d85e75c7b903c36f73f2cacb912e18c0d8f799fd34427bcbe5",
+      "download_hash_verified": true
+    },
+    "result": {
+      "gameplay": "FAILED",
+      "live_shutdown": "NOT TESTED",
+      "problems": [
+        "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-auth.py\", line 318, in run\n    self.live_authorization(); self.shutdown('live')\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-gaming.py\", line 520, in live_authorization\n    if problems: raise RuntimeError('; '.join(problems)+': '+report.get('error',''))\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Actual gaming observer did not complete successfully; Missing actual gaming check: user_install_record; Missing actual gaming check: trusted_origin; Missing actual gaming check: system_packages_unchanged; Missing actual gaming check: password_unchanged; Missing actual gaming check: no_system_install; No verified signed user game deployment; No actual human controls consumed by the game engine; No completed rendered OpenGL game profile; The actual profile race did not exit naturally with code zero; No unmuted guest audio stream attributed to SuperTuxKart; No game-attributed audio capture bracket; No 60-second continuous native game/window observation; No current native game window during stability measurement; No unprivileged native game ELF in its exact Flatpak namespace: RuntimeError: Actual game client: FileNotFoundError: gamemoderun is not installed; install it or disable this setting\n",
+        "Virtual audio: No game-attributed audio capture interval was measured"
+      ],
+      "accelerator": "kvm",
+      "proof_scope": "Actual accountless STK user install, QMP/game-engine input, rendered OpenGL race and virtual HDA output; no physical hardware claim",
+      "iso_sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+      "iso_bytes": 2079227904,
+      "package_installation": "NOT TESTED",
+      "virtual_audio": "FAILED"
+    },
+    "guest": {
+      "phase": "installation",
+      "stage": "normal-loading",
+      "finished": true,
+      "success": false,
+      "checks": {
+        "initial_app_absent": true,
+        "live_session_active": true,
+        "unprivileged_launcher": true,
+        "no_extra_terminal": true
+      },
+      "app_id": "net.supertuxkart.SuperTuxKart",
+      "live_session": [
+        "Name=live",
+        "Remote=no",
+        "Active=yes"
+      ],
+      "client": {
+        "pid": 1226,
+        "uid": 1000,
+        "phase": "normal-loading",
+        "finished": true,
+        "windows": [],
+        "audio_streams": [],
+        "audio_observations": [],
+        "install_log": "Installing runtime/org.freedesktop.Platform.GL.default/x86_64/25.08\nInstalling runtime/org.freedesktop.Platform.GL.default/x86_64/25.08-extra\nInstalling runtime/org.freedesktop.Platform.Locale/x86_64/25.08\nInstalling runtime/org.freedesktop.Platform.codecs-extra/x86_64/25.08-extra\nInstalling runtime/org.freedesktop.Platform/x86_64/25.08\nInstalling app/net.supertuxkart.SuperTuxKart/x86_64/stable\n",
+        "game_version": "\u001b[0m[info   ] main: ==============================\n\u001b[0;;m\u001b[0m[info   ] main: SuperTuxKart, 1.5.\n\u001b[0;;m\u001b[0m[info   ] main: ==============================\n\u001b[0;;m",
+        "game_policy": {
+          "gaming_mode": true,
+          "overlay": false
+        },
+        "error": "FileNotFoundError: gamemoderun is not installed; install it or disable this setting",
+        "normal_log": "",
+        "profile_log": ""
+      },
+      "native_current": [],
+      "available_bytes": 3352023040,
+      "error": "RuntimeError: Actual game client: FileNotFoundError: gamemoderun is not installed; install it or disable this setting",
+      "client_output": ""
+    },
+    "interpretation": [
+      "The Flatpak install command completed and the actual --version probe reported SuperTuxKart 1.5. Independent deployment checks were not completed before the client error, so package_installation is NOT TESTED.",
+      "The actual UID-1000 session loaded gaming_mode=true/overlay=false, then the existing game_command refused to construct a launch because gamemoderun was unavailable. No race, input, graphics or audio acceptance follows.",
+      "GAME_PACKAGES/OPTIONAL_APPLICATION_PACKAGES intentionally exclude GameMode from both clean profiles and installed targets, while config._defaults unconditionally enabled it. This policy mismatch blocks default husk-game launches.",
+      "Fix fresh implicit defaults to enable GameMode only when its executable exists. Preserve every saved choice and the existing error for explicit enabled-but-missing tools; do not force a test-only setting or preinstall optional apps."
+    ]
+  },
+  "rebuild": {
+    "technically_required": true,
+    "reason": "The verified default-launch fix changes src/ownos/config.py; the original SHA-locked ISO does not contain it and cannot be reused as proof of the fixed runtime.",
+    "old_artifact_preserved": true,
+    "new_candidate": "PENDING",
+    "release_authorized": false
+  },
+  "source_validation": {
+    "run": 40171192165,
+    "source_job": 121102170202,
+    "source_tests": 521,
+    "environment_skips": 72,
+    "actual_gtk_tests": 521,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 187,
+    "native_sanitizers": "PASSED",
+    "real_wayland_run": 40171195436,
+    "real_wayland_job": 121102178924,
+    "real_wayland": "PASSED"
+  },
+  "limits": [
+    "No actual game launch/input/audio/stability result from the blocked run.",
+    "No physical GPU, Vulkan, gamepad, human audio quality, latency, online/account or proprietary-game acceptance.",
+    "Previously accepted installer, desktop, Steam and Heroic evidence remains scoped to its original immutable image."
+  ],
+  "default_fix_validation": {
+    "local_tests": 523,
+    "environment_skips": 72,
+    "syntax_checks": 187,
+    "local_asan_ubsan": "PASSED with sandbox leak detection disabled",
+    "focused_tests": 78,
+    "review": "No open findings in the targeted runtime-default fix",
+    "new_iso": "PENDING"
+  }
+}

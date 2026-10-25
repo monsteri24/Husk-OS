@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import shutil
 import stat
 import tempfile
 from pathlib import Path
@@ -61,7 +62,9 @@ def defaults():
 
 def _defaults(keyboard):
     keyboard = keyboard or {'layout': 'fi', 'variant': ''}
-    return dict(gaming_mode=True, overlay=False, animations=True,
+    # Clean profiles exclude optional gaming tools; an implicit preference must
+    # not prevent every husk-game launch. Explicit saved choices still override.
+    return dict(gaming_mode=shutil.which('gamemoderun') is not None, overlay=False, animations=True,
                 accent=HUSK_YELLOW, wallpaper='', keymap=keyboard['layout'],
                 keymap_variant=keyboard['variant'], pointer_speed=0.0,
                 taskbar_position='bottom', language=DEFAULT_LANGUAGE, show_trash=True)
