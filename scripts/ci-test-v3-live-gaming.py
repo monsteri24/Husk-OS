@@ -68,13 +68,91 @@ def parse_profile_log(text):
         raise ValueError('No complete rendered OpenGL race statistics/renderer')
     frames, runtime, reported_fps = int(match[1]), float(match[2]), float(match[3])
     triangles = float(geometry[1])
+    scene = re.search(r'Overall scene complexity estimated at (\d+)', text)
+    complexity = int(scene[1]) if scene else 0
+    shader_scene = 'GLSL supported.' in text and complexity > 0
     if (frames <= 0 or not math.isfinite(runtime) or not 60 <= runtime <= 600 or
             not math.isfinite(reported_fps) or reported_fps <= 0 or
-            not math.isfinite(triangles) or triangles <= 0):
+            not math.isfinite(triangles) or triangles < 0 or
+            (triangles == 0 and not shader_scene)):
         raise ValueError('Invalid or short native game profile')
+    # STK 1.5's SP shader renderer does not update Irrlicht's primitive
+    # counter. Keep its literal value; actual drawing must additionally pass
+    # the timed world-viewport sensor in live_authorization for every renderer.
     return dict(frames=frames, runtime_seconds=runtime,
-        upstream_reported_fps=reported_fps, average_drawn_nodes_k=triangles,
+        upstream_reported_fps=reported_fps, legacy_irrlicht_drawn_nodes_k=triangles,
+        scene_complexity=complexity,
         opengl_version=gl[1], renderer=renderer[1].strip())
+
+
+def profile_race_progress(text):
+    if not isinstance(text, str): return None
+    rows = list(re.finditer(r'\bfps:\s*time (\S+) distance (\S+) dt (\S+) fps (\S+)', text))
+    if not rows: return None
+    try: game_time, distance, dt, fps = map(float, rows[-1].groups())
+    except ValueError: return None
+    if not all(math.isfinite(value) for value in (game_time, distance, dt, fps)):
+        return None
+    if game_time <= 1 or distance <= 5 or dt <= 0 or fps <= 0: return None
+    return dict(game_time=game_time, distance=distance)
+
+
+def summarize_rendered_frames(directory, frames):
+    from PIL import Image, ImageChops, ImageStat
+    if not isinstance(frames, list) or len(frames) != 4:
+        raise ValueError('Four actual race viewport captures are required')
+    for name in ('wall_seconds', 'healthy_seconds', 'game_time', 'distance'):
+        values = [row.get(name) for row in frames]
+        if any(type(value) not in (int, float) or not math.isfinite(value) for value in values):
+            raise ValueError('Invalid actual race capture clock/progress')
+        if name != 'distance' and any(b <= a for a, b in zip(values, values[1:])):
+            raise ValueError('Race capture clocks did not advance')
+    span = frames[-1]['wall_seconds']-frames[0]['wall_seconds']
+    healthy_span = frames[-1]['healthy_seconds']-frames[0]['healthy_seconds']
+    if not 60 <= span <= 300 or healthy_span < span-2.5:
+        raise ValueError('No continuous 60-second rendered race capture interval')
+    if (any(row['game_time'] <= 1 or row['distance'] <= 5 for row in frames) or
+            max(row['distance'] for row in frames)-min(row['distance'] for row in frames) < 10):
+        raise ValueError('Captures show loading or no actual race progress')
+    images=[]; samples=[]; size=None; crop=None
+    for row in frames:
+        name=row.get('file', '')
+        if not isinstance(name, str) or Path(name).name != name:
+            raise ValueError('Invalid original race capture filename')
+        with Image.open(Path(directory)/name) as original:
+            if size is None:
+                size=original.size
+                if size[0] < 640 or size[1] < 480: raise ValueError('Race viewport capture is too small')
+                crop=(size[0]//4, size[1]//4, size[0]*3//4, size[1]*3//4)
+            if original.size != size: raise ValueError('Race capture dimensions changed')
+            # Central world region excludes the observed clock/minimap/HUD.
+            im=original.convert('RGB').crop(crop).resize((160,100))
+        diversity=len({tuple(value//16 for value in pixel) for pixel in im.getdata()})
+        if diversity < 32: raise ValueError('No diverse rendered world content')
+        images.append(im)
+        samples.append(dict(file=name, wall_seconds=row['wall_seconds'],
+            healthy_seconds=row['healthy_seconds'], game_time=row['game_time'],
+            distance=row['distance'], quantized_colors=diversity,
+            world_rgb_sha256=hashlib.sha256(im.tobytes()).hexdigest()))
+    changes=[]
+    for first,last in zip(images, images[1:]):
+        delta=ImageChops.difference(first,last)
+        fractions=[]
+        for y in range(3):
+            for x in range(3):
+                tile=delta.crop((x*160//3,y*100//3,(x+1)*160//3,(y+1)*100//3))
+                pixels=list(tile.getdata())
+                fractions.append(sum(max(pixel)>=16 for pixel in pixels)/len(pixels))
+        fraction=sum(max(pixel)>=16 for pixel in delta.getdata())/(160*100)
+        mean=sum(ImageStat.Stat(delta).mean)/3
+        tiles=sum(value>=.1 for value in fractions)
+        changes.append(dict(changed_pixel_fraction=fraction,mean_absolute_rgb_difference=mean,
+            changed_tiles=tiles,tile_changed_fractions=fractions,
+            substantial=fraction>=.1 and mean>=4 and tiles>=5))
+    motion=sum(row['substantial'] for row in changes)
+    if motion < 2: raise ValueError('No distributed world motion across multiple race intervals')
+    return dict(wall_seconds=span, crop=list(crop), analysis_size=[160,100],
+        samples=samples,changes=changes,substantial_motion_intervals=motion)
 
 
 def summarize_audio(path, start_byte, end_byte, clip_path=None):
@@ -211,7 +289,9 @@ bridge=None; process=None; store=ToplevelStore()
 def tail(path):
     if not path.is_file(): return ''
     with path.open('rb') as stream:
-        head=stream.read(16000); stream.seek(max(16000,path.stat().st_size-80000))
+        # The real track initialization is around byte40k. Keep that bounded
+        # startup evidence when per-frame diagnostics grow the logfile.
+        head=stream.read(64000); stream.seek(max(64000,path.stat().st_size-80000))
         return (head+stream.read(80000)).decode(errors='replace')
 def write():
     temporary=directory/'client.tmp';temporary.write_text(json.dumps(state));temporary.replace(directory/'client.json')
@@ -240,7 +320,7 @@ try:
     settings=ConfigStore().load()
     state['game_policy']={key:settings[key] for key in ('gaming_mode','overlay')}
     common=['--no-start-screen','--track=lighthouse','--kart=tux','--difficulty=0',
-        '--fullscreen','--screensize=800x600','--render-driver=gl','--disable-dynamic-lights',
+        '--fullscreen','--screensize=800x600','--render-driver=opengl','--disable-dynamic-lights',
         '--disable-ssao','--shadows=0','--log=0']
     bridge=subprocess.Popen(['/usr/bin/own-toplevel'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
     reader=PipeLineReader(bridge.stdout.fileno())
@@ -280,7 +360,7 @@ try:
         subprocess.run(['/usr/bin/flatpak','kill',APP_ID],capture_output=True,timeout=15)
         process.wait(timeout=20);state['normal_controlled_stop']=True
     with (directory/'game-profile.log').open('w') as log:
-        state['phase']='profile-running';process=launch(['--numkarts=3','--profile-time=120'],log)
+        state['phase']='profile-running';process=launch(['--numkarts=3','--profile-time=120','--fps-debug'],log)
         launched=time.monotonic();pump()
         while process.poll() is None:
             state['profile_log']=tail(directory/'game-profile.log');pump()
@@ -491,7 +571,7 @@ class GamingAcceptance(auth.AuthorizationAcceptance):
     def live_authorization(self):
         self.result.update(package_installation='NOT TESTED',virtual_audio='NOT TESTED')
         started=time.monotonic();next_ready=15;delivered=terminal=launched=driven=captured=False
-        previous=None;frames=[];next_frame=0
+        previous=None;frames=[];next_frame=0;visual_since=None
         while time.monotonic()-started<self.args.timeout:
             self.alive();elapsed=time.monotonic()-started;output=self.serial.read()
             if not delivered:
@@ -514,20 +594,26 @@ class GamingAcceptance(auth.AuthorizationAcceptance):
                     if type(age) in (int,float) and 0<=age<=2 and any(row.get('active') is True for row in client.get('windows',[])):
                         self.drive(report);driven=True
                 stable=report.get('stability',{})
-                if stage=='profile-running' and stable.get('healthy_seconds',-1)>=next_frame and len(frames)<4:
+                progress=profile_race_progress(client.get('profile_log'))
+                visual_ready=(stage=='profile-running' and progress is not None and
+                    report.get('native_current') and client.get('windows') and report.get('available_bytes',0)>0)
+                if visual_ready and visual_since is None: visual_since=time.monotonic()
+                visual_elapsed=time.monotonic()-visual_since if visual_since is not None else -1
+                if visual_ready and visual_elapsed>=next_frame and len(frames)<4:
                     path=self.artifacts/('game-profile-'+str(len(frames))+'.png');self.monitor.capture(path)
-                    frames.append(dict(file=path.name,healthy_seconds=stable['healthy_seconds'],sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
-                    next_frame+=20
+                    frames.append(dict(file=path.name,wall_seconds=time.monotonic()-visual_since,
+                        healthy_seconds=stable['healthy_seconds'],**progress,
+                        sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+                    next_frame=frames[-1]['wall_seconds']+20
                 if report.get('finished'):
                     problems=validate_gameplay_report(report)
                     if problems: raise RuntimeError('; '.join(problems)+': '+report.get('error',''))
-                    if len(frames)<4 or len({row['sha256'] for row in frames})<3:
-                        raise RuntimeError('No sequence of changing rendered race frames across stability measurement')
+                    rendered=summarize_rendered_frames(self.artifacts,frames)
                     if not captured:
                         self.result['target_blockstats']=vm.cancellation_blockstats(self.monitor.command('query-blockstats'))
                         self.result.update(input=parse_input_history(report['input_history']),
                             profile=parse_profile_log(client['profile_log']),stability=stable,
-                            rendered_frames=frames,game_policy=client.get('game_policy'),
+                            rendered_frames=frames,rendered_scene=rendered,game_policy=client.get('game_policy'),
                             deployment_commit=report['deployment_commit'],origin=report['origin'])
                         (self.artifacts/'game-input-history.log').write_text(report['input_history'])
                         self.resources['cleanup']=b'CLEANUP\n';captured=True

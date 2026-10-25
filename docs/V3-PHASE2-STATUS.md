@@ -143,6 +143,18 @@ zero target data writes/unmaps and clean shutdown. The downloaded evidence
 archive digest and Steam screenshot were inspected. The game workflow reuses
 this exact replacement artifact; no further rebuild is needed.
 
+[Second game run 40174676166](https://github.com/monsteri24/Husk-OS/actions/runs/40174676166)
+confirmed the actual fresh default launch, all nine deployment/session guards,
+original-engine keyboard input, OpenGL 4.6/llvmpipe, varying attributed virtual
+audio and 219.710735192 seconds of native continuity. The profile exited
+naturally with code zero. Overall acceptance still failed: its GLSL renderer
+uses a separate polygon counter while the legacy Irrlicht counter reports zero.
+The initial screenshot also showed Loading, leaving less than 60 seconds of
+race-view images. The corrected sensor waits for actual race progress and
+requires 60 host seconds of distributed world-viewport motion, retaining all
+other gates. Final disk and shutdown checks were not reached in that failed run.
+A fresh same-image run is required; this is a harness correction.
+
 Latest CI passed **524 real GTK tests** (one root-only skip), 187 syntax checks,
 normal native sanitizers and real Labwc. Local checks passed 524 tests with 72
 environment skips and ASan/UBSan. Actual game, graphics, input, audio and

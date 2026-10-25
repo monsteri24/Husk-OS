@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "latest_status": "Replacement candidate build, Live UEFI, offline installation, installed UEFI and strict Steam acceptance passed; actual gameplay on the fixed image pending",
+  "latest_status": "Corrected image launches the actual game and virtual audio passes; full acceptance remains failed at an obsolete graphics counter, with corrected timed world sensor pending rerun",
   "original_image": {
     "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
     "run": 39720818758,
@@ -199,7 +199,7 @@
     "real_wayland": "PASSED"
   },
   "limits": [
-    "No actual game launch/input/audio/stability result from the blocked run.",
+    "The first run never launched. The second run established partial native-game/input/virtual-audio observations but failed full rendering acceptance and did not reach final target-write/shutdown checks.",
     "No physical GPU, Vulkan, gamepad, human audio quality, latency, online/account or proprietary-game acceptance.",
     "Previously accepted installer, desktop, Steam and Heroic evidence remains scoped to its original immutable image."
   ],
@@ -224,5 +224,137 @@
     "native_sanitizers": "PASSED",
     "real_wayland_run": 40173149563,
     "real_wayland": "PASSED"
+  },
+  "second_run": {
+    "run": 40174676166,
+    "job": 121112682601,
+    "source": "383d4fea2711d4e1f5c977543cb604cb4a929d1b",
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40174676166",
+    "memory_mib": 12288,
+    "artifact": {
+      "id": 12591538241,
+      "bytes": 7009232,
+      "sha256": "5792d28c017ee36566a443e8be87597c71879e68c724f90cacb1a05c518b98ae",
+      "download_hash_verified": true
+    },
+    "result": {
+      "gameplay": "FAILED",
+      "live_shutdown": "NOT TESTED",
+      "problems": [
+        "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-auth.py\", line 318, in run\n    self.live_authorization(); self.shutdown('live')\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-gaming.py\", line 523, in live_authorization\n    if problems: raise RuntimeError('; '.join(problems)+': '+report.get('error',''))\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: No completed rendered OpenGL game profile: \n"
+      ],
+      "accelerator": "kvm",
+      "proof_scope": "Actual accountless STK user install, QMP/game-engine input, rendered OpenGL race and virtual HDA output; no physical hardware claim",
+      "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+      "iso_bytes": 2080997376,
+      "package_installation": "PASSED",
+      "virtual_audio": "PASSED",
+      "audio_capture_interval_bytes": [
+        2662400,
+        4435968
+      ],
+      "audio_measurements": {
+        "seconds": 10.054240362811791,
+        "sample_rate": 44100,
+        "channels": 2,
+        "peak": 7043,
+        "rms": 1128.7375530260372,
+        "minimum": -6906,
+        "maximum": 7043,
+        "bytes": 1773568,
+        "temporal_peak_to_peak": 13864
+      }
+    },
+    "checks": {
+      "initial_app_absent": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "user_install_record": true,
+      "trusted_origin": true,
+      "system_packages_unchanged": true,
+      "password_unchanged": true,
+      "no_system_install": true
+    },
+    "game_policy": {
+      "gaming_mode": false,
+      "overlay": false
+    },
+    "deployment_commit": "e2b859bf213a539f25e3e7304d02de3c2bb294e0bb1ccd300221961f73ffeb87",
+    "origin": "flathub",
+    "input_history": "STK-version:      1.5\nHistory-version:  1\nnumkarts:         1\nnumplayers:       1\ndifficulty:       0\nreverse: n\ntrack: lighthouse\nmodel 0: tux\ncount:     6\n0 0 2 32768\n124 0 1 32768\n178 0 1 0\n178 0 0 32768\n238 0 0 0\n442 0 2 0\nHistory file end.\n",
+    "profile_exit_code": 0,
+    "observed_native_stability": {
+      "healthy_seconds": 219.71073519200002,
+      "samples": 215,
+      "windows": [
+        {
+          "id": 3,
+          "title": "SuperTuxKart",
+          "app_id": "supertuxkart",
+          "active": true,
+          "minimized": false,
+          "maximized": false,
+          "fullscreen": true,
+          "outputs": [
+            {
+              "name": "Virtual-1",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 800
+            }
+          ]
+        }
+      ],
+      "processes": [
+        {
+          "pid": 1683,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "net.supertuxkart.SuperTuxKart",
+          "executable": "/app/bin/supertuxkart",
+          "namespace_pids": [
+            1683,
+            2
+          ]
+        }
+      ]
+    },
+    "available_bytes": 3278864384,
+    "profile_observations": [
+      "[warn   ] IrrDriver: Unknown driver gl, revert to opengl",
+      "[info   ] IrrDriver: OpenGL version: 4.6",
+      "[info   ] IrrDriver: OpenGL renderer: llvmpipe (LLVM 21.1.8, 256 bits)",
+      "[info   ] irr_driver: GLSL supported.",
+      "[info   ] Track: Overall scene complexity estimated at 156, Auto-LoD multiplier is 2.651560",
+      "[verbose  ] profile: Number of frames: 15005 time 218.915009, Average FPS: 68.542580",
+      "[verbose  ] profile: Average # drawn nodes           0.000000 k"
+    ],
+    "interpretation": [
+      "The actual fresh policy is gaming_mode=false/overlay=false and the original unmodified game runs through husk-game, proving the default-launch fix on the new image.",
+      "All nine session/deployment guards, original-engine acceleration/steering history, game-attributed varying virtual PCM, 219.710735192 seconds of current native window/process observations and natural exit0 were observed.",
+      "Full gameplay FAILED: STK1.5 ProfileWorld reads Irrlicht primitive counts, while its GLSL SP renderer maintains separate SP::sp_solid_poly_count. The reported legacy counter0 must not be described as positive rendered geometry.",
+      "Inspected original screenshots show a moving 3D race, but screenshot0 is Loading and screenshots1-3 cover only40 seconds. This run is not retroactively accepted by changing the parser.",
+      "The corrected harness requires actual MainLoop race progress before four central-world captures span60 host seconds, with distributed scene motion plus all existing native/OpenGL/profile/input/audio/exit gates. Fix observed driver spelling gl to opengl without changing the actual renderer.",
+      "Independent review reproduced verbose-log truncation of startup scene evidence. A RED/GREEN regression now retains a bounded64k startup prefix including the observed scene line around40k plus final80k.",
+      "Final target-write observation and normal Live shutdown were not reached; they remain NOT TESTED for this failed run."
+    ],
+    "primary_source": [
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/modes/profile_world.cpp",
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/graphics/sp/sp_base.cpp",
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/graphics/irr_driver.cpp",
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/main_loop.cpp"
+    ]
+  },
+  "visual_sensor_fix_validation": {
+    "local_tests": 528,
+    "environment_skips": 72,
+    "syntax_checks": 187,
+    "local_asan_ubsan": "PASSED with sandbox leak detection disabled",
+    "focused_gaming_tests": 12,
+    "regressions": "Observed RED then GREEN for shader-counter interpretation, race readiness, loading/static/HUD-only/small-object/short/gapped images and bounded startup-log retention",
+    "review": "No remaining findings after resolving startup-log retention",
+    "actual_same_image_rerun": "PENDING"
   }
 }

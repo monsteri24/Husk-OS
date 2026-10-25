@@ -92,6 +92,86 @@ class LiveGamingAcceptanceTests(unittest.TestCase):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 self.harness.parse_profile_log(invalid)
 
+    def test_shader_race_does_not_misinterpret_the_unused_irrlicht_counter(self):
+        # Literal observations from real run 40174676166. STK's SP renderer
+        # counts geometry separately from ProfileWorld's Irrlicht counter.
+        shader = PROFILE.replace('20.000000 k', '0.000000 k') + '''
+[info   ] irr_driver: GLSL supported.
+[info   ] Track: Overall scene complexity estimated at 156, Auto-LoD multiplier is 2.651560
+'''
+        actual = self.harness.parse_profile_log(shader)
+        self.assertEqual(actual['legacy_irrlicht_drawn_nodes_k'], 0)
+        self.assertEqual(actual['scene_complexity'], 156)
+        for invalid in (shader.replace('GLSL supported.', 'No shaders'),
+                        shader.replace('estimated at 156', 'estimated at 0'),
+                        shader.replace('0.000000 k', '-1.000000 k'),
+                        shader.replace('0.000000 k', 'nan k')):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                self.harness.parse_profile_log(invalid)
+
+    def test_visual_sampling_waits_for_actual_racing_after_loading(self):
+        # Official STK 1.5 MainLoop --fps-debug contract, not profile's
+        # physics-update count mislabeled as frames per second.
+        line = '[verbose  ] fps: time 2.250000 distance 20.500000 dt 0.033333 fps 30.000000\n'
+        progress = self.harness.profile_race_progress('loading\n' + line)
+        self.assertEqual(progress['game_time'], 2.25)
+        self.assertEqual(progress['distance'], 20.5)
+        for invalid in ('Loading', line.replace('2.250000', '0.000000'),
+                        line.replace('20.500000', '0.000000'),
+                        line.replace('2.250000', 'nan'), line.replace('0.033333', '0.000000')):
+            self.assertIsNone(self.harness.profile_race_progress(invalid))
+
+    def test_verbose_race_log_retains_actual_startup_scene_and_final_statistics(self):
+        client=ast.parse(self.harness.GAME_CLIENT)
+        tail=next(node for node in client.body if isinstance(node,ast.FunctionDef) and node.name=='tail')
+        namespace={}
+        exec(compile(ast.Module(body=[tail],type_ignores=[]),'game-log-reader','exec'),namespace)
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary)/'profile.log'
+            # In the actual run, scene initialization is beyond the old16k
+            # prefix. --fps-debug then pushes it outside the last80k as well.
+            path.write_text('OpenGL version: 4.6\n'+'x'*39939+
+                '\nOverall scene complexity estimated at 156\n'+'fps log\n'*30000+PROFILE)
+            kept=namespace['tail'](path)
+            self.assertIn('Overall scene complexity estimated at 156',kept)
+            self.assertIn('Number of frames: 14400',kept)
+            self.assertLessEqual(len(kept),144000)
+
+    def test_rendered_world_requires_distributed_motion_after_loading_for_sixty_seconds(self):
+        from PIL import Image, ImageDraw
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            frames = [dict(file='frame-'+str(i)+'.png', wall_seconds=i*20,
+                healthy_seconds=15+i*20, game_time=2+i*10, distance=20+i*40) for i in range(4)]
+            texture = Image.frombytes('RGB', (640, 480), bytes(
+                (x*3+y*5+channel*53) % 256 for y in range(480) for x in range(640) for channel in range(3)))
+            def images(mode):
+                for i, row in enumerate(frames):
+                    im = texture.copy() if mode in ('static', 'hud', 'small') else Image.frombytes(
+                        'RGB', (640,480), bytes((value+i*47) % 256 for value in texture.tobytes()))
+                    if mode == 'blank': im = Image.new('RGB', (640,480), (i*40,)*3)
+                    if mode == 'hud': ImageDraw.Draw(im).rectangle((580,0,639,30), fill=(i*50,0,0))
+                    if mode == 'small': ImageDraw.Draw(im).rectangle((315,235,325,245), fill=(i*50,0,0))
+                    im.save(directory/row['file'])
+            images('moving')
+            measured = self.harness.summarize_rendered_frames(directory, frames)
+            self.assertGreaterEqual(measured['wall_seconds'], 60)
+            self.assertGreaterEqual(measured['substantial_motion_intervals'], 2)
+            for mode in ('blank','static','hud','small'):
+                images(mode)
+                with self.subTest(mode=mode), self.assertRaises(ValueError):
+                    self.harness.summarize_rendered_frames(directory, frames)
+            images('moving')
+            for changes in (dict(wall_seconds=59), dict(game_time=0), dict(distance=0),
+                            dict(healthy_seconds=40)):
+                invalid=copy.deepcopy(frames); invalid[-1].update(changes)
+                with self.subTest(changes=changes), self.assertRaises(ValueError):
+                    self.harness.summarize_rendered_frames(directory, invalid)
+            loading=copy.deepcopy(frames)
+            for row in loading: row.update(game_time=0, distance=0)
+            with self.assertRaises(ValueError):
+                self.harness.summarize_rendered_frames(directory, loading)
+
     def test_wrapper_window_missing_proof_and_unmeasured_stability_cannot_pass(self):
         report = self.report()
         self.assertEqual(self.harness.validate_gameplay_report(report), [])
