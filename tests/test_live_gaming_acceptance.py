@@ -84,6 +84,9 @@ class LiveGamingAcceptanceTests(unittest.TestCase):
         self.assertEqual(actual['frames'], 14400)
         self.assertEqual(actual['runtime_seconds'], 120)
         self.assertIn('llvmpipe', actual['renderer'])
+        # The actual log first names the API, then the device implementation.
+        mixed='[info   ] [IrrDriver Logger]: Using renderer: OpenGL 4.6\n'+PROFILE
+        self.assertIn('llvmpipe',self.harness.parse_profile_log(mixed)['renderer'])
         for invalid in ('Window appeared', PROFILE.replace('14400','0'),
                         PROFILE.replace('120.000000','nan'),
                         PROFILE.replace('time 120.000000','time 1.000000'),

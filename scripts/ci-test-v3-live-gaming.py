@@ -61,7 +61,8 @@ def parse_profile_log(text):
     if not isinstance(text, str): raise ValueError('No native game profile log')
     match = re.search(r'Number of frames:\s*(\d+)\s+time\s+([^,\s]+),\s*Average FPS:\s*(\S+)', text, re.I)
     gl = re.search(r'OpenGL(?: version)?[:\s]+([0-9]+\.[0-9]+)', text, re.I)
-    renderer = re.search(r'(?:OpenGL renderer|Renderer):\s*([^\r\n]+)', text, re.I)
+    renderer = re.search(r'OpenGL renderer:\s*([^\r\n]+)', text, re.I)
+    if not renderer: renderer = re.search(r'Renderer:\s*([^\r\n]+)', text, re.I)
     if not renderer: renderer = re.search(r'((?:llvmpipe|softpipe)[^\r\n]+)', text, re.I)
     geometry = re.search(r'Average # drawn nodes\s+([^\s]+)', text, re.I)
     if not all((match, gl, renderer, geometry)):

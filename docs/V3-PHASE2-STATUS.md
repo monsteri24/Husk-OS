@@ -27,7 +27,7 @@ resolves to IANA zones with DST; the installed keyboard layout/variant is
 retained. The completion view provides the requested decreasing 30-second
 countdown and Restart Later/Restart Now order.
 
-## Current candidate and verified application startup
+## Preserved application startup acceptance
 
 The existing [candidate 39720818758](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758),
 runtime source `285fb33`, retains its normal Live UEFI boot, all 19 offline
@@ -101,66 +101,75 @@ Current application CI passed **513 real GTK tests** (one root-only skip),
 passed. Local verification passed 513 tests (72 environment skips), the same
 syntax checks and ASan/UBSan; focused review has no open findings. Heroic's
 first-start tool/Proton installation completed before acceptance, but the
-virtual GPU reported no Vulkan 1.1 support. Game, DXVK/VKD3D and physical-GPU
+virtual GPU reported no Vulkan 1.1 support. Account-backed games, DXVK/VKD3D and physical-GPU
 compatibility require separate testing.
 
-- [Current ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
+- [Preserved ISO/checksum](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12401517977), retained until 2026-10-29
 - Size: **2,079,227,904 bytes**
 - SHA-256: `3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05`
 - [Build/boot/install/application evidence](https://github.com/monsteri24/Husk-OS/actions/runs/39720818758/artifacts/12402122296)
 - [Permanent scoped installer acceptance](evidence/v3-phase2/2026-10-22-candidate-acceptance.json)
 
-## Actual gameplay continuation in progress
+## Actual gameplay acceptance
 
-The 2026-10-25 continuation adds accountless SuperTuxKart 1.5 gameplay tests
-initially on the preserved immutable ISO. The signed user Flatpak runs through
-the existing Husk game entry point/default policy. A normal race records actual keyboard
-acceleration/steering in the game's own history and a game-attributed virtual
-HDA/WAV audio segment. A separate profile race must render OpenGL geometry,
-remain continuously observed for at least 60 wall seconds and exit naturally.
-No Steam/Heroic or installer scenario is repeated by this test.
+[Actual game run 40202229908](https://github.com/monsteri24/Husk-OS/actions/runs/40202229908),
+source `76f3336`, **passed** in a fresh 12 GiB KVM Live VM. It downloaded the
+signed user Flathub deployment of **SuperTuxKart 1.5**, an accountless Linux
+3D racer, and used the actual `husk-game` entry point with the fresh default
+policy. Game binaries and assets were unchanged.
 
-The first [actual game run 40171192165](https://github.com/monsteri24/Husk-OS/actions/runs/40171192165)
-verified the unchanged original ISO, completed the user Flatpak install command
-and reported STK 1.5, then stopped before launching a race: the actual fresh
-configuration enabled GameMode but `gamemoderun` was absent. This is a runtime
-default mismatch, not a graphics/audio result. The clean-profile/installer
-policy intentionally excludes that optional tool. Fresh defaults now enable it
-only when available; explicit saved choices and the enabled-but-missing error
-remain. No test-only configuration override or optional-app preinstallation is
-used. A new ISO candidate is technically required to verify this runtime fix;
-the original candidate and all its scoped accepted evidence are preserved.
-[Permanent game diagnostic](evidence/v3-phase2/2026-10-25-gaming-acceptance.json).
+| Property | Actual scoped result |
+| --- | --- |
+| Installation and identity | All nine local-session/user/trust/system-state checks passed; exact native ELF `/app/bin/supertuxkart`, UID 1000 and Flatpak namespace `net.supertuxkart.SuperTuxKart`. |
+| Graphics | OpenGL **4.6**, **llvmpipe (LLVM 21.1.8, 256 bits)**, GLSL and track initialization. Four original full-screen race images span **60.96151523 host seconds** after race progress begins; all three adjacent intervals show distributed world motion in all nine sampled tiles. All originals were inspected and their SHA-256 values verified. Actual mode was **1280×800**; the game selected it from the requested 800×600. |
+| Input | The original engine history contains **six** actual acceleration/left/right press/release events, ticks **76–748**, in the single-player lighthouse race. Before/after images show actual movement. |
+| Virtual audio | **10.031020408 seconds**, stereo 44.1 kHz PCM, peak **7410**, RMS **1400.348**, temporal range **14134**. **51** fresh Pulse observations bracket the capture and match the native game/namespace PID, unmuted and uncorked with no query errors or other active streams. The bounded WAV clip was reanalysed with identical measurements. |
+| Stability and exit | **192.074204591 continuous healthy seconds**, **189 samples**, current native full-screen game window/process, **3,278,053,376 bytes free**, natural profile exit **0**. The human-input race is explicitly stopped after proof; the separate AI profile exits naturally. |
+| Isolation and shutdown | Final target data writes/unmaps **zero**; normal Live shutdown **passed**. |
 
-The necessary replacement [candidate 40172519876](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876),
-source `96a0a02`, passed payload checks, normal Live UEFI, all 19 offline target
-checks, zero-write Cancel, Restart Later, independent installed UEFI/default
-Husk login and both shutdowns. Its exact ISO is **2,080,997,376 bytes**, SHA-256
+This uses the necessary replacement [candidate 40172519876](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876),
+runtime source `96a0a02`: **2,080,997,376 bytes**, SHA-256
 `496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715`.
-All 20 graphical Steam checks and strict startup passed again in the bounded
-12 GiB guest: **30.795566443 healthy seconds**, **2,978,816,000 free bytes**,
-zero target data writes/unmaps and clean shutdown. The downloaded evidence
-archive digest and Steam screenshot were inspected. The game workflow reuses
-this exact replacement artifact; no further rebuild is needed.
+The game workflow downloaded and hashed this existing artifact; no further
+rebuild occurred. The candidate separately passed payload checks, normal Live
+UEFI, all 19 offline target checks, zero-write Cancel, Restart Later, independent
+installed UEFI/default Husk login and both shutdowns. All 20 graphical Steam
+checks and strict startup passed again: **30.795566443 healthy seconds**,
+**2,978,816,000 free bytes**, zero target data writes/unmaps and clean shutdown.
 
-[Second game run 40174676166](https://github.com/monsteri24/Husk-OS/actions/runs/40174676166)
-confirmed the actual fresh default launch, all nine deployment/session guards,
-original-engine keyboard input, OpenGL 4.6/llvmpipe, varying attributed virtual
-audio and 219.710735192 seconds of native continuity. The profile exited
-naturally with code zero. Overall acceptance still failed: its GLSL renderer
-uses a separate polygon counter while the legacy Irrlicht counter reports zero.
-The initial screenshot also showed Loading, leaving less than 60 seconds of
-race-view images. The corrected sensor waits for actual race progress and
-requires 60 host seconds of distributed world-viewport motion, retaining all
-other gates. Final disk and shutdown checks were not reached in that failed run.
-A fresh same-image run is required; this is a harness correction.
+- [Current candidate ISO and checksums](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876/artifacts/12590858411), retained until 2026-11-01.
+- [Actual game images, logs, JSON and bounded audio clip](https://github.com/monsteri24/Husk-OS/actions/runs/40202229908/artifacts/12602636886), retained until 2026-11-24.
+- [Permanent game evidence and preserved failed attempts](evidence/v3-phase2/2026-10-25-gaming-acceptance.json).
 
-Latest CI passed **524 real GTK tests** (one root-only skip), 187 syntax checks,
-normal native sanitizers and real Labwc. Local checks passed 524 tests with 72
-environment skips and ASan/UBSan. Actual game, graphics, input, audio and
-stability acceptance are **not yet claimed**. VM software rendering
-will not establish physical GPU performance, Vulkan, gamepad support, perceived
-audio quality, input latency, online/account or proprietary-game compatibility.
+The first game run on the preserved original image found a real default-launch
+blocker: fresh settings enabled optional GameMode while `gamemoderun` was absent.
+The minimal runtime fix enables that implicit default only when its executable
+exists; saved choices and the explicit enabled-but-missing error remain. This
+runtime change justified the replacement build; no optional apps were added.
+
+The second run launched the game and measured input/audio/native continuity but
+failed at STK's legacy Irrlicht geometry counter, which the SP shader renderer
+does not update. Its first capture was also Loading. Those attempts remain
+failed. The corrected sensor retains literal legacy zero, explicit GLSL/scene
+initialization and every other gate, and additionally requires race progress
+plus 60 host seconds of distributed central-world motion. Bounded startup-log
+retention preserves scene evidence amid per-frame diagnostics. Review findings
+were resolved with RED/GREEN regressions before the fresh successful run.
+The later metadata-only regression prefers the explicit renderer device name
+over an earlier API label; replaying every acceptance validator on the original
+successful artifact passed. No new VM or ISO is required for that label fix.
+
+CI passed **528 actual GTK tests** (one root-only skip), **187 syntax checks**,
+normal native sanitizers and [real Labwc 40202234569](https://github.com/monsteri24/Husk-OS/actions/runs/40202234569).
+Local checks passed 528 tests (72 environment skips), ASan/UBSan and all 12 game
+regressions. Artifact archive/PNG/clip hashes and all original screenshots were
+inspected. STK's profile FPS counter includes physics updates and establishes
+no presented-frame rate or gaming-performance improvement.
+
+Physical GPU/Vulkan performance, physical audio/listening quality, input
+latency/gamepads, long soak tests, personal-account games, Proton/DXVK/VKD3D,
+anti-cheat and online multiplayer remain untested. These VM results authorize
+no merge or release; `.hpk` remains the planned native format.
 
 ## Earlier installer/restart acceptance
 
@@ -247,11 +256,11 @@ normal Live UEFI and offline installation/independent installed UEFI boot. The
 Steam first-start failure is now resolved in the tested 12 GiB Live VM configuration.
 
 Physical Wi-Fi/Bluetooth adapters, GPU/firmware, actual USB removal and nonempty
-real-hardware targets need independent testing. The VM renderer is pixman.
+real-hardware targets need independent testing. The desktop VM renderer is pixman; the separately tested game uses llvmpipe.
 Normal graphical package authorization and successful Steam installation are
 now observed on the new image. A native Steam sign-in window is also observed,
 and healthy self-update/startup passed the scoped VM gate. Heroic's user
-installation and native launcher also passed separately. Account/game launches
+installation and native launcher also passed separately. Account-backed Steam/Heroic game launches
 and physical GPU compatibility remain unverified. Earlier root-container
 transactions are a narrower proof. The installer supports UEFI whole-drive erase only;
 alongside installation is not implemented or advertised.

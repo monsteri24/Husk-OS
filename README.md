@@ -77,7 +77,7 @@ Version 3 is being developed separately from the published releases.
 
 The development branch has passed automated tests covering graphical authorization, disposable-disk installation, installed UEFI boot, Husk Desktop login and installation-completion restarts.
 
-The current candidate passed normal Live UEFI boot, offline installation, independent installed UEFI login and actual graphical Steam package installation. Steam's completed self-updates and native sign-in window passed the strengthened 30-second startup gate on the same ISO in a 12 GiB Live VM. Heroic graphical user Flatpak installation and native launcher startup also passed on the same ISO. Account/game launches and physical hardware testing remain outstanding. See the scoped [V3 acceptance status](docs/V3-PHASE2-STATUS.md).
+V3 candidates passed normal Live UEFI boot, offline installation, independent installed UEFI login and actual graphical Steam/Heroic installation and native startup. The latest candidate also passed an actual accountless **SuperTuxKart 1.5** game test through the Husk game launcher: software OpenGL rendering, engine-consumed keyboard input, attributed virtual audio, a 60-second rendered-race interval, approximately 192 seconds of native stability, zero target writes and clean shutdown. This continuation fixed fresh launches when optional GameMode is absent. Physical GPU performance, listening quality, controllers, latency and account-backed games remain untested. Exact image/test provenance and preserved earlier results are in the [V3 acceptance status](docs/V3-PHASE2-STATUS.md).
 
 **No V3 release has been published.**
 
