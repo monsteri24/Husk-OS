@@ -25,10 +25,36 @@ def snapshot(module):
             children=[dict(path='/dev/sda1', type='part')])])),
             boot_mount=probe(dict(filesystems=[dict(source='/dev/sda1', target='/run/archiso/bootmnt',
                 fstype='iso9660', options='ro,relatime')])),
-            swap=probe(dict(swapdevices=[])), udisks=dict(status='collected', stdout='masked\n')))
+            swap=dict(status='collected',stdout='Filename\tType\tSize\tUsed\tPriority\n'),
+            udisks=dict(status='collected', stdout='masked\n')))
 
 
 class HardwareReportTests(unittest.TestCase):
+    def test_builtin_ahci_needs_the_initcall_guard_and_actual_unbound_controller(self):
+        module=collector(); state=snapshot(module)
+        state['storage_modules']['ahci']=False
+        state['storage_builtin']=dict(ahci=True)
+        state['pci_storage']=[dict(class_code='0x010601',driver=None)]
+        state['probes']['swap']['stdout']='Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n'
+        self.assertEqual(module.validate_live_usb(state),[])
+        state['pci_storage'][0]['driver']='ahci'
+        self.assertTrue(module.validate_live_usb(state))
+        state['pci_storage'][0]['driver']=None
+        state['storage_builtin']['ahci']=False
+        self.assertTrue(module.validate_live_usb(state))
+
+    def test_secure_boot_uses_actual_efivar_or_current_kernel_evidence_without_guessing(self):
+        module=collector()
+        disabled=dict(status='collected',stdout='secureboot: Secure boot disabled\n')
+        enabled=dict(status='collected',stdout='secureboot: Secure boot enabled\n')
+        self.assertEqual(module.secure_boot_status(None,disabled),'disabled')
+        self.assertEqual(module.secure_boot_status(None,enabled),'enabled')
+        self.assertEqual(module.secure_boot_status(bytes([6,0,0,0,0]),disabled),'disabled')
+        self.assertEqual(module.secure_boot_status(bytes([6,0,0,0,1]),disabled),'unknown')
+        for probe in ({},dict(status='command_failed',stdout=disabled['stdout']),
+                      dict(status='collected',stdout='-- No entries --\n')):
+            self.assertEqual(module.secure_boot_status(None,probe),'unknown')
+
     def test_complete_usb_only_snapshot_is_accepted(self):
         module = collector()
         self.assertEqual(module.validate_live_usb(snapshot(module)), [])
@@ -64,7 +90,7 @@ class HardwareReportTests(unittest.TestCase):
     def test_missing_probes_active_swap_or_writable_media_stop(self):
         module = collector()
         for name, value in [('storage','{}'), ('storage','invalid'),
-                            ('swap',json.dumps(dict(swapdevices=[dict(name='/dev/sdb')]))),
+                            ('swap','Filename\tType\tSize\tUsed\tPriority\n/dev/sdb\tpartition\t4096\t0\t-2\n'),
                             ('boot_mount',json.dumps(dict(filesystems=[dict(source='/dev/sda1',
                                 target='/run/archiso/bootmnt', fstype='iso9660', options='rw')]))),
                             ('udisks','loaded')]:

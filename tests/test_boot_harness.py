@@ -168,7 +168,8 @@ class BootHarnessTests(unittest.TestCase):
         self.assertTrue(module.validate_hardware_usb(dict(state,pci_storage=[]),'protected'))
         self.assertTrue(module.validate_hardware_usb(state,'control'))
         control=copy.deepcopy(state)
-        control['kernel_cmdline']=control['kernel_cmdline'].replace(report.USB_BOOT_OPTIONS[0],'')
+        control['kernel_cmdline']=' '.join(token for token in control['kernel_cmdline'].split()
+            if not token.startswith(('module_blacklist=','initcall_blacklist=')))
         control['loaded_modules']=['nvme','ahci']
         for device,driver in zip(control['pci_storage'],('nvme','ahci')): device['driver']=driver
         devices=json.loads(control['probes']['storage']['stdout'])

@@ -96,7 +96,7 @@ def validate_hardware_usb(state, mode):
         kinds={item.get('tran') for item in disks if item.get('type')=='disk'}
         drivers={(item.get('class_code'),item.get('driver')) for item in devices}
         if (kinds!={'usb','nvme','sata'} or drivers!={('0x010802','nvme'),('0x010601','ahci')} or
-            any(token.startswith('module_blacklist=') for token in state.get('kernel_cmdline','').split()) or
+            any(token.startswith(('module_blacklist=','initcall_blacklist=')) for token in state.get('kernel_cmdline','').split()) or
             not hardware_collector().validate_live_usb(state)):
             return ['Negative control did not expose both NVMe/AHCI disks and fail the safety gate']
     except (KeyError,TypeError,ValueError): return ['Missing negative-control disk observations']
@@ -109,7 +109,7 @@ def edit_usb_boot(monitor, mode):
     monitor.capture('uefi-usb-menu')
     monitor.key('e'); time.sleep(0.5); monitor.key('end')
     options=hardware_collector().USB_BOOT_OPTIONS
-    if mode=='control': options=tuple(option for option in options if not option.startswith('module_blacklist='))
+    if mode=='control': options=tuple(option for option in options if not option.startswith(('module_blacklist=','initcall_blacklist=')))
     monitor.type_console(' '+' '.join(options),submit=False)
     monitor.capture('uefi-usb-edited-options')
     monitor.key('ret')
