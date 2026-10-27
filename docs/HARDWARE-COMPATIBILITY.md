@@ -1,4 +1,51 @@
-# Husk OS – laitteistoyhteensopivuus, 14.10.2026 🦅
+# Husk OS – laitteistoyhteensopivuus 🦅
+
+## V3:n ensimmäisen Lenovo USB Live -testin arvio, 27.10.2026
+
+Kohde on käyttäjän ilmoittama **Lenovo-pelikannettava ja NVIDIA RTX 3070 Laptop
+GPU**. Tarkka malli, CPU/iGPU, MUX/näyttöliitännät, Wi-Fi-piiri, tallennusohjain
+ja Secure Boot -tila puuttuvat. **Fyysistä laitetestiä ei ole vielä tehty.**
+Vanhan auditoinnin RTX 3050 -viittaus ei ole tämän tehtävän kohdemalli.
+
+Nykyinen V3-ISO on rakennettu ja sen Live/asennettu UEFI, GTK/Wayland,
+Steam/Heroic sekä oikea SuperTuxKart-peli on hyväksytty VM:ssä. Pelin grafiikka
+oli **llvmpipe-ohjelmistorenderöintiä**, ei NVIDIA-testi. Historiallisen taulukon
+väitteet puuttuvasta ISO/VM-testistä kuvaavat vain 14.10. tilannetta.
+[Ajantasaiset tulokset ja rajat](V3-PHASE2-STATUS.md).
+
+Arvio perustuu myös **olemassa olevan 96a0a02-ISO:n** onnistuneen offline-kloonin
+pakettihavaintoon (`40172519876/install-v3/installed-guest.json`), ei vain uuden
+branchin pakettitoivelistaan. ISO:n SHA-256 on
+`496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715`.
+
+| Osa | Havaittu tukipolku / VM-näyttö | Fyysisellä Lenovolla vielä varmistettava |
+| --- | --- | --- |
+| NVIDIA RTX 3070 Laptop | NVIDIA:n virallinen open-moduulitaulukko sisältää tunnisteet `249D` ja `24DD` (Turing ja uudemmat). ISO:ssa on `linux-firmware-nvidia` ja Mesa/nouveau-polku; **ei** `nvidia-open-dkms`/`nvidia-utils`-ajuria eikä `vulkan-nouveau`-ICD:tä. Erillinen asennetun järjestelmän NVIDIA-valinta säilyy. | Todellinen PCI-ID, KMS/GSP, paneeli/MUX/PRIME, OpenGL/Vulkan ja ulkoiset näytöt. Upstream-lista ei hyväksy tämän ISO:n NVIDIA-kiihdytystä. Ensimmäiseen Live-testiin ei lisätä ajureita. |
+| UEFI / USB | Nykyinen ISO on hyväksytysti käynnistynyt normaalin OVMF/systemd-boot-valikon kautta. Suojattu USB-UEFI ja vertailuajo läpäisivät testin [40524446117](https://github.com/monsteri24/Husk-OS/actions/runs/40524446117); Secure Boot -tila luettiin poiskytketyksi. | Lenovon USB/firmware. Secure Boot -luottamusketju puuttuu hyväksynnästä: jos käytössä tai epäselvä, STOP; ei firmware-/TPM-/BitLocker-muutoksia. |
+| Windows / sisäiset levyt | Uusi opt-in-testipolku käyttää kertaluonteista NVMe/AHCI/VMD-moduuliestoa ja sisäänrakennetun AHCI:n initcall-estoa, ei resumea/GPT-autoliitäntää, ei swapia/UDisksiä. Todellisessa suojatussa VM-ajossa molemmat PCI-ohjaimet jäivät ilman ajuria, vain USB näkyi, lopulliset kirjoitus-/unmap-laskurit olivat nolla ja koko levyn hashit säilyivät sammutuksessa. Vain uudet VM-levyt liitettiin testiin. | Ensin todettava kaikkien sisäisten levyjen standardi NVMe/SATA-AHCI-ohjain. RAID/VMD/eMMC/tuntematon ohjain ei kuulu hyväksyttyyn menettelyyn. Ei yleistä lupausta kaikkien levyjen kirjoitussuojauksesta. |
+| Wi-Fi | ISO:ssa `linux-firmware` ja Intel/Atheros/Realtek/MediaTek/Broadcom-firmwarepaketit, NetworkManager ja wpa_supplicant. | Tarkka piiri/PCI-ID, rfkill, liittyminen reitittimeen, DHCP ja DNS. Paketin löytyminen ei takaa piirikohtaista tukea. |
+| Ääni | ISO:ssa ALSA, `sof-firmware`, PipeWire/audio/pulse/alsa ja WirePlumber. VM-pelin virtuaalinen äänivirta mitattiin. | Oikea codec/SOF-profiili, kaiuttimet/kuulokkeet ja käyttäjän kuulema ääni; mikrofoni/Bluetooth myöhemmin. |
+| Näppäimistö / hiiri | ISO:ssa libinput; Labwc:n syöttö ja oikeat pelin näppäintapahtumat hyväksyttiin VM:ssä. | Sisäinen näppäimistö/Fn, I²C/PS2-touchpad, USB-hiiren liike/painikkeet/rulla. VM ei mittaa fyysistä viivettä. |
+| Näyttö | Labwc/GTK, KMS-polku, Xwayland ja näyttötyökalut mukana; VM:n näyttö/työpöytä toimivat. | Sisäinen paneeli, oikea resoluutio/virkistystaajuus, kirkkaus ja GPU-liitäntä. Ei HDR/VRR/ulkoisen näytön tai RTX-suorituskyvyn hyväksyntää. |
+
+[Turvallinen ensimmäisen USB Live -testin menettely](INSTALL.md#v3-first-lenovo-hardware-test--live-only-2026-10-27)
+ei käynnistä asenninta eikä liitä Windows-levyjä. Uusi raporttikerääjä on erikseen
+ladattava RAM:ssa ajettava sivutiedosto; sitä ei väitetä jo ISO:ssa olevaksi.
+Automaattinen `USB_ONLY` tarkoittaa vain rajattujen havaintojen täyttymistä,
+ei fyysisen tietokoneen hyväksyntää. Puuttuva havainto pysäyttää testin.
+
+Nykyiset ensisijaiset lähteet:
+[NVIDIA:n tukilista](https://github.com/NVIDIA/open-gpu-kernel-modules),
+[Nouveaun ominaisuustaulukon rajoitukset](https://nouveau.freedesktop.org/FeatureMatrix.html),
+[kernelin module_blacklist](https://docs.kernel.org/admin-guide/kernel-parameters.html),
+[systemd GPT-auto](https://www.freedesktop.org/software/systemd/man/latest/systemd-gpt-auto-generator.html),
+[kertaluonteiset maskit](https://www.freedesktop.org/software/systemd/man/latest/systemd-debug-generator.html),
+[Microsoftin BitLocker/boot-order-ohje](https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/faq).
+
+## Säilytetty lähdekoodiauditointi, 14.10.2026
+
+Seuraava taulukko ja sen tulkinnat on säilytetty historiallisena tilannekuvana.
+Nykyisten VM-testien osalta yllä oleva arvio ja V3-status korvaavat sen.
 
 **Yhtään fyysistä laitetta tai Husk OS:ssä käynnistettyä virtuaalilaitetta ei ole
 hyväksymistestattu.** Taulukko arvioi lähdekoodin kokoonpanoa, ei todistettua yhteensopivuutta.

@@ -268,3 +268,62 @@ alongside installation is not implemented or advertised.
 No V3 release has been published and no PR has been merged. The user's current
 instruction continues to forbid publication, merging, changing main or deleting
 previous releases, even though these acceptance checks passed.
+
+## First Lenovo USB Live hardware preparation — 2026-10-27
+
+The next target is the user's **Lenovo gaming laptop with RTX 3070 Laptop GPU**.
+The exact model, CPU/iGPU/MUX, Wi-Fi chip, internal storage controller and Secure
+Boot state are unknown. **No physical hardware acceptance is claimed.**
+[First Live-only procedure](INSTALL.md#v3-first-lenovo-hardware-test--live-only-2026-10-27)
+and [component assessment](HARDWARE-COMPATIBILITY.md) cover these prerequisites.
+The default ISO contains Mesa/nouveau/firmware, not the optional NVIDIA driver;
+upstream RTX support does not establish this image's acceleration/display support.
+
+The new USB cases reuse candidate **40172519876 / 96a0a02**, size
+**2,080,997,376 bytes**, SHA-256
+`496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715`.
+No runtime or ISO rebuild is involved. Each VM attaches only new disposable
+32 MiB NVMe/AHCI sentinel files; the ISO is read-only USB media. Actual
+systemd-boot keyboard edits apply temporary storage/resume/swap/automount guards.
+The strict gate requires actual unbound controllers, USB-only disk visibility,
+empty swap, masked UDisks and disabled Secure Boot evidence. It never treats a
+missing observation as success. Hardware mode retains QMP until observed guest
+power-off, checks all final write/unmap/failure counters, then quits QEMU and
+hashes both complete sentinel files.
+
+The first protected run failed correctly: **AHCI is built into this ISO's
+7.2.11-arch1-1 kernel**, so a module blacklist alone left SATA accessible.
+The built-in `ahci_pci_driver_init` initcall block fixes this demonstrated gap.
+The second run showed both NVMe and AHCI controllers unbound and only the USB
+visible, but overall acceptance still stopped on unknown Secure Boot state.
+It also confirmed canonical empty `/proc/swaps`; unsupported `swapon --json`
+was removed. Earlier failed attempts remain failed, with protected normal
+shutdown/final-counter observations explicitly NOT TESTED.
+
+The complete guarded USB acceptance **PASSED** in the SMM firmware fixture
+run [40524446117](https://github.com/monsteri24/Husk-OS/actions/runs/40524446117),
+test source `c336cd1`. Both negative control and protected UEFI/UID-1000
+Wayland/Foot/normal shutdown passed in fresh **4 GiB** guests. The control
+positively read both bound internal sentinels; the protected guest exposed
+only USB, with both PCI controllers still present but unbound. Both observed
+EFI SecureBoot bytes `0600000000` (disabled); enabled Secure Boot boot support
+is still unaccepted. All final sentinel write/unmap/failure counters were zero
+after actual guest power-off, and both full disk hashes matched after QEMU
+exit. The downloaded ZIP matched SHA-256
+`fc39e5ec6741e85e887c88f32c75d79d44f9c5f98fb3cc6803c7b4abab4f81c2`;
+original menu/desktop/Foot screenshots were inspected and validators replayed.
+Source/real GTK passed **541 tests** (one root-only skip),
+**188 syntax checks**, normal native sanitizers, and real Wayland
+[40524455846](https://github.com/monsteri24/Husk-OS/actions/runs/40524455846).
+Local checks passed 541 tests (119 environment skips), native compilation and
+ASan/UBSan with local leak detection off only; CI leak checks remain unchanged.
+[Permanent scoped observations](evidence/v3-phase2/2026-10-27-hardware-usb-preparation.json).
+
+The procedure stops before boot on enabled/unknown Secure Boot or unsupported
+storage. It makes no TPM, key-enrollment, BitLocker or firmware-setting changes.
+It excludes the installer, internal mounts, swap, package/driver updates and
+real Windows disks from the test. The collector is a separately downloaded,
+hash-verified RAM-only sidecar, not an installed component of the reused ISO.
+Actual NVIDIA acceleration, Wi-Fi, audible audio, keyboard/touchpad/mouse,
+internal panel/MUX and external-display behavior remain physical tests.
+Main/releases and the planned `.hpk` format remain unchanged; PR #1 stays draft.
