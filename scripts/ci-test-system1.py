@@ -206,6 +206,11 @@ collector={'__name__':'husk_usb_diagnostics'}
 exec(compile(source,'<verified hardware collector>','exec'),collector)
 info['hardware']=collector['hardware_state']()
 info['usb_safety_problems']=collector['validate_live_usb'](info['hardware'])
+info['efi_diagnostics']={
+    'bootctl':collector['capture'](['bootctl','status','--no-pager']),
+    'variables_mount':collector['capture'](['findmnt','--json','--mountpoint','/sys/firmware/efi/efivars']),
+    'kernel':collector['capture'](['journalctl','-b','-k','--no-pager','-o','cat','--grep','[Ss]ecure|[Ee][Ff][Ii]|initcall']),
+    'variable_names':sorted(path.name for path in pathlib.Path('/sys/firmware/efi/efivars').glob('*'))[:100]}
 """ % collector_digest()
     return PROBE.replace('data = json.dumps(info).encode()',extra+'data = json.dumps(info).encode()')
 
@@ -298,7 +303,7 @@ def main(iso=None, artifacts=None, expected_version=None, require_live_write_spa
         OUT = Path(artifacts).resolve()
     OUT.mkdir(parents=True, exist_ok=False)
     iso = Path(iso).resolve() if iso is not None else ROOT / 'out/HuskOS-system-1.iso'
-    code = Path('/usr/share/OVMF/OVMF_CODE_4M.fd')
+    code = Path('/usr/share/OVMF/OVMF_CODE_4M.secboot.fd' if hardware_usb else '/usr/share/OVMF/OVMF_CODE_4M.fd')
     template = Path('/usr/share/OVMF/OVMF_VARS_4M.fd')
     if not iso.is_file() or not code.is_file() or not template.is_file():
         raise RuntimeError('Published ISO or OVMF firmware is missing')
@@ -309,8 +314,9 @@ def main(iso=None, artifacts=None, expected_version=None, require_live_write_spa
     hashes={name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in disks.items()}
     media=(usb_drive_options(iso,disks) if hardware_usb else
            ['-cdrom',str(iso),'-boot','d','-device','qemu-xhci'])
-    command = ['qemu-system-x86_64', '-machine', 'q35', '-accel', 'kvm' if kvm else 'tcg',
+    command = ['qemu-system-x86_64', '-machine', 'q35,smm=on' if hardware_usb else 'q35', '-accel', 'kvm' if kvm else 'tcg',
                '-cpu', 'host' if kvm else 'max', '-m', '4096', '-smp', '2',
+               *(['-global','driver=cfi.pflash01,property=secure,value=on'] if hardware_usb else []),
                '-drive', 'if=pflash,format=raw,readonly=on,file=' + str(code),
                '-drive', 'if=pflash,format=raw,file=' + str(variables),
                *media, *(['-no-shutdown'] if hardware_usb else []),
@@ -323,7 +329,11 @@ def main(iso=None, artifacts=None, expected_version=None, require_live_write_spa
     threading.Thread(target=server.serve_forever, daemon=True).start()
     result = {'iso': iso.name, 'accelerator': 'kvm' if kvm else 'tcg',
               'boot': 'FAILED', 'shutdown': 'NOT TESTED', 'problems': []}
-    if hardware_usb: result['hardware_usb']=dict(mode=hardware_usb,status='FAILED',collector_sha256=collector_digest())
+    if hardware_usb:
+        result['hardware_usb']=dict(mode=hardware_usb,status='FAILED',collector_sha256=collector_digest(),
+            firmware=dict(code=code.name,code_sha256=hashlib.sha256(code.read_bytes()).hexdigest(),
+                variables_template=template.name,variables_template_sha256=hashlib.sha256(template.read_bytes()).hexdigest(),
+                policy='Secure Boot capable SMM firmware with fresh unenrolled variables; actual disabled observation required'))
     with iso.open('rb') as stream:
         result['iso_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
     result['iso_bytes'] = iso.stat().st_size
