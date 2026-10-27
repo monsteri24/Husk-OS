@@ -28,7 +28,7 @@ jobs:
           from pathlib import Path
           request=json.loads(Path('.github/v3-live-app-request.json').read_text())
           application=request.get('application','steam')
-          if application not in ('steam','heroic','gaming'): raise ValueError('Invalid application acceptance target')
+          if application not in ('steam','heroic','gaming','hardware'): raise ValueError('Invalid application acceptance target')
           with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_TEST_APPLICATION='+application+'\n')
           memory=request.get('memory_mib',4096)
           if type(memory) is not int or memory not in (4096,8192,12288): raise ValueError('Invalid bounded guest memory')
@@ -83,6 +83,14 @@ jobs:
             steam) harness=scripts/ci-test-v3-live-app.py ;;
             heroic) harness=scripts/ci-test-v3-live-heroic.py ;;
             gaming) harness=scripts/ci-test-v3-live-gaming.py ;;
+            hardware)
+              for mode in control protected; do
+                timeout 780 /usr/bin/python3 scripts/ci-test-system1.py \
+                  --iso out/HuskOS-v3-phase2.iso --expected-version v3-phase2 \
+                  --require-live-write-space --hardware-usb "$mode" \
+                  --artifacts "out/live-app-v3/hardware-$mode"
+              done
+              exit 0 ;;
             *) exit 1 ;;
           esac
           timeout 1800 /usr/bin/python3 "$harness" --timeout 1500 --memory-mib "$HUSK_VM_MEMORY_MIB"
@@ -98,5 +106,8 @@ jobs:
             out/live-app-v3/*.log
             out/live-app-v3/*.png
             out/live-app-v3/game-audio-clip.wav
+            out/live-app-v3/hardware-*/*.json
+            out/live-app-v3/hardware-*/*.log
+            out/live-app-v3/hardware-*/*.png
           if-no-files-found: warn
           retention-days: 30
