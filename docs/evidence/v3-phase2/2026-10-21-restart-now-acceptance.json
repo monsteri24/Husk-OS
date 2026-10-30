@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "evidence_created_utc": "2026-10-21T14:11:35Z",
+  "proof_scope": "Actual Restart Now pointer input at positive seconds, genuine guest reset and independent installed UEFI normal-user Wayland boot",
+  "runtime_source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
+  "test_source": "2fb96fc799a7f113ca015a1b3886cadc72de9496",
+  "acceptance_run": 39613704162,
+  "job_id": 119268985330,
+  "evidence_artifact": 12352660922,
+  "iso_sha256": "14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec",
+  "iso_bytes": 2079227904,
+  "vm_results": {
+    "installation": "PASSED",
+    "installed_boot": "PASSED",
+    "live_restart": "PASSED",
+    "live_shutdown": "PASSED",
+    "installed_shutdown": "PASSED"
+  },
+  "cancellation_qemu_blockstats": {
+    "unmap_operations": 0,
+    "unmap_merged": 0,
+    "failed_zone_append_operations": 0,
+    "flush_total_time_ns": 15039,
+    "wr_highest_offset": 0,
+    "wr_total_time_ns": 0,
+    "failed_wr_operations": 0,
+    "failed_rd_operations": 0,
+    "wr_merged": 0,
+    "wr_bytes": 0,
+    "timed_stats": [],
+    "failed_unmap_operations": 0,
+    "zone_append_merged": 0,
+    "failed_flush_operations": 0,
+    "account_invalid": true,
+    "rd_total_time_ns": 5863745,
+    "invalid_unmap_operations": 0,
+    "flush_operations": 1,
+    "wr_operations": 0,
+    "unmap_bytes": 0,
+    "rd_merged": 5,
+    "rd_bytes": 21934080,
+    "unmap_total_time_ns": 0,
+    "invalid_flush_operations": 0,
+    "account_failed": true,
+    "idle_time_ns": 2117893149,
+    "zone_append_total_time_ns": 0,
+    "zone_append_operations": 0,
+    "rd_operations": 228,
+    "zone_append_bytes": 0,
+    "invalid_zone_append_operations": 0,
+    "invalid_wr_operations": 0,
+    "invalid_rd_operations": 0
+  },
+  "target_checks": {
+    "efi_partition": true,
+    "root_partition": true,
+    "fstab": true,
+    "user": true,
+    "kernel": true,
+    "initramfs": true,
+    "grub": true,
+    "efi_fallback": true,
+    "version": true,
+    "live_cleanup": true,
+    "guard_job": true,
+    "copy_job": true,
+    "users_job": true,
+    "initramfs_job": true,
+    "bootloader_job": true,
+    "timezone": true,
+    "keyboard": true,
+    "english_locale": true,
+    "hostname": true
+  },
+  "restart_evidence": {
+    "completion": "now",
+    "qemu_exit": 0,
+    "qmp_events": [
+      {
+        "timestamp": {
+          "seconds": 1792591601,
+          "microseconds": 35113
+        },
+        "event": "RTC_CHANGE",
+        "data": {
+          "offset": -1,
+          "qom-path": "/machine/unattached/device[4]/rtc"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792591601,
+          "microseconds": 992551
+        },
+        "event": "RTC_CHANGE",
+        "data": {
+          "offset": 0,
+          "qom-path": "/machine/unattached/device[4]/rtc"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792591612,
+          "microseconds": 570024
+        },
+        "event": "NIC_RX_FILTER_CHANGED",
+        "data": {
+          "path": "/machine/unattached/device[29]/virtio-backend"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792591613,
+          "microseconds": 497457
+        },
+        "event": "RTC_CHANGE",
+        "data": {
+          "offset": 0,
+          "qom-path": "/machine/unattached/device[4]/rtc"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792591808,
+          "microseconds": 160618
+        },
+        "event": "SHUTDOWN",
+        "data": {
+          "guest": true,
+          "reason": "guest-reset"
+        }
+      }
+    ],
+    "events": [
+      {
+        "elapsed_ms": 19958,
+        "event": "application-quit",
+        "time": "2026-10-21T14:07:26.055Z"
+      },
+      {
+        "elapsed_ms": 150427,
+        "event": "installation-success",
+        "seconds": 30,
+        "time": "2026-10-21T14:10:01.533Z",
+        "title": "Installation Complete"
+      },
+      {
+        "elapsed_ms": 150430,
+        "event": "countdown-tick",
+        "observed_ms": 3,
+        "seconds": 30,
+        "time": "2026-10-21T14:10:01.536Z"
+      },
+      {
+        "elapsed_ms": 151427,
+        "event": "countdown-tick",
+        "observed_ms": 1000,
+        "seconds": 29,
+        "time": "2026-10-21T14:10:02.533Z"
+      },
+      {
+        "elapsed_ms": 152427,
+        "event": "countdown-tick",
+        "observed_ms": 2000,
+        "seconds": 28,
+        "time": "2026-10-21T14:10:03.533Z"
+      },
+      {
+        "elapsed_ms": 153427,
+        "event": "countdown-tick",
+        "observed_ms": 3000,
+        "seconds": 27,
+        "time": "2026-10-21T14:10:04.533Z"
+      },
+      {
+        "elapsed_ms": 154427,
+        "event": "countdown-tick",
+        "observed_ms": 4000,
+        "seconds": 26,
+        "time": "2026-10-21T14:10:05.533Z"
+      },
+      {
+        "elapsed_ms": 154428,
+        "event": "countdown-observed",
+        "first": 30,
+        "last": 26,
+        "observed_ms": 4001,
+        "time": "2026-10-21T14:10:05.534Z"
+      },
+      {
+        "elapsed_ms": 154428,
+        "event": "restart-now-click",
+        "seconds": 26,
+        "time": "2026-10-21T14:10:05.534Z"
+      },
+      {
+        "elapsed_ms": 154460,
+        "event": "restart-now-accepted",
+        "requested": true,
+        "seconds": 26,
+        "time": "2026-10-21T14:10:05.566Z",
+        "timer_stopped": true
+      },
+      {
+        "elapsed_ms": 154676,
+        "event": "application-quit",
+        "seconds": 26,
+        "time": "2026-10-21T14:10:05.782Z"
+      }
+    ]
+  },
+  "installed": {
+    "uid": 1000,
+    "user": "huskcheck",
+    "live": false,
+    "uefi": true,
+    "debug_shell": false,
+    "root_device": "/dev/vda2",
+    "root_fstype": "ext4",
+    "optical_media": [],
+    "session": {
+      "Name": "huskcheck",
+      "VTNr": "1",
+      "Remote": "no",
+      "Type": "wayland",
+      "State": "online"
+    },
+    "cmdline": "BOOT_IMAGE=/boot/vmlinuz-linux root=UUID=cd74deef-054d-4c0d-a6e1-3bd0aa151d7f rw loglevel=3 quiet"
+  },
+  "installed_status": {
+    "backend": "wayland",
+    "bridge_connected": true,
+    "desktop": "Husk Desktop",
+    "desktop_surfaces": 1,
+    "keyring_ready": false,
+    "live": false,
+    "os": "Husk OS",
+    "panel_mapped": true,
+    "panel_mode": "desktop",
+    "panel_visible": true,
+    "renderer": "pixman",
+    "version": "v3-phase2",
+    "window_count": 0
+  },
+  "screenshots": {
+    "installation-complete-before-restart.png": "fff2d917572fe1b1bc579f3ec5e4f89614ee3efe10f858ebffe756f5c19cce83",
+    "installed-sddm-greeter.png": "a59cf82c9a589092f4d62c4893a62fcf08d96571cce7b7cf0c2dbb5d37445072",
+    "installed-husk-desktop.png": "4138f8a86e2691a4ae17c2fcbc7ba558ecbef71cf551e0475fd83aa8f4a8b9fb"
+  },
+  "limitations": [
+    "Normal Live authorization is covered separately by39609995495.",
+    "No physical hardware/USB-removal or Steam/game launch acceptance is inferred.",
+    "Live temporary /tmp unmount reported busy during fixture shutdown; required installed-target flush/unmount/sync checks and guest reset passed."
+  ],
+  "release_authorized": false,
+  "main_modified": false
+}

@@ -1,0 +1,795 @@
+{
+  "schema_version": 1,
+  "latest_status": "PASSED: actual accountless SuperTuxKart installation, default launch, software OpenGL race rendering, engine-consumed keyboard input, attributed virtual audio, bounded stability, zero target writes and Live shutdown",
+  "original_image": {
+    "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "run": 39720818758,
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "reused_without_rebuild": true
+  },
+  "game": {
+    "name": "SuperTuxKart",
+    "version": "1.5",
+    "app_id": "net.supertuxkart.SuperTuxKart",
+    "account_required": false,
+    "source": "Signed user Flathub deployment of official STK release; source/asset licenses retained upstream",
+    "upstream": [
+      "https://github.com/supertuxkart/stk-code/blob/1.5/COPYING",
+      "https://github.com/flathub/net.supertuxkart.SuperTuxKart/blob/master/net.supertuxkart.SuperTuxKart.yml"
+    ]
+  },
+  "first_run": {
+    "run": 40171192165,
+    "job": 121102169910,
+    "source": "550b4ada4c7b91709793bad29af4b67825dff59d",
+    "memory_mib": 12288,
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40171192165",
+    "artifact": {
+      "id": 12590486069,
+      "bytes": 527257,
+      "sha256": "9755f70fa44009d85e75c7b903c36f73f2cacb912e18c0d8f799fd34427bcbe5",
+      "download_hash_verified": true
+    },
+    "result": {
+      "gameplay": "FAILED",
+      "live_shutdown": "NOT TESTED",
+      "problems": [
+        "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-auth.py\", line 318, in run\n    self.live_authorization(); self.shutdown('live')\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-gaming.py\", line 520, in live_authorization\n    if problems: raise RuntimeError('; '.join(problems)+': '+report.get('error',''))\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Actual gaming observer did not complete successfully; Missing actual gaming check: user_install_record; Missing actual gaming check: trusted_origin; Missing actual gaming check: system_packages_unchanged; Missing actual gaming check: password_unchanged; Missing actual gaming check: no_system_install; No verified signed user game deployment; No actual human controls consumed by the game engine; No completed rendered OpenGL game profile; The actual profile race did not exit naturally with code zero; No unmuted guest audio stream attributed to SuperTuxKart; No game-attributed audio capture bracket; No 60-second continuous native game/window observation; No current native game window during stability measurement; No unprivileged native game ELF in its exact Flatpak namespace: RuntimeError: Actual game client: FileNotFoundError: gamemoderun is not installed; install it or disable this setting\n",
+        "Virtual audio: No game-attributed audio capture interval was measured"
+      ],
+      "accelerator": "kvm",
+      "proof_scope": "Actual accountless STK user install, QMP/game-engine input, rendered OpenGL race and virtual HDA output; no physical hardware claim",
+      "iso_sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+      "iso_bytes": 2079227904,
+      "package_installation": "NOT TESTED",
+      "virtual_audio": "FAILED"
+    },
+    "guest": {
+      "phase": "installation",
+      "stage": "normal-loading",
+      "finished": true,
+      "success": false,
+      "checks": {
+        "initial_app_absent": true,
+        "live_session_active": true,
+        "unprivileged_launcher": true,
+        "no_extra_terminal": true
+      },
+      "app_id": "net.supertuxkart.SuperTuxKart",
+      "live_session": [
+        "Name=live",
+        "Remote=no",
+        "Active=yes"
+      ],
+      "client": {
+        "pid": 1226,
+        "uid": 1000,
+        "phase": "normal-loading",
+        "finished": true,
+        "windows": [],
+        "audio_streams": [],
+        "audio_observations": [],
+        "install_log": "Installing runtime/org.freedesktop.Platform.GL.default/x86_64/25.08\nInstalling runtime/org.freedesktop.Platform.GL.default/x86_64/25.08-extra\nInstalling runtime/org.freedesktop.Platform.Locale/x86_64/25.08\nInstalling runtime/org.freedesktop.Platform.codecs-extra/x86_64/25.08-extra\nInstalling runtime/org.freedesktop.Platform/x86_64/25.08\nInstalling app/net.supertuxkart.SuperTuxKart/x86_64/stable\n",
+        "game_version": "\u001b[0m[info   ] main: ==============================\n\u001b[0;;m\u001b[0m[info   ] main: SuperTuxKart, 1.5.\n\u001b[0;;m\u001b[0m[info   ] main: ==============================\n\u001b[0;;m",
+        "game_policy": {
+          "gaming_mode": true,
+          "overlay": false
+        },
+        "error": "FileNotFoundError: gamemoderun is not installed; install it or disable this setting",
+        "normal_log": "",
+        "profile_log": ""
+      },
+      "native_current": [],
+      "available_bytes": 3352023040,
+      "error": "RuntimeError: Actual game client: FileNotFoundError: gamemoderun is not installed; install it or disable this setting",
+      "client_output": ""
+    },
+    "interpretation": [
+      "The Flatpak install command completed and the actual --version probe reported SuperTuxKart 1.5. Independent deployment checks were not completed before the client error, so package_installation is NOT TESTED.",
+      "The actual UID-1000 session loaded gaming_mode=true/overlay=false, then the existing game_command refused to construct a launch because gamemoderun was unavailable. No race, input, graphics or audio acceptance follows.",
+      "GAME_PACKAGES/OPTIONAL_APPLICATION_PACKAGES intentionally exclude GameMode from both clean profiles and installed targets, while config._defaults unconditionally enabled it. This policy mismatch blocks default husk-game launches.",
+      "Fix fresh implicit defaults to enable GameMode only when its executable exists. Preserve every saved choice and the existing error for explicit enabled-but-missing tools; do not force a test-only setting or preinstall optional apps."
+    ]
+  },
+  "rebuild": {
+    "technically_required": true,
+    "reason": "The verified default-launch fix changes src/ownos/config.py; the original SHA-locked ISO does not contain it and cannot be reused as proof of the fixed runtime.",
+    "old_artifact_preserved": true,
+    "new_candidate": {
+      "source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
+      "run": 40172519876,
+      "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40172519876",
+      "iso_bytes": 2080997376,
+      "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+      "iso_hash_verified_by_build_and_each_vm_harness": true,
+      "iso_artifact": {
+        "id": 12590858411,
+        "bytes": 2080997916,
+        "sha256": "02c0a047d27bd006dfa1ad895d00bde256242831cb33e8c5d7077d611c29f636",
+        "expires_at": "2026-11-01T07:43:14Z"
+      },
+      "evidence_artifact": {
+        "id": 12591716882,
+        "bytes": 10689089,
+        "sha256": "d105cec33c1f8e9d86c0b96e7b7f391716f14d69a8bc751516c1378366d7a568",
+        "download_hash_verified": true
+      },
+      "rootfs_payload_checks": "PASSED",
+      "live_uefi": "PASSED",
+      "offline_installation": {
+        "result": "PASSED",
+        "target_checks": {
+          "efi_partition": true,
+          "root_partition": true,
+          "fstab": true,
+          "user": true,
+          "kernel": true,
+          "initramfs": true,
+          "grub": true,
+          "efi_fallback": true,
+          "version": true,
+          "live_cleanup": true,
+          "guard_job": true,
+          "copy_job": true,
+          "users_job": true,
+          "initramfs_job": true,
+          "bootloader_job": true,
+          "timezone": true,
+          "keyboard": true,
+          "english_locale": true,
+          "hostname": true
+        },
+        "offline": true,
+        "cancel_zero_target_data_writes": true,
+        "restart_later": true
+      },
+      "installed_uefi": "PASSED",
+      "live_shutdown": "PASSED",
+      "installed_shutdown": "PASSED",
+      "steam": {
+        "package_installation": "PASSED",
+        "client_startup": "PASSED",
+        "checks": {
+          "live_write_space": true,
+          "initial_package_absent": true,
+          "initial_password_empty": true,
+          "live_session_active": true,
+          "unprivileged_launcher": true,
+          "no_extra_terminal": true,
+          "confirmation_cancel_unchanged": true,
+          "password_cancel_unchanged": true,
+          "authorization_cancel_unchanged": true,
+          "polkit_authenticated": true,
+          "root_helper": true,
+          "pkexec_caller": true,
+          "no_test_injection": true,
+          "retry_existing_password": true,
+          "package_installed": true,
+          "full_upgrade": true,
+          "matching_graphics": true,
+          "signatures_required": true,
+          "official_icon": true,
+          "gtk_verified": true
+        },
+        "healthy_seconds": 30.795566442999984,
+        "live_write_space": {
+          "total_bytes": 6263656448,
+          "available_bytes": 2978816000
+        },
+        "zero_target_data_writes_and_unmaps": true,
+        "live_shutdown": "PASSED",
+        "screenshot_inspected": true
+      },
+      "actual_gameplay": "PASSED in 40202229908 using the same image"
+    },
+    "release_authorized": false
+  },
+  "source_validation": {
+    "run": 40171192165,
+    "source_job": 121102170202,
+    "source_tests": 521,
+    "environment_skips": 72,
+    "actual_gtk_tests": 521,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 187,
+    "native_sanitizers": "PASSED",
+    "real_wayland_run": 40171195436,
+    "real_wayland_job": 121102178924,
+    "real_wayland": "PASSED"
+  },
+  "limits": [
+    "VM-only 12 GiB KVM test with software llvmpipe/OpenGL and a bounded race; no physical GPU, Vulkan, hardware FPS comparison or long soak acceptance.",
+    "Virtual output PCM presence/variation and native attribution were measured. Human listening quality, spatial accuracy, microphone, physical outputs and audio latency remain untested.",
+    "QMP keyboard events were consumed by the original game engine. Physical input devices, gamepads and input latency remain untested.",
+    "No personal account, Steam/Heroic library game, Proton/DXVK/VKD3D, anti-cheat, online multiplayer or proprietary-game compatibility claim.",
+    "The first two failed attempts remain failed. Earlier installer/desktop/Steam/Heroic evidence stays scoped to its original immutable images; the replacement image separately passed the recorded candidate gates.",
+    "No merge, release, main-branch change or .hpk implementation is authorized or implied."
+  ],
+  "default_fix_validation": {
+    "local_tests": 523,
+    "environment_skips": 72,
+    "syntax_checks": 187,
+    "local_asan_ubsan": "PASSED with sandbox leak detection disabled",
+    "focused_tests": 78,
+    "review": "No open findings in the targeted runtime-default fix",
+    "new_iso": "PASSED: replacement UEFI/offline/installed/Steam gates and actual default game launch"
+  },
+  "latest_source_validation": {
+    "source": "76f3336b9ca638e93ee5251f39495756df23df39",
+    "run": 40202229908,
+    "source_job": 121195628873,
+    "source_tests": 528,
+    "environment_skips": 72,
+    "actual_gtk_tests": 528,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 187,
+    "native_sanitizers": "PASSED",
+    "real_wayland_run": 40202234569,
+    "real_wayland_job": 121195642356,
+    "real_wayland": "PASSED"
+  },
+  "second_run": {
+    "run": 40174676166,
+    "job": 121112682601,
+    "source": "383d4fea2711d4e1f5c977543cb604cb4a929d1b",
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40174676166",
+    "memory_mib": 12288,
+    "artifact": {
+      "id": 12591538241,
+      "bytes": 7009232,
+      "sha256": "5792d28c017ee36566a443e8be87597c71879e68c724f90cacb1a05c518b98ae",
+      "download_hash_verified": true
+    },
+    "result": {
+      "gameplay": "FAILED",
+      "live_shutdown": "NOT TESTED",
+      "problems": [
+        "Traceback (most recent call last):\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-auth.py\", line 318, in run\n    self.live_authorization(); self.shutdown('live')\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/Husk-OS/Husk-OS/scripts/ci-test-v3-live-gaming.py\", line 523, in live_authorization\n    if problems: raise RuntimeError('; '.join(problems)+': '+report.get('error',''))\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: No completed rendered OpenGL game profile: \n"
+      ],
+      "accelerator": "kvm",
+      "proof_scope": "Actual accountless STK user install, QMP/game-engine input, rendered OpenGL race and virtual HDA output; no physical hardware claim",
+      "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+      "iso_bytes": 2080997376,
+      "package_installation": "PASSED",
+      "virtual_audio": "PASSED",
+      "audio_capture_interval_bytes": [
+        2662400,
+        4435968
+      ],
+      "audio_measurements": {
+        "seconds": 10.054240362811791,
+        "sample_rate": 44100,
+        "channels": 2,
+        "peak": 7043,
+        "rms": 1128.7375530260372,
+        "minimum": -6906,
+        "maximum": 7043,
+        "bytes": 1773568,
+        "temporal_peak_to_peak": 13864
+      }
+    },
+    "checks": {
+      "initial_app_absent": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "user_install_record": true,
+      "trusted_origin": true,
+      "system_packages_unchanged": true,
+      "password_unchanged": true,
+      "no_system_install": true
+    },
+    "game_policy": {
+      "gaming_mode": false,
+      "overlay": false
+    },
+    "deployment_commit": "e2b859bf213a539f25e3e7304d02de3c2bb294e0bb1ccd300221961f73ffeb87",
+    "origin": "flathub",
+    "input_history": "STK-version:      1.5\nHistory-version:  1\nnumkarts:         1\nnumplayers:       1\ndifficulty:       0\nreverse: n\ntrack: lighthouse\nmodel 0: tux\ncount:     6\n0 0 2 32768\n124 0 1 32768\n178 0 1 0\n178 0 0 32768\n238 0 0 0\n442 0 2 0\nHistory file end.\n",
+    "profile_exit_code": 0,
+    "observed_native_stability": {
+      "healthy_seconds": 219.71073519200002,
+      "samples": 215,
+      "windows": [
+        {
+          "id": 3,
+          "title": "SuperTuxKart",
+          "app_id": "supertuxkart",
+          "active": true,
+          "minimized": false,
+          "maximized": false,
+          "fullscreen": true,
+          "outputs": [
+            {
+              "name": "Virtual-1",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 800
+            }
+          ]
+        }
+      ],
+      "processes": [
+        {
+          "pid": 1683,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "net.supertuxkart.SuperTuxKart",
+          "executable": "/app/bin/supertuxkart",
+          "namespace_pids": [
+            1683,
+            2
+          ]
+        }
+      ]
+    },
+    "available_bytes": 3278864384,
+    "profile_observations": [
+      "[warn   ] IrrDriver: Unknown driver gl, revert to opengl",
+      "[info   ] IrrDriver: OpenGL version: 4.6",
+      "[info   ] IrrDriver: OpenGL renderer: llvmpipe (LLVM 21.1.8, 256 bits)",
+      "[info   ] irr_driver: GLSL supported.",
+      "[info   ] Track: Overall scene complexity estimated at 156, Auto-LoD multiplier is 2.651560",
+      "[verbose  ] profile: Number of frames: 15005 time 218.915009, Average FPS: 68.542580",
+      "[verbose  ] profile: Average # drawn nodes           0.000000 k"
+    ],
+    "interpretation": [
+      "The actual fresh policy is gaming_mode=false/overlay=false and the original unmodified game runs through husk-game, proving the default-launch fix on the new image.",
+      "All nine session/deployment guards, original-engine acceleration/steering history, game-attributed varying virtual PCM, 219.710735192 seconds of current native window/process observations and natural exit0 were observed.",
+      "Full gameplay FAILED: STK1.5 ProfileWorld reads Irrlicht primitive counts, while its GLSL SP renderer maintains separate SP::sp_solid_poly_count. The reported legacy counter0 must not be described as positive rendered geometry.",
+      "Inspected original screenshots show a moving 3D race, but screenshot0 is Loading and screenshots1-3 cover only40 seconds. This run is not retroactively accepted by changing the parser.",
+      "The corrected harness requires actual MainLoop race progress before four central-world captures span60 host seconds, with distributed scene motion plus all existing native/OpenGL/profile/input/audio/exit gates. Fix observed driver spelling gl to opengl without changing the actual renderer.",
+      "Independent review reproduced verbose-log truncation of startup scene evidence. A RED/GREEN regression now retains a bounded64k startup prefix including the observed scene line around40k plus final80k.",
+      "Final target-write observation and normal Live shutdown were not reached; they remain NOT TESTED for this failed run."
+    ],
+    "primary_source": [
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/modes/profile_world.cpp",
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/graphics/sp/sp_base.cpp",
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/graphics/irr_driver.cpp",
+      "https://github.com/supertuxkart/stk-code/blob/1.5/src/main_loop.cpp"
+    ]
+  },
+  "visual_sensor_fix_validation": {
+    "local_tests": 528,
+    "environment_skips": 72,
+    "syntax_checks": 187,
+    "local_asan_ubsan": "PASSED with sandbox leak detection disabled",
+    "focused_gaming_tests": 12,
+    "regressions": "Observed RED then GREEN for shader-counter interpretation, race readiness, loading/static/HUD-only/small-object/short/gapped images and bounded startup-log retention",
+    "review": "No remaining findings after resolving startup-log retention",
+    "actual_same_image_rerun": "PASSED in 40202229908; all original screenshots inspected and artifact SHA-256 verified"
+  },
+  "accepted_run": {
+    "run": 40202229908,
+    "job": 121195628732,
+    "source": "76f3336b9ca638e93ee5251f39495756df23df39",
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40202229908",
+    "artifact": {
+      "id": 12602636886,
+      "bytes": 7293624,
+      "sha256": "bc538091399c4c55d40730bfed2d3efbee2e7add962363fac82fe559587dc86f",
+      "download_hash_verified": true,
+      "expires_at": "2026-11-24T14:32:28Z"
+    },
+    "memory_mib": 12288,
+    "accelerator": "kvm",
+    "iso_source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
+    "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+    "iso_bytes": 2080997376,
+    "reused_existing_replacement_candidate": true,
+    "actual_game_version": "1.5",
+    "gameplay_mode": {
+      "normal": "Single human-player lighthouse race with actual QMP acceleration/steering; controlled stop after proof",
+      "profile": "Three AI karts, lighthouse, difficulty0, bounded --profile-time=120; natural exit0",
+      "requested_resolution": [
+        800,
+        600
+      ],
+      "actual_fullscreen_resolution": [
+        1280,
+        800
+      ],
+      "graphics": "OpenGL, dynamic lights/SSAO/shadows disabled; CPU software renderer"
+    },
+    "result": {
+      "gameplay": "PASSED",
+      "live_shutdown": "PASSED",
+      "problems": [],
+      "accelerator": "kvm",
+      "proof_scope": "Actual accountless STK user install, QMP/game-engine input, rendered OpenGL race and virtual HDA output; no physical hardware claim",
+      "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+      "iso_bytes": 2080997376,
+      "package_installation": "PASSED",
+      "virtual_audio": "PASSED",
+      "audio_capture_interval_bytes": [
+        2666496,
+        4435968
+      ],
+      "target_blockstats": {
+        "unmap_operations": 0,
+        "unmap_merged": 0,
+        "failed_zone_append_operations": 0,
+        "flush_total_time_ns": 0,
+        "wr_highest_offset": 0,
+        "wr_total_time_ns": 0,
+        "failed_wr_operations": 0,
+        "failed_rd_operations": 0,
+        "wr_merged": 0,
+        "wr_bytes": 0,
+        "timed_stats": [],
+        "failed_unmap_operations": 0,
+        "zone_append_merged": 0,
+        "failed_flush_operations": 0,
+        "account_invalid": true,
+        "rd_total_time_ns": 2925427,
+        "invalid_unmap_operations": 0,
+        "flush_operations": 0,
+        "wr_operations": 0,
+        "unmap_bytes": 0,
+        "rd_merged": 1,
+        "rd_bytes": 6578176,
+        "unmap_total_time_ns": 0,
+        "invalid_flush_operations": 0,
+        "account_failed": true,
+        "idle_time_ns": 258575970378,
+        "zone_append_total_time_ns": 0,
+        "zone_append_operations": 0,
+        "rd_operations": 103,
+        "zone_append_bytes": 0,
+        "invalid_zone_append_operations": 0,
+        "invalid_wr_operations": 0,
+        "invalid_rd_operations": 0
+      },
+      "input": {
+        "events": 6,
+        "accelerated": true,
+        "steered": true,
+        "first_tick": 76,
+        "last_tick": 748
+      },
+      "profile": {
+        "frames": 15005,
+        "runtime_seconds": 191.278015,
+        "upstream_reported_fps": 78.446022,
+        "legacy_irrlicht_drawn_nodes_k": 0.0,
+        "scene_complexity": 156,
+        "opengl_version": "4.6",
+        "renderer": "OpenGL 4.6"
+      },
+      "stability": {
+        "healthy_seconds": 192.07420459099998,
+        "samples": 189,
+        "windows": [
+          {
+            "id": 3,
+            "title": "SuperTuxKart",
+            "app_id": "supertuxkart",
+            "active": true,
+            "minimized": false,
+            "maximized": false,
+            "fullscreen": true,
+            "outputs": [
+              {
+                "name": "Virtual-1",
+                "x": 0,
+                "y": 0,
+                "width": 1280,
+                "height": 800
+              }
+            ]
+          }
+        ],
+        "processes": [
+          {
+            "pid": 1685,
+            "uid": 1000,
+            "elf": true,
+            "flatpak_id": "net.supertuxkart.SuperTuxKart",
+            "executable": "/app/bin/supertuxkart",
+            "namespace_pids": [
+              1685,
+              2
+            ]
+          }
+        ]
+      },
+      "rendered_frames": [
+        {
+          "file": "game-profile-0.png",
+          "wall_seconds": 0.30735987599996406,
+          "healthy_seconds": 15.392361199000007,
+          "game_time": 2.933333,
+          "distance": 7.344053,
+          "sha256": "f3f6c3e09bd9b7dbb3a567d02604f8ea5573aed2e7976a055091a1e3f2570158"
+        },
+        {
+          "file": "game-profile-1.png",
+          "wall_seconds": 20.633527396999966,
+          "healthy_seconds": 35.758794369,
+          "game_time": 15.833333,
+          "distance": 218.905579,
+          "sha256": "c17c05ae8ce3ed1c8c5e34d93a4e5f5c5a4b867191699c6793cb5eb7c65895ce"
+        },
+        {
+          "file": "game-profile-2.png",
+          "wall_seconds": 40.93750577399999,
+          "healthy_seconds": 56.316530794,
+          "game_time": 30.625,
+          "distance": 469.508575,
+          "sha256": "538ab6d1eb992498962480a787f41c4f18269ec14a2c7547cb6bee6c19479fb7"
+        },
+        {
+          "file": "game-profile-3.png",
+          "wall_seconds": 61.268875105999996,
+          "healthy_seconds": 76.69352966300002,
+          "game_time": 44.525002,
+          "distance": 688.032898,
+          "sha256": "3bcb2e625c9d265513c0e9add888cec3c88b43c1f7d4d0833bce8ad0ba4aaf8b"
+        }
+      ],
+      "rendered_scene": {
+        "wall_seconds": 60.96151523000003,
+        "crop": [
+          320,
+          200,
+          960,
+          600
+        ],
+        "analysis_size": [
+          160,
+          100
+        ],
+        "samples": [
+          {
+            "file": "game-profile-0.png",
+            "wall_seconds": 0.30735987599996406,
+            "healthy_seconds": 15.392361199000007,
+            "game_time": 2.933333,
+            "distance": 7.344053,
+            "quantized_colors": 302,
+            "world_rgb_sha256": "46ab716831e112df183d6a90494adce904a127cc434afa2ffd2a8e51dcab2661"
+          },
+          {
+            "file": "game-profile-1.png",
+            "wall_seconds": 20.633527396999966,
+            "healthy_seconds": 35.758794369,
+            "game_time": 15.833333,
+            "distance": 218.905579,
+            "quantized_colors": 308,
+            "world_rgb_sha256": "bf0b75a3ed74f72983c059c03558294d69e75fa5431318b87ba278c2a28d221c"
+          },
+          {
+            "file": "game-profile-2.png",
+            "wall_seconds": 40.93750577399999,
+            "healthy_seconds": 56.316530794,
+            "game_time": 30.625,
+            "distance": 469.508575,
+            "quantized_colors": 287,
+            "world_rgb_sha256": "54603f60e862adca6ec088ce929ef1702841d53a408ee9a755c0e55467bda52c"
+          },
+          {
+            "file": "game-profile-3.png",
+            "wall_seconds": 61.268875105999996,
+            "healthy_seconds": 76.69352966300002,
+            "game_time": 44.525002,
+            "distance": 688.032898,
+            "quantized_colors": 320,
+            "world_rgb_sha256": "f2d4bf220941e590c06916bf42934c52e3e1cf91e82eb5234e43b66e0e308af5"
+          }
+        ],
+        "changes": [
+          {
+            "changed_pixel_fraction": 0.6454375,
+            "mean_absolute_rgb_difference": 23.546270833333335,
+            "changed_tiles": 9,
+            "tile_changed_fractions": [
+              0.5506003430531733,
+              0.7444253859348199,
+              0.9696969696969697,
+              0.5088622069754145,
+              0.6432246998284734,
+              0.5723905723905723,
+              0.451165371809101,
+              0.6986681465038845,
+              0.6683006535947712
+            ],
+            "substantial": true
+          },
+          {
+            "changed_pixel_fraction": 0.7375,
+            "mean_absolute_rgb_difference": 29.386104166666666,
+            "changed_tiles": 9,
+            "tile_changed_fractions": [
+              0.9508290451686678,
+              0.9548313321898227,
+              0.9854096520763187,
+              0.5849056603773585,
+              0.6054888507718696,
+              0.9012345679012346,
+              0.40288568257491675,
+              0.4900110987791343,
+              0.7701525054466231
+            ],
+            "substantial": true
+          },
+          {
+            "changed_pixel_fraction": 0.6618125,
+            "mean_absolute_rgb_difference": 28.381645833333334,
+            "changed_tiles": 9,
+            "tile_changed_fractions": [
+              0.5694682675814752,
+              0.6403659233847913,
+              0.7222222222222222,
+              0.7958833619210978,
+              0.6123499142367067,
+              0.9377104377104377,
+              0.42175360710321863,
+              0.4322974472807991,
+              0.8240740740740741
+            ],
+            "substantial": true
+          }
+        ],
+        "substantial_motion_intervals": 3
+      },
+      "game_policy": {
+        "gaming_mode": false,
+        "overlay": false
+      },
+      "deployment_commit": "e2b859bf213a539f25e3e7304d02de3c2bb294e0bb1ccd300221961f73ffeb87",
+      "origin": "flathub",
+      "audio_measurements": {
+        "seconds": 10.031020408163265,
+        "sample_rate": 44100,
+        "channels": 2,
+        "peak": 7410,
+        "rms": 1400.3480423735914,
+        "minimum": -6724,
+        "maximum": 7410,
+        "bytes": 1769472,
+        "temporal_peak_to_peak": 14134
+      }
+    },
+    "checks": {
+      "initial_app_absent": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "user_install_record": true,
+      "trusted_origin": true,
+      "system_packages_unchanged": true,
+      "password_unchanged": true,
+      "no_system_install": true
+    },
+    "input_history": "STK-version:      1.5\nHistory-version:  1\nnumkarts:         1\nnumplayers:       1\ndifficulty:       0\nreverse: n\ntrack: lighthouse\nmodel 0: tux\ncount:     6\n76 0 2 32768\n346 0 1 32768\n418 0 1 0\n418 0 0 32768\n496 0 0 0\n748 0 2 0\nHistory file end.\n",
+    "profile_exit_code": 0,
+    "normal_controlled_stop": true,
+    "available_bytes": 3278053376,
+    "audio_attribution": {
+      "start": 56.882268471,
+      "end": 69.077947944,
+      "observations": 51,
+      "native_processes": [
+        {
+          "pid": 1518,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "net.supertuxkart.SuperTuxKart",
+          "executable": "/app/bin/supertuxkart",
+          "namespace_pids": [
+            1518,
+            2
+          ]
+        }
+      ],
+      "sample_times": [
+        56.622988541,
+        56.882268471,
+        57.147110246,
+        57.40974337,
+        57.676370683,
+        57.938153826,
+        58.202242972,
+        58.467249715,
+        58.734266487,
+        58.998076986,
+        59.260555177,
+        59.52268835,
+        59.786119433,
+        60.047965915,
+        60.309293481,
+        60.571145275,
+        60.832223013,
+        61.098288415,
+        61.361235768,
+        61.620995874,
+        61.881158225,
+        62.14549736,
+        62.413080897,
+        62.67448812,
+        62.935970649,
+        63.198044925,
+        63.460736594,
+        63.727461745,
+        64.00066934,
+        64.264991434,
+        64.528602975,
+        64.790897401,
+        65.05376907,
+        65.320896717,
+        65.582982362,
+        65.846267814,
+        66.113717516,
+        66.379397713,
+        66.6423834,
+        66.906281911,
+        67.172822004,
+        67.435609594,
+        67.69904978,
+        67.967213175,
+        68.230101382,
+        68.494360602,
+        68.75863964,
+        69.027241193,
+        69.294519255,
+        69.558499854,
+        69.822215767
+      ],
+      "application_names": [
+        "supertuxkart"
+      ],
+      "application_process_ids": [
+        "2"
+      ],
+      "all_observations_unmuted_uncorked": true,
+      "query_errors": 0,
+      "other_active_streams": 0,
+      "strict_native_pid_bracket_validator": "PASSED",
+      "clip_sha256": "2c6d08393ebbcd95391e989626bef1fcefffa9f68e89862e634c35c76a4cd0e6",
+      "clip_reanalysis": "EXACT MATCH to original PCM measurements"
+    },
+    "graphics_log_excerpt": [
+      "[info   ] [IrrDriver Logger]: Using renderer: OpenGL 4.6",
+      "[info   ] IrrDriver: OpenGL version: 4.6",
+      "[info   ] IrrDriver: OpenGL renderer: llvmpipe (LLVM 21.1.8, 256 bits)",
+      "[info   ] irr_driver: GLSL supported.",
+      "[info   ] Track: Overall scene complexity estimated at 156, Auto-LoD multiplier is 2.651560",
+      "[verbose  ] profile: Number of frames: 15005 time 191.278015, Average FPS: 78.446022",
+      "[verbose  ] profile: Average # drawn nodes           0.000000 k"
+    ],
+    "actual_renderer": {
+      "frames": 15005,
+      "runtime_seconds": 191.278015,
+      "upstream_reported_fps": 78.446022,
+      "legacy_irrlicht_drawn_nodes_k": 0.0,
+      "scene_complexity": 156,
+      "opengl_version": "4.6",
+      "renderer": "llvmpipe (LLVM 21.1.8, 256 bits)"
+    },
+    "original_screenshots_inspected": [
+      "game-before-input.png",
+      "game-after-input.png",
+      "game-profile-0.png",
+      "game-profile-1.png",
+      "game-profile-2.png",
+      "game-profile-3.png"
+    ],
+    "original_png_hashes_verified": true,
+    "offline_reanalysis": {
+      "all_current_acceptance_validators": "PASSED",
+      "rendered_world_motion_intervals": 3,
+      "audio_clip_measurements": "EXACT MATCH",
+      "note": "Prefer the explicit OpenGL renderer device line over an earlier Using renderer API label. RED/GREEN metadata regression passed; acceptance properties are unchanged. Original run result above is preserved literally."
+    }
+  },
+  "post_acceptance_metadata_validation": {
+    "focused_gaming_tests": 12,
+    "syntax_checks": 187,
+    "real_artifact_validator_replay": "PASSED",
+    "runtime_or_image_changes": false,
+    "new_vm_run_required": false,
+    "reason": "Only prefer the explicitly reported renderer implementation name; all acceptance predicates and actual captured evidence are unchanged."
+  }
+}

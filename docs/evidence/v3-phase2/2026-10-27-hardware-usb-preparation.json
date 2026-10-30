@@ -1,0 +1,2237 @@
+{
+  "schema_version": 1,
+  "latest_status": "PASSED: same-ISO normal USB UEFI boot, expected negative control, protected NVMe/AHCI exclusion, disabled EFI SecureBoot value, unprivileged Wayland/Foot, zero final writes/unmaps after observed guest shutdown and unchanged complete sentinel hashes. Physical hardware NOT TESTED.",
+  "target": {
+    "vendor": "ASUS",
+    "model": null,
+    "gpu": "NVIDIA GeForce RTX 3070 Laptop GPU",
+    "physical_acceptance": "NOT TESTED",
+    "unknown": [
+      "exact model",
+      "CPU/iGPU/MUX/display routing",
+      "Wi-Fi chipset",
+      "internal storage controller",
+      "Secure Boot state"
+    ],
+    "family": "ROG",
+    "correction": {
+      "reported_on": "2026-10-30",
+      "source": "Explicit user correction: ASUS ROG, not Lenovo",
+      "previous_assumption": "Lenovo",
+      "vm_evidence_unchanged": true
+    },
+    "preflight_review": {
+      "date": "2026-10-30",
+      "physical_boot": "NOT APPROVED: preflight incomplete",
+      "explicit_confirmation": "PENDING before physical testing or USB writing/booting",
+      "required": [
+        "exact ASUS ROG model and BIOS version",
+        "UEFI mode and existing disabled Secure Boot",
+        "all internal disk bus types AND storage-controller/driver identities",
+        "BitLocker/device-encryption state and private recovery readiness when enabled"
+      ],
+      "runtime_or_iso_change_needed": false,
+      "scope": "Current evidence supports only the existing VM result; no ASUS hardware observations were collected"
+    }
+  },
+  "image": {
+    "source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
+    "run": 40172519876,
+    "artifact": 12590858411,
+    "bytes": 2080997376,
+    "sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+    "expires_at": "2026-11-01T07:43:14Z",
+    "reused_without_rebuild": true
+  },
+  "attempts": [
+    {
+      "attempt": 11,
+      "run": 40519844357,
+      "source": "826080279830e27d2063f30cde8c686f55dacd3f",
+      "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40519844357",
+      "artifact": {
+        "id": 12741577056,
+        "sha256": "e2eaf78a8a25de33c09878242ac8dc6e4645cb77ee98b3f60437f41112235f5f",
+        "download_hash_verified": true
+      },
+      "control": {
+        "boot": "PASSED",
+        "terminal": "PASSED",
+        "shutdown": "PASSED",
+        "problems": [],
+        "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+        "iso_bytes": 2080997376,
+        "accelerator": "kvm",
+        "raw_result_sha256": "6b164fb89e0eb0fdb253eca35cedbcc7c3309e7697439f2fa73fbc60ad2bfe6c",
+        "hardware_status": "PASSED",
+        "hardware_problems": [],
+        "command_line": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+        "secure_boot": "unknown",
+        "secure_boot_evidence": null,
+        "storage_module_kind": {
+          "loadable": {
+            "nvme": true,
+            "ahci": false
+          },
+          "builtin": null,
+          "raw_probes": null
+        },
+        "controllers": [
+          {
+            "pci": "0000:00:1f.2",
+            "class_code": "0x010601",
+            "driver": "ahci"
+          },
+          {
+            "pci": "0000:00:03.0",
+            "class_code": "0x010802",
+            "driver": "nvme"
+          }
+        ],
+        "probes": {
+          "storage": {
+            "status": "collected",
+            "command": [
+              "lsblk",
+              "--json",
+              "--paths",
+              "--tree",
+              "-o",
+              "PATH,TYPE,TRAN,RO,MOUNTPOINTS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"blockdevices\": [\n      {\n         \"path\": \"/dev/loop0\",\n         \"type\": \"loop\",\n         \"tran\": null,\n         \"ro\": true,\n         \"mountpoints\": [\n             \"/run/archiso/airootfs\"\n         ]\n      },{\n         \"path\": \"/dev/sda\",\n         \"type\": \"disk\",\n         \"tran\": \"sata\",\n         \"ro\": false,\n         \"mountpoints\": []\n      },{\n         \"path\": \"/dev/sdb\",\n         \"type\": \"disk\",\n         \"tran\": \"usb\",\n         \"ro\": true,\n         \"mountpoints\": [],\n         \"children\": [\n            {\n               \"path\": \"/dev/sdb1\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": [\n                   \"/run/archiso/bootmnt\"\n               ]\n            },{\n               \"path\": \"/dev/sdb2\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": []\n            }\n         ]\n      },{\n         \"path\": \"/dev/nvme0n1\",\n         \"type\": \"disk\",\n         \"tran\": \"nvme\",\n         \"ro\": false,\n         \"mountpoints\": []\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "boot_mount": {
+            "status": "collected",
+            "command": [
+              "findmnt",
+              "--json",
+              "--target",
+              "/run/archiso/bootmnt",
+              "-o",
+              "SOURCE,TARGET,FSTYPE,OPTIONS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/sdb1\",\n         \"target\": \"/run/archiso/bootmnt\",\n         \"fstype\": \"iso9660\",\n         \"options\": \"ro,relatime,nojoliet,check=s,map=n,blocksize=2048,iocharset=utf8\"\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "swap": {
+            "status": "command_failed",
+            "command": [
+              "swapon",
+              "--show",
+              "--json"
+            ],
+            "returncode": 1,
+            "stdout": "",
+            "stderr": "swapon: unrecognized option '--json'\nTry 'swapon --help' for more information.\n"
+          },
+          "udisks": {
+            "status": "collected",
+            "command": [
+              "systemctl",
+              "show",
+              "udisks2.service",
+              "--property=LoadState",
+              "--value"
+            ],
+            "returncode": 0,
+            "stdout": "masked\n",
+            "stderr": ""
+          }
+        },
+        "sentinel_sha256_before": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "sentinel_sha256_after_qemu_exit": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "after_guest_shutdown": {
+          "guest_status": {
+            "status": "shutdown",
+            "singlestep": false,
+            "running": false
+          },
+          "sentinel_counters": [
+            {
+              "device": "nvme-test",
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 0,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 5407103,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 0,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 2220032,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "idle_time_ns": 1127723740,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 142,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              }
+            },
+            {
+              "device": "sata-test",
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 73810,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 6382612,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 1,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 6660096,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "idle_time_ns": 556702954,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 141,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              }
+            }
+          ]
+        }
+      },
+      "protected": {
+        "boot": "FAILED",
+        "terminal": null,
+        "shutdown": "NOT TESTED",
+        "problems": [
+          "Secure Boot is enabled or unverified: STOP; An internal storage driver is loaded; Cannot verify that NVMe and AHCI are loadable modules, not built in; Unsupported or bound internal storage controller: STOP; A required storage/swap/automount observation is unavailable"
+        ],
+        "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+        "iso_bytes": 2080997376,
+        "accelerator": "kvm",
+        "raw_result_sha256": "3390666fe7763cb426b4c451256587de27f40e12744304bbada3eff3127b8694",
+        "hardware_status": "FAILED",
+        "hardware_problems": [
+          "Secure Boot is enabled or unverified: STOP",
+          "An internal storage driver is loaded",
+          "Cannot verify that NVMe and AHCI are loadable modules, not built in",
+          "Unsupported or bound internal storage controller: STOP",
+          "A required storage/swap/automount observation is unavailable"
+        ],
+        "command_line": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% module_blacklist=nvme,ahci,vmd noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+        "secure_boot": "unknown",
+        "secure_boot_evidence": null,
+        "storage_module_kind": {
+          "loadable": {
+            "nvme": true,
+            "ahci": false
+          },
+          "builtin": null,
+          "raw_probes": null
+        },
+        "controllers": [
+          {
+            "pci": "0000:00:1f.2",
+            "class_code": "0x010601",
+            "driver": "ahci"
+          },
+          {
+            "pci": "0000:00:03.0",
+            "class_code": "0x010802",
+            "driver": null
+          }
+        ],
+        "probes": {
+          "storage": {
+            "status": "collected",
+            "command": [
+              "lsblk",
+              "--json",
+              "--paths",
+              "--tree",
+              "-o",
+              "PATH,TYPE,TRAN,RO,MOUNTPOINTS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"blockdevices\": [\n      {\n         \"path\": \"/dev/loop0\",\n         \"type\": \"loop\",\n         \"tran\": null,\n         \"ro\": true,\n         \"mountpoints\": [\n             \"/run/archiso/airootfs\"\n         ]\n      },{\n         \"path\": \"/dev/sda\",\n         \"type\": \"disk\",\n         \"tran\": \"sata\",\n         \"ro\": false,\n         \"mountpoints\": []\n      },{\n         \"path\": \"/dev/sdb\",\n         \"type\": \"disk\",\n         \"tran\": \"usb\",\n         \"ro\": true,\n         \"mountpoints\": [],\n         \"children\": [\n            {\n               \"path\": \"/dev/sdb1\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": [\n                   \"/run/archiso/bootmnt\"\n               ]\n            },{\n               \"path\": \"/dev/sdb2\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": []\n            }\n         ]\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "boot_mount": {
+            "status": "collected",
+            "command": [
+              "findmnt",
+              "--json",
+              "--target",
+              "/run/archiso/bootmnt",
+              "-o",
+              "SOURCE,TARGET,FSTYPE,OPTIONS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/sdb1\",\n         \"target\": \"/run/archiso/bootmnt\",\n         \"fstype\": \"iso9660\",\n         \"options\": \"ro,relatime,nojoliet,check=s,map=n,blocksize=2048,iocharset=utf8\"\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "swap": {
+            "status": "command_failed",
+            "command": [
+              "swapon",
+              "--show",
+              "--json"
+            ],
+            "returncode": 1,
+            "stdout": "",
+            "stderr": "swapon: unrecognized option '--json'\nTry 'swapon --help' for more information.\n"
+          },
+          "udisks": {
+            "status": "collected",
+            "command": [
+              "systemctl",
+              "show",
+              "udisks2.service",
+              "--property=LoadState",
+              "--value"
+            ],
+            "returncode": 0,
+            "stdout": "masked\n",
+            "stderr": ""
+          }
+        },
+        "sentinel_sha256_before": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "sentinel_sha256_after_qemu_exit": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "after_guest_shutdown": null
+      }
+    },
+    {
+      "attempt": 12,
+      "run": 40521925726,
+      "source": "96f3efeeed35bbafb40fc9f9ca273b27d2513b0d",
+      "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40521925726",
+      "artifact": {
+        "id": 12742338632,
+        "sha256": "2833b1724cfeb2eb5f5e87787b1c1a4332e3baddfbf412ebdd8cafb57651fae6",
+        "download_hash_verified": true
+      },
+      "control": {
+        "boot": "PASSED",
+        "terminal": "PASSED",
+        "shutdown": "PASSED",
+        "problems": [],
+        "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+        "iso_bytes": 2080997376,
+        "accelerator": "kvm",
+        "raw_result_sha256": "7c4535c0e62423f88855bf1f76a3b92efce1a7984bdf0aa69d96d5fd4fb8f947",
+        "hardware_status": "PASSED",
+        "hardware_problems": [],
+        "command_line": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+        "secure_boot": "unknown",
+        "secure_boot_evidence": {
+          "kernel": {
+            "status": "command_failed",
+            "command": [
+              "journalctl",
+              "-b",
+              "-k",
+              "--no-pager",
+              "-o",
+              "cat",
+              "--grep",
+              "secureboot: Secure boot"
+            ],
+            "returncode": 1,
+            "stdout": "",
+            "stderr": ""
+          },
+          "efivar_error": "[Errno 2] No such file or directory: '/sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c'"
+        },
+        "storage_module_kind": {
+          "loadable": {
+            "nvme": true,
+            "ahci": false
+          },
+          "builtin": {
+            "nvme": false,
+            "ahci": true
+          },
+          "raw_probes": {
+            "nvme": {
+              "status": "collected",
+              "command": [
+                "modinfo",
+                "--field",
+                "filename",
+                "nvme"
+              ],
+              "returncode": 0,
+              "stdout": "/lib/modules/7.2.11-arch1-1/kernel/drivers/nvme/host/nvme.ko.zst\n",
+              "stderr": ""
+            },
+            "ahci": {
+              "status": "collected",
+              "command": [
+                "modinfo",
+                "--field",
+                "filename",
+                "ahci"
+              ],
+              "returncode": 0,
+              "stdout": "(builtin)\n",
+              "stderr": ""
+            }
+          }
+        },
+        "controllers": [
+          {
+            "pci": "0000:00:1f.2",
+            "class_code": "0x010601",
+            "driver": "ahci"
+          },
+          {
+            "pci": "0000:00:03.0",
+            "class_code": "0x010802",
+            "driver": "nvme"
+          }
+        ],
+        "probes": {
+          "storage": {
+            "status": "collected",
+            "command": [
+              "lsblk",
+              "--json",
+              "--paths",
+              "--tree",
+              "-o",
+              "PATH,TYPE,TRAN,RO,MOUNTPOINTS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"blockdevices\": [\n      {\n         \"path\": \"/dev/loop0\",\n         \"type\": \"loop\",\n         \"tran\": null,\n         \"ro\": true,\n         \"mountpoints\": [\n             \"/run/archiso/airootfs\"\n         ]\n      },{\n         \"path\": \"/dev/sda\",\n         \"type\": \"disk\",\n         \"tran\": \"sata\",\n         \"ro\": false,\n         \"mountpoints\": []\n      },{\n         \"path\": \"/dev/sdb\",\n         \"type\": \"disk\",\n         \"tran\": \"usb\",\n         \"ro\": true,\n         \"mountpoints\": [],\n         \"children\": [\n            {\n               \"path\": \"/dev/sdb1\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": [\n                   \"/run/archiso/bootmnt\"\n               ]\n            },{\n               \"path\": \"/dev/sdb2\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": []\n            }\n         ]\n      },{\n         \"path\": \"/dev/nvme0n1\",\n         \"type\": \"disk\",\n         \"tran\": \"nvme\",\n         \"ro\": false,\n         \"mountpoints\": []\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "boot_mount": {
+            "status": "collected",
+            "command": [
+              "findmnt",
+              "--json",
+              "--target",
+              "/run/archiso/bootmnt",
+              "-o",
+              "SOURCE,TARGET,FSTYPE,OPTIONS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/sdb1\",\n         \"target\": \"/run/archiso/bootmnt\",\n         \"fstype\": \"iso9660\",\n         \"options\": \"ro,relatime,nojoliet,check=s,map=n,blocksize=2048,iocharset=utf8\"\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "swap": {
+            "status": "collected",
+            "command": [
+              "cat",
+              "/proc/swaps"
+            ],
+            "returncode": 0,
+            "stdout": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+            "stderr": ""
+          },
+          "udisks": {
+            "status": "collected",
+            "command": [
+              "systemctl",
+              "show",
+              "udisks2.service",
+              "--property=LoadState",
+              "--value"
+            ],
+            "returncode": 0,
+            "stdout": "masked\n",
+            "stderr": ""
+          }
+        },
+        "sentinel_sha256_before": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "sentinel_sha256_after_qemu_exit": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "after_guest_shutdown": {
+          "guest_status": {
+            "status": "shutdown",
+            "singlestep": false,
+            "running": false
+          },
+          "sentinel_counters": [
+            {
+              "device": "nvme-test",
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 0,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 5463161,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 0,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 2482176,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "idle_time_ns": 762585833,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 143,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              }
+            },
+            {
+              "device": "sata-test",
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 38832,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 6779151,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 1,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 6660096,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "idle_time_ns": 529505120,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 143,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              }
+            }
+          ]
+        }
+      },
+      "protected": {
+        "boot": "FAILED",
+        "terminal": null,
+        "shutdown": "NOT TESTED",
+        "problems": [
+          "Secure Boot is enabled or unverified: STOP"
+        ],
+        "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+        "iso_bytes": 2080997376,
+        "accelerator": "kvm",
+        "raw_result_sha256": "64ffe5d7c8610b817ca0c2981f4bc06dab9e883af734a1a6c468d2de0a2eb95b",
+        "hardware_status": "FAILED",
+        "hardware_problems": [
+          "Secure Boot is enabled or unverified: STOP"
+        ],
+        "command_line": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% module_blacklist=nvme,ahci,vmd initcall_blacklist=ahci_pci_driver_init noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+        "secure_boot": "unknown",
+        "secure_boot_evidence": {
+          "kernel": {
+            "status": "command_failed",
+            "command": [
+              "journalctl",
+              "-b",
+              "-k",
+              "--no-pager",
+              "-o",
+              "cat",
+              "--grep",
+              "secureboot: Secure boot"
+            ],
+            "returncode": 1,
+            "stdout": "",
+            "stderr": ""
+          },
+          "efivar_error": "[Errno 2] No such file or directory: '/sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c'"
+        },
+        "storage_module_kind": {
+          "loadable": {
+            "nvme": true,
+            "ahci": false
+          },
+          "builtin": {
+            "nvme": false,
+            "ahci": true
+          },
+          "raw_probes": {
+            "nvme": {
+              "status": "collected",
+              "command": [
+                "modinfo",
+                "--field",
+                "filename",
+                "nvme"
+              ],
+              "returncode": 0,
+              "stdout": "/lib/modules/7.2.11-arch1-1/kernel/drivers/nvme/host/nvme.ko.zst\n",
+              "stderr": ""
+            },
+            "ahci": {
+              "status": "collected",
+              "command": [
+                "modinfo",
+                "--field",
+                "filename",
+                "ahci"
+              ],
+              "returncode": 0,
+              "stdout": "(builtin)\n",
+              "stderr": ""
+            }
+          }
+        },
+        "controllers": [
+          {
+            "pci": "0000:00:1f.2",
+            "class_code": "0x010601",
+            "driver": null
+          },
+          {
+            "pci": "0000:00:03.0",
+            "class_code": "0x010802",
+            "driver": null
+          }
+        ],
+        "probes": {
+          "storage": {
+            "status": "collected",
+            "command": [
+              "lsblk",
+              "--json",
+              "--paths",
+              "--tree",
+              "-o",
+              "PATH,TYPE,TRAN,RO,MOUNTPOINTS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"blockdevices\": [\n      {\n         \"path\": \"/dev/loop0\",\n         \"type\": \"loop\",\n         \"tran\": null,\n         \"ro\": true,\n         \"mountpoints\": [\n             \"/run/archiso/airootfs\"\n         ]\n      },{\n         \"path\": \"/dev/sda\",\n         \"type\": \"disk\",\n         \"tran\": \"usb\",\n         \"ro\": true,\n         \"mountpoints\": [],\n         \"children\": [\n            {\n               \"path\": \"/dev/sda1\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": [\n                   \"/run/archiso/bootmnt\"\n               ]\n            },{\n               \"path\": \"/dev/sda2\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": []\n            }\n         ]\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "boot_mount": {
+            "status": "collected",
+            "command": [
+              "findmnt",
+              "--json",
+              "--target",
+              "/run/archiso/bootmnt",
+              "-o",
+              "SOURCE,TARGET,FSTYPE,OPTIONS"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/sda1\",\n         \"target\": \"/run/archiso/bootmnt\",\n         \"fstype\": \"iso9660\",\n         \"options\": \"ro,relatime,nojoliet,check=s,map=n,blocksize=2048,iocharset=utf8\"\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "swap": {
+            "status": "collected",
+            "command": [
+              "cat",
+              "/proc/swaps"
+            ],
+            "returncode": 0,
+            "stdout": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+            "stderr": ""
+          },
+          "udisks": {
+            "status": "collected",
+            "command": [
+              "systemctl",
+              "show",
+              "udisks2.service",
+              "--property=LoadState",
+              "--value"
+            ],
+            "returncode": 0,
+            "stdout": "masked\n",
+            "stderr": ""
+          }
+        },
+        "sentinel_sha256_before": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "sentinel_sha256_after_qemu_exit": {
+          "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+          "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+        },
+        "after_guest_shutdown": null
+      }
+    }
+  ],
+  "interpretation": [
+    "Attempt11 correctly failed: module_blacklist blocked loadable NVMe but not built-in AHCI; actual SATA disk stayed visible.",
+    "Observed kernel7.2.11-arch1-1 reports ahci filename (builtin), while nvme is a compressed loadable module.",
+    "The one-time ahci_pci_driver_init initcall guard in attempt12 unbound both actual controllers and left only USB/Live loop devices.",
+    "swapon --json is unsupported; canonical /proc/swaps now provides strict empty-swap proof.",
+    "Both earlier negative controls passed normal USB UEFI/UID1000 desktop/Foot/shutdown, final zero sentinel counters and unchanged full hashes. This is expected unsafe disk visibility on disposable files only.",
+    "Protected attempts11/12 remain FAILED and their normal shutdown/final operation observations NOT TESTED; unchanged final hashes alone do not make them pass.",
+    "Attempt12 missing EFI SecureBoot variable and empty canonical journal query remain unknown/STOP. No disabled-state inference was made.",
+    "The final explicit SMM-capable firmware with fresh unenrolled variables exposes EFI SecureBoot bytes0600000000 in both cases. All strict gates pass without an absent-variable inference; this establishes disabled-state detection, not SecureBoot-enabled boot support.",
+    "Expected negative-control disks are visible/bound and positively read; protected guest keeps both PCI devices present but unbound and exposes only the boot USB and Live loop device. Final QMP counters after actual guest power-off remain zero, followed by equal full-file hashes after host quit."
+  ],
+  "candidate_package_observation": {
+    "run": 40172519876,
+    "artifact": 12591716882,
+    "path": "install-v3/installed-guest.json",
+    "sha256": "280b0194f89c42a6a72538cbe78d373417762a01e1a068dba6bcec84d6ce213a",
+    "selected": [
+      "alsa-utils",
+      "libinput",
+      "linux",
+      "linux-firmware",
+      "linux-firmware-amd",
+      "linux-firmware-amdgpu",
+      "linux-firmware-atheros",
+      "linux-firmware-broadcom",
+      "linux-firmware-cirrus",
+      "linux-firmware-intel",
+      "linux-firmware-marvell",
+      "linux-firmware-mediatek",
+      "linux-firmware-nvidia",
+      "linux-firmware-other",
+      "linux-firmware-radeon",
+      "linux-firmware-realtek",
+      "linux-firmware-ti",
+      "linux-firmware-whence",
+      "mesa",
+      "networkmanager",
+      "pipewire",
+      "pipewire-alsa",
+      "pipewire-audio",
+      "pipewire-pulse",
+      "sof-firmware",
+      "vulkan-icd-loader",
+      "vulkan-intel",
+      "vulkan-mesa-implicit-layers",
+      "vulkan-radeon",
+      "vulkan-tools",
+      "wireplumber",
+      "wpa_supplicant",
+      "xorg-xwayland"
+    ],
+    "nvidia_driver_present": false,
+    "scope": "Installed target cloned offline from this exact ISO; package presence, not physical support acceptance"
+  },
+  "physical_limits": [
+    "Secure Boot enabled/unknown: STOP; no firmware/TPM/key/BitLocker changes in first-test procedure",
+    "Unknown/RAID/VMD/eMMC/internal-USB storage: STOP before boot; current guards are specific to standard NVMe/SATA-AHCI",
+    "No real/internal Windows disk was attached to automated tests; only exclusive fresh32MiB sentinel files",
+    "NVIDIA upstream list includes249D/24DD, but this ISO does not ship the optional NVIDIA driver or vulkan-nouveau; physical graphics are NOT TESTED",
+    "Wi-Fi, audible speaker/headphone output, physical keyboard/touchpad/mouse and panel/MUX/external displays are NOT TESTED",
+    "No installer, package/driver update, internal mount, swap, firmware change or user-data operation is part of the first physical test",
+    "No V3 publication/merge/main/release change; existing Steam/Heroic/game/installer acceptance and planned.hpk remain preserved"
+  ],
+  "sources": [
+    "https://github.com/NVIDIA/open-gpu-kernel-modules",
+    "https://nouveau.freedesktop.org/FeatureMatrix.html",
+    "https://docs.kernel.org/admin-guide/kernel-parameters.html",
+    "https://github.com/torvalds/linux/blob/master/drivers/ata/ahci.c",
+    "https://github.com/torvalds/linux/blob/master/include/linux/device/driver.h",
+    "https://github.com/tianocore/edk2/blob/master/OvmfPkg/README",
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html",
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd-gpt-auto-generator.html",
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd-debug-generator.html",
+    "https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/faq"
+  ],
+  "accepted_run": {
+    "attempt": 13,
+    "run": 40524446117,
+    "job": 122260030032,
+    "source": "c336cd11b3f5d2bfb18b4bc6de45b7d01e839208",
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/40524446117",
+    "memory_mib": 4096,
+    "artifact": {
+      "id": 12744106013,
+      "bytes": 7634983,
+      "sha256": "fc39e5ec6741e85e887c88f32c75d79d44f9c5f98fb3cc6803c7b4abab4f81c2",
+      "download_hash_verified": true
+    },
+    "validator_replay_passed": true,
+    "results": {
+      "control": {
+        "boot": "PASSED",
+        "terminal": "PASSED",
+        "shutdown": "PASSED",
+        "problems": [],
+        "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+        "iso_bytes": 2080997376,
+        "accelerator": "kvm",
+        "desktop_status": {
+          "backend": "wayland",
+          "bridge_connected": true,
+          "desktop": "Husk Desktop",
+          "desktop_surfaces": 1,
+          "keyring_ready": true,
+          "live": true,
+          "os": "Husk OS",
+          "panel_mapped": true,
+          "panel_mode": "desktop",
+          "panel_visible": true,
+          "renderer": "pixman",
+          "version": "v3-phase2",
+          "window_count": 0
+        },
+        "terminal_pids": [
+          1335
+        ],
+        "kernel_cmdline": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+        "live_write_space": {
+          "total_bytes": 2028568576,
+          "available_bytes": 2026610688,
+          "filesystem": "tmpfs"
+        },
+        "memory_total_bytes": 4057137152,
+        "raw_result_sha256": "ce7972d5ee74b91672d07fc3035de60685a0c26a3e7c29c6757f5e3403797779",
+        "hardware": {
+          "mode": "control",
+          "status": "PASSED",
+          "collector_sha256": "d2f93e5f804032c65a1f2308e66353056694fa4ef211deb88047c94196804b84",
+          "firmware": {
+            "code": "OVMF_CODE_4M.secboot.fd",
+            "code_sha256": "1286f2a3217d09b374d05951355d7a561c8bacecd74845c8a1fbb71a48c0de8d",
+            "variables_template": "OVMF_VARS_4M.fd",
+            "variables_template_sha256": "5d2ac383371b408398accee7ec27c8c09ea5b74a0de0ceea6513388b15be5d1e",
+            "policy": "Secure Boot capable SMM firmware with fresh unenrolled variables; actual disabled observation required"
+          },
+          "guest": {
+            "live": true,
+            "uefi": true,
+            "is_husk_os": true,
+            "kernel_cmdline": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+            "secure_boot": "disabled",
+            "loaded_modules": [
+              "aead",
+              "aesni_intel",
+              "ccp",
+              "cdrom",
+              "cfg80211",
+              "crypto_user",
+              "dm_mod",
+              "failover",
+              "gf128mul",
+              "i2c_i801",
+              "i2c_mux",
+              "i2c_smbus",
+              "iTCO_wdt",
+              "intel_agp",
+              "intel_gtt",
+              "intel_pmc_bxt",
+              "intel_rapl_common",
+              "intel_rapl_msr",
+              "irqbypass",
+              "isofs",
+              "joydev",
+              "kvm",
+              "kvm_amd",
+              "loop",
+              "lpc_ich",
+              "mac_hid",
+              "mousedev",
+              "net_failover",
+              "nvme",
+              "nvme_auth",
+              "nvme_core",
+              "nvme_keyring",
+              "overlay",
+              "parport",
+              "parport_pc",
+              "pcspkr",
+              "pkcs8_key_parser",
+              "ppdev",
+              "psmouse",
+              "qemu_fw_cfg",
+              "qrtr",
+              "rfkill",
+              "serio_raw",
+              "squashfs",
+              "tun",
+              "uas",
+              "usb_storage",
+              "virtio_dma_buf",
+              "virtio_gpu",
+              "virtio_net",
+              "vmw_vsock_virtio_transport",
+              "vmw_vsock_virtio_transport_common",
+              "vsock",
+              "vsock_loopback"
+            ],
+            "probes": {
+              "storage": {
+                "status": "collected",
+                "command": [
+                  "lsblk",
+                  "--json",
+                  "--paths",
+                  "--tree",
+                  "-o",
+                  "PATH,TYPE,TRAN,RO,MOUNTPOINTS"
+                ],
+                "returncode": 0,
+                "stdout": "{\n   \"blockdevices\": [\n      {\n         \"path\": \"/dev/loop0\",\n         \"type\": \"loop\",\n         \"tran\": null,\n         \"ro\": true,\n         \"mountpoints\": [\n             \"/run/archiso/airootfs\"\n         ]\n      },{\n         \"path\": \"/dev/sda\",\n         \"type\": \"disk\",\n         \"tran\": \"sata\",\n         \"ro\": false,\n         \"mountpoints\": []\n      },{\n         \"path\": \"/dev/sdb\",\n         \"type\": \"disk\",\n         \"tran\": \"usb\",\n         \"ro\": true,\n         \"mountpoints\": [],\n         \"children\": [\n            {\n               \"path\": \"/dev/sdb1\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": [\n                   \"/run/archiso/bootmnt\"\n               ]\n            },{\n               \"path\": \"/dev/sdb2\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": []\n            }\n         ]\n      },{\n         \"path\": \"/dev/nvme0n1\",\n         \"type\": \"disk\",\n         \"tran\": \"nvme\",\n         \"ro\": false,\n         \"mountpoints\": []\n      }\n   ]\n}\n",
+                "stderr": ""
+              },
+              "boot_mount": {
+                "status": "collected",
+                "command": [
+                  "findmnt",
+                  "--json",
+                  "--target",
+                  "/run/archiso/bootmnt",
+                  "-o",
+                  "SOURCE,TARGET,FSTYPE,OPTIONS"
+                ],
+                "returncode": 0,
+                "stdout": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/sdb1\",\n         \"target\": \"/run/archiso/bootmnt\",\n         \"fstype\": \"iso9660\",\n         \"options\": \"ro,relatime,nojoliet,check=s,map=n,blocksize=2048,iocharset=utf8\"\n      }\n   ]\n}\n",
+                "stderr": ""
+              },
+              "swap": {
+                "status": "collected",
+                "command": [
+                  "cat",
+                  "/proc/swaps"
+                ],
+                "returncode": 0,
+                "stdout": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+                "stderr": ""
+              },
+              "udisks": {
+                "status": "collected",
+                "command": [
+                  "systemctl",
+                  "show",
+                  "udisks2.service",
+                  "--property=LoadState",
+                  "--value"
+                ],
+                "returncode": 0,
+                "stdout": "masked\n",
+                "stderr": ""
+              }
+            },
+            "storage_modules": {
+              "nvme": true,
+              "ahci": false
+            },
+            "storage_builtin": {
+              "nvme": false,
+              "ahci": true
+            },
+            "storage_driver_probes": {
+              "nvme": {
+                "status": "collected",
+                "command": [
+                  "modinfo",
+                  "--field",
+                  "filename",
+                  "nvme"
+                ],
+                "returncode": 0,
+                "stdout": "/lib/modules/7.2.11-arch1-1/kernel/drivers/nvme/host/nvme.ko.zst\n",
+                "stderr": ""
+              },
+              "ahci": {
+                "status": "collected",
+                "command": [
+                  "modinfo",
+                  "--field",
+                  "filename",
+                  "ahci"
+                ],
+                "returncode": 0,
+                "stdout": "(builtin)\n",
+                "stderr": ""
+              }
+            },
+            "pci_storage": [
+              {
+                "pci": "0000:00:1f.2",
+                "class_code": "0x010601",
+                "driver": "ahci"
+              },
+              {
+                "pci": "0000:00:03.0",
+                "class_code": "0x010802",
+                "driver": "nvme"
+              }
+            ],
+            "dmi": {
+              "sys_vendor": "QEMU",
+              "product_name": "Standard PC (Q35 + ICH9, 2009)",
+              "product_version": "pc-q35-8.2",
+              "bios_version": "2024.02-2ubuntu0.10"
+            },
+            "drm": {
+              "card1-Virtual-1": {
+                "status": "connected",
+                "modes": [
+                  "1280x800",
+                  "5120x2160",
+                  "4096x2160",
+                  "3840x2160",
+                  "3840x2160",
+                  "3840x2160",
+                  "1920x1440",
+                  "2560x1080",
+                  "1856x1392",
+                  "1792x1344",
+                  "2048x1152",
+                  "1920x1200",
+                  "1920x1080",
+                  "1920x1080",
+                  "1600x1200",
+                  "1680x1050",
+                  "1400x1050",
+                  "1280x1024",
+                  "1440x900",
+                  "1280x960",
+                  "1360x768",
+                  "1280x768",
+                  "1024x768",
+                  "800x600",
+                  "640x480",
+                  "640x480"
+                ]
+              }
+            },
+            "secure_boot_evidence": {
+              "kernel": {
+                "status": "command_failed",
+                "command": [
+                  "journalctl",
+                  "-b",
+                  "-k",
+                  "--no-pager",
+                  "-o",
+                  "cat",
+                  "--grep",
+                  "secureboot: Secure boot"
+                ],
+                "returncode": 1,
+                "stdout": "",
+                "stderr": ""
+              },
+              "efivar_hex": "0600000000"
+            }
+          },
+          "safety_problems": [
+            "Missing or conflicting one-time USB safety boot options",
+            "An internal storage driver is loaded",
+            "Unsupported or bound internal storage controller: STOP",
+            "Unsupported or bound internal storage controller: STOP",
+            "Only the boot USB may be exposed; an internal/additional/unknown disk is visible"
+          ],
+          "problems": [],
+          "pre_shutdown_blockstats": [
+            {
+              "device": "nvme-test",
+              "parent": {
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": false,
+                  "rd_total_time_ns": 0,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 0,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": false,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 0,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block621",
+                "driver-specific": {
+                  "discard-bytes-ok": 0,
+                  "discard-nb-ok": 0,
+                  "driver": "file",
+                  "discard-nb-failed": 0
+                }
+              },
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 0,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 6650021,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 0,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 2351104,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "idle_time_ns": 70300912505,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 142,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              },
+              "node-name": "#block745",
+              "qdev": "/machine/peripheral-anon/device[1]"
+            },
+            {
+              "device": "sata-test",
+              "parent": {
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": false,
+                  "rd_total_time_ns": 0,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 0,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": false,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 0,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block897",
+                "driver-specific": {
+                  "discard-bytes-ok": 0,
+                  "discard-nb-ok": 0,
+                  "driver": "file",
+                  "discard-nb-failed": 0
+                }
+              },
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 0,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 9591136,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 0,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 6529024,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "idle_time_ns": 70224803253,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 141,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              },
+              "node-name": "#block905",
+              "qdev": "/machine/peripheral-anon/device[2]"
+            }
+          ],
+          "after_guest_shutdown": {
+            "guest_status": {
+              "status": "shutdown",
+              "singlestep": false,
+              "running": false
+            },
+            "blockstats": [
+              {
+                "device": "nvme-test",
+                "parent": {
+                  "stats": {
+                    "unmap_operations": 0,
+                    "unmap_merged": 0,
+                    "failed_zone_append_operations": 0,
+                    "flush_total_time_ns": 0,
+                    "wr_highest_offset": 0,
+                    "wr_total_time_ns": 0,
+                    "failed_wr_operations": 0,
+                    "failed_rd_operations": 0,
+                    "wr_merged": 0,
+                    "wr_bytes": 0,
+                    "timed_stats": [],
+                    "failed_unmap_operations": 0,
+                    "zone_append_merged": 0,
+                    "failed_flush_operations": 0,
+                    "account_invalid": false,
+                    "rd_total_time_ns": 0,
+                    "invalid_unmap_operations": 0,
+                    "flush_operations": 0,
+                    "wr_operations": 0,
+                    "unmap_bytes": 0,
+                    "rd_merged": 0,
+                    "rd_bytes": 0,
+                    "unmap_total_time_ns": 0,
+                    "invalid_flush_operations": 0,
+                    "account_failed": false,
+                    "zone_append_total_time_ns": 0,
+                    "zone_append_operations": 0,
+                    "rd_operations": 0,
+                    "zone_append_bytes": 0,
+                    "invalid_zone_append_operations": 0,
+                    "invalid_wr_operations": 0,
+                    "invalid_rd_operations": 0
+                  },
+                  "node-name": "#block621",
+                  "driver-specific": {
+                    "discard-bytes-ok": 0,
+                    "discard-nb-ok": 0,
+                    "driver": "file",
+                    "discard-nb-failed": 0
+                  }
+                },
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": true,
+                  "rd_total_time_ns": 6762150,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 2482176,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": true,
+                  "idle_time_ns": 1142296784,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 143,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block745",
+                "qdev": "/machine/peripheral-anon/device[1]"
+              },
+              {
+                "device": "sata-test",
+                "parent": {
+                  "stats": {
+                    "unmap_operations": 0,
+                    "unmap_merged": 0,
+                    "failed_zone_append_operations": 0,
+                    "flush_total_time_ns": 0,
+                    "wr_highest_offset": 0,
+                    "wr_total_time_ns": 0,
+                    "failed_wr_operations": 0,
+                    "failed_rd_operations": 0,
+                    "wr_merged": 0,
+                    "wr_bytes": 0,
+                    "timed_stats": [],
+                    "failed_unmap_operations": 0,
+                    "zone_append_merged": 0,
+                    "failed_flush_operations": 0,
+                    "account_invalid": false,
+                    "rd_total_time_ns": 0,
+                    "invalid_unmap_operations": 0,
+                    "flush_operations": 0,
+                    "wr_operations": 0,
+                    "unmap_bytes": 0,
+                    "rd_merged": 0,
+                    "rd_bytes": 0,
+                    "unmap_total_time_ns": 0,
+                    "invalid_flush_operations": 0,
+                    "account_failed": false,
+                    "zone_append_total_time_ns": 0,
+                    "zone_append_operations": 0,
+                    "rd_operations": 0,
+                    "zone_append_bytes": 0,
+                    "invalid_zone_append_operations": 0,
+                    "invalid_wr_operations": 0,
+                    "invalid_rd_operations": 0
+                  },
+                  "node-name": "#block897",
+                  "driver-specific": {
+                    "discard-bytes-ok": 0,
+                    "discard-nb-ok": 0,
+                    "driver": "file",
+                    "discard-nb-failed": 0
+                  }
+                },
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 67714,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": true,
+                  "rd_total_time_ns": 9669617,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 1,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 6660096,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": true,
+                  "idle_time_ns": 165469252,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 142,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block905",
+                "qdev": "/machine/peripheral-anon/device[2]"
+              }
+            ]
+          },
+          "sentinel_sha256_before": {
+            "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+            "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+          },
+          "sentinel_sha256_after_shutdown": {
+            "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+            "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+          }
+        },
+        "uid": 1000,
+        "live": true,
+        "efi_diagnostics": {
+          "bootctl": {
+            "status": "collected",
+            "command": [
+              "bootctl",
+              "status",
+              "--no-pager"
+            ],
+            "returncode": 0,
+            "stdout": "System:\n      Firmware: UEFI 2.70 (Ubuntu distribution of EDK II 1.00)\n Firmware Arch: x64\n   Secure Boot: disabled (setup)\n  TPM2 Support: no\n  Measured UKI: no\n   Measured OS: no\n  Boot into FW: supported\n Platform Lang: n/a\n\nCurrent Boot Loader:\n        Product: systemd-boot 262.1-1-arch\n       Features: \u2713 Boot counting\n                 \u2713 Menu timeout control\n                 \u2713 One-shot menu timeout control\n                 \u2713 Default entry control\n                 \u2713 One-shot entry control\n                 \u2713 Support for XBOOTLDR partition\n                 \u2713 Support for passing random seed to OS\n                 \u2713 Load drop-in drivers\n                 \u2713 Support Type #1 sort-key field\n                 \u2713 Support @saved pseudo-entry\n                 \u2713 Support Type #1 devicetree field\n                 \u2713 Enroll SecureBoot keys\n                 \u2713 Retain SHIM protocols\n                 \u2713 Menu can be disabled\n                 \u2713 Multi-Profile UKIs are supported\n                 \u2713 Loader reports network boot URL\n                 \u2713 Support Type #1 uki field\n                 \u2713 Support Type #1 uki-url field\n                 \u2713 Loader reports active TPM2 PCR banks\n                 \u2713 Loader reports firmware keyboard layout\n                 \u2713 Loader measures SMBIOS information\n      Partition: /dev/disk/by-partuuid/36323032-3031-4532-b033-303732323136\n         Loader: \u2514\u2500(null)//EFI/BOOT/BOOTX64.EFI\nKeyboard Layout: n/a (not reported by firmware)\n  Current Entry: 01-archiso-linux.conf\n\nRandom Seed:\n System Token: not set\n\nNo boot loaders listed in EFI Variables.\n\n",
+            "stderr": "Couldn't find EFI system partition. It is recommended to mount it to /boot/ or /efi/.\nAlternatively, use --esp-path= to specify path to mount point.\n"
+          },
+          "variables_mount": {
+            "status": "collected",
+            "command": [
+              "findmnt",
+              "--json",
+              "--mountpoint",
+              "/sys/firmware/efi/efivars"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"filesystems\": [\n      {\n         \"target\": \"/sys/firmware/efi/efivars\",\n         \"source\": \"efivarfs\",\n         \"fstype\": \"efivarfs\",\n         \"options\": \"rw,nosuid,nodev,noexec,relatime\"\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "kernel": {
+            "status": "collected",
+            "command": [
+              "journalctl",
+              "-b",
+              "-k",
+              "--no-pager",
+              "-o",
+              "cat",
+              "--grep",
+              "[Ss]ecure|[Ee][Ff][Ii]|initcall"
+            ],
+            "returncode": 0,
+            "stdout": "efi: EFI v2.7 by Ubuntu distribution of EDK II\nefi: SMBIOS=0x7e9d5000 SMBIOS 3.0=0x7e9d3000 ACPI=0x7eb7e000 ACPI 2.0=0x7eb7e014 MEMATTR=0x7d6b6018 INITRD=0x7d6afe18 \nSecure boot disabled\nclocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns\nefi: Freeing EFI boot services memory: 26196K\nefivars: Registered efivars operations\nLoad Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore\nClear SysFail Entry If The Boot Is Successful skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/LoaderEntrySysFail-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f\nClear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67\n",
+            "stderr": ""
+          },
+          "variable_names": [
+            "SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c",
+            "SetupMode-8be4df61-93ca-11d2-aa0d-00e098032b8c"
+          ]
+        },
+        "screenshots": [
+          {
+            "path": "desktop-start.png",
+            "sha256": "e4a00f26216ed2057436e8363c1352b4d77653deb087ad0169600655e7a1f5a7"
+          },
+          {
+            "path": "desktop-terminal.png",
+            "sha256": "a245c0c12f7f1c9a784a092508ebac429c508306ac0aaf9bb434ee00269e508a"
+          },
+          {
+            "path": "uefi-usb-edited-options.png",
+            "sha256": "a3a2d2df54a842c5793735dfa898291bd966b65f289bc84b3bdeeab1f37ddb22"
+          },
+          {
+            "path": "uefi-usb-menu.png",
+            "sha256": "3e0abfc95381d53d4b9b003aab16c587e83d3d9792ee9c969a5336d4d0810ba8"
+          }
+        ],
+        "summary_scope": "Exact guest observations; QMP lists restricted to both sentinel disks; EFI variable-name list restricted to SecureBoot/SetupMode. Full raw-result and archive digests preserved."
+      },
+      "protected": {
+        "boot": "PASSED",
+        "terminal": "PASSED",
+        "shutdown": "PASSED",
+        "problems": [],
+        "iso_sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+        "iso_bytes": 2080997376,
+        "accelerator": "kvm",
+        "desktop_status": {
+          "backend": "wayland",
+          "bridge_connected": true,
+          "desktop": "Husk Desktop",
+          "desktop_surfaces": 1,
+          "keyring_ready": true,
+          "live": true,
+          "os": "Husk OS",
+          "panel_mapped": true,
+          "panel_mode": "desktop",
+          "panel_visible": true,
+          "renderer": "pixman",
+          "version": "v3-phase2",
+          "window_count": 0
+        },
+        "terminal_pids": [
+          1316
+        ],
+        "kernel_cmdline": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% module_blacklist=nvme,ahci,vmd initcall_blacklist=ahci_pci_driver_init noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+        "live_write_space": {
+          "total_bytes": 2028568576,
+          "available_bytes": 2026610688,
+          "filesystem": "tmpfs"
+        },
+        "memory_total_bytes": 4057137152,
+        "raw_result_sha256": "ecbb62c2909de6352a5dfadcbbbcb32f5fc049fdf73ac77c8b59d904160ba863",
+        "hardware": {
+          "mode": "protected",
+          "status": "PASSED",
+          "collector_sha256": "d2f93e5f804032c65a1f2308e66353056694fa4ef211deb88047c94196804b84",
+          "firmware": {
+            "code": "OVMF_CODE_4M.secboot.fd",
+            "code_sha256": "1286f2a3217d09b374d05951355d7a561c8bacecd74845c8a1fbb71a48c0de8d",
+            "variables_template": "OVMF_VARS_4M.fd",
+            "variables_template_sha256": "5d2ac383371b408398accee7ec27c8c09ea5b74a0de0ceea6513388b15be5d1e",
+            "policy": "Secure Boot capable SMM firmware with fresh unenrolled variables; actual disabled observation required"
+          },
+          "guest": {
+            "live": true,
+            "uefi": true,
+            "is_husk_os": true,
+            "kernel_cmdline": "initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% module_blacklist=nvme,ahci,vmd initcall_blacklist=ahci_pci_driver_init noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target",
+            "secure_boot": "disabled",
+            "loaded_modules": [
+              "aead",
+              "aesni_intel",
+              "ccp",
+              "cdrom",
+              "cfg80211",
+              "crypto_user",
+              "dm_mod",
+              "failover",
+              "gf128mul",
+              "i2c_i801",
+              "i2c_mux",
+              "i2c_smbus",
+              "iTCO_wdt",
+              "intel_agp",
+              "intel_gtt",
+              "intel_pmc_bxt",
+              "intel_rapl_common",
+              "intel_rapl_msr",
+              "irqbypass",
+              "isofs",
+              "joydev",
+              "kvm",
+              "kvm_amd",
+              "loop",
+              "lpc_ich",
+              "mac_hid",
+              "mousedev",
+              "net_failover",
+              "nvme_auth",
+              "nvme_core",
+              "nvme_keyring",
+              "overlay",
+              "parport",
+              "parport_pc",
+              "pcspkr",
+              "pkcs8_key_parser",
+              "ppdev",
+              "psmouse",
+              "qemu_fw_cfg",
+              "qrtr",
+              "rfkill",
+              "serio_raw",
+              "squashfs",
+              "tun",
+              "uas",
+              "usb_storage",
+              "virtio_dma_buf",
+              "virtio_gpu",
+              "virtio_net",
+              "vmw_vsock_virtio_transport",
+              "vmw_vsock_virtio_transport_common",
+              "vsock",
+              "vsock_loopback"
+            ],
+            "probes": {
+              "storage": {
+                "status": "collected",
+                "command": [
+                  "lsblk",
+                  "--json",
+                  "--paths",
+                  "--tree",
+                  "-o",
+                  "PATH,TYPE,TRAN,RO,MOUNTPOINTS"
+                ],
+                "returncode": 0,
+                "stdout": "{\n   \"blockdevices\": [\n      {\n         \"path\": \"/dev/loop0\",\n         \"type\": \"loop\",\n         \"tran\": null,\n         \"ro\": true,\n         \"mountpoints\": [\n             \"/run/archiso/airootfs\"\n         ]\n      },{\n         \"path\": \"/dev/sda\",\n         \"type\": \"disk\",\n         \"tran\": \"usb\",\n         \"ro\": true,\n         \"mountpoints\": [],\n         \"children\": [\n            {\n               \"path\": \"/dev/sda1\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": [\n                   \"/run/archiso/bootmnt\"\n               ]\n            },{\n               \"path\": \"/dev/sda2\",\n               \"type\": \"part\",\n               \"tran\": null,\n               \"ro\": true,\n               \"mountpoints\": []\n            }\n         ]\n      }\n   ]\n}\n",
+                "stderr": ""
+              },
+              "boot_mount": {
+                "status": "collected",
+                "command": [
+                  "findmnt",
+                  "--json",
+                  "--target",
+                  "/run/archiso/bootmnt",
+                  "-o",
+                  "SOURCE,TARGET,FSTYPE,OPTIONS"
+                ],
+                "returncode": 0,
+                "stdout": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/sda1\",\n         \"target\": \"/run/archiso/bootmnt\",\n         \"fstype\": \"iso9660\",\n         \"options\": \"ro,relatime,nojoliet,check=s,map=n,blocksize=2048,iocharset=utf8\"\n      }\n   ]\n}\n",
+                "stderr": ""
+              },
+              "swap": {
+                "status": "collected",
+                "command": [
+                  "cat",
+                  "/proc/swaps"
+                ],
+                "returncode": 0,
+                "stdout": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n",
+                "stderr": ""
+              },
+              "udisks": {
+                "status": "collected",
+                "command": [
+                  "systemctl",
+                  "show",
+                  "udisks2.service",
+                  "--property=LoadState",
+                  "--value"
+                ],
+                "returncode": 0,
+                "stdout": "masked\n",
+                "stderr": ""
+              }
+            },
+            "storage_modules": {
+              "nvme": true,
+              "ahci": false
+            },
+            "storage_builtin": {
+              "nvme": false,
+              "ahci": true
+            },
+            "storage_driver_probes": {
+              "nvme": {
+                "status": "collected",
+                "command": [
+                  "modinfo",
+                  "--field",
+                  "filename",
+                  "nvme"
+                ],
+                "returncode": 0,
+                "stdout": "/lib/modules/7.2.11-arch1-1/kernel/drivers/nvme/host/nvme.ko.zst\n",
+                "stderr": ""
+              },
+              "ahci": {
+                "status": "collected",
+                "command": [
+                  "modinfo",
+                  "--field",
+                  "filename",
+                  "ahci"
+                ],
+                "returncode": 0,
+                "stdout": "(builtin)\n",
+                "stderr": ""
+              }
+            },
+            "pci_storage": [
+              {
+                "pci": "0000:00:1f.2",
+                "class_code": "0x010601",
+                "driver": null
+              },
+              {
+                "pci": "0000:00:03.0",
+                "class_code": "0x010802",
+                "driver": null
+              }
+            ],
+            "dmi": {
+              "sys_vendor": "QEMU",
+              "product_name": "Standard PC (Q35 + ICH9, 2009)",
+              "product_version": "pc-q35-8.2",
+              "bios_version": "2024.02-2ubuntu0.10"
+            },
+            "drm": {
+              "card1-Virtual-1": {
+                "status": "connected",
+                "modes": [
+                  "1280x800",
+                  "5120x2160",
+                  "4096x2160",
+                  "3840x2160",
+                  "3840x2160",
+                  "3840x2160",
+                  "1920x1440",
+                  "2560x1080",
+                  "1856x1392",
+                  "1792x1344",
+                  "2048x1152",
+                  "1920x1200",
+                  "1920x1080",
+                  "1920x1080",
+                  "1600x1200",
+                  "1680x1050",
+                  "1400x1050",
+                  "1280x1024",
+                  "1440x900",
+                  "1280x960",
+                  "1360x768",
+                  "1280x768",
+                  "1024x768",
+                  "800x600",
+                  "640x480",
+                  "640x480"
+                ]
+              }
+            },
+            "secure_boot_evidence": {
+              "kernel": {
+                "status": "command_failed",
+                "command": [
+                  "journalctl",
+                  "-b",
+                  "-k",
+                  "--no-pager",
+                  "-o",
+                  "cat",
+                  "--grep",
+                  "secureboot: Secure boot"
+                ],
+                "returncode": 1,
+                "stdout": "",
+                "stderr": ""
+              },
+              "efivar_hex": "0600000000"
+            }
+          },
+          "safety_problems": [],
+          "problems": [],
+          "pre_shutdown_blockstats": [
+            {
+              "device": "nvme-test",
+              "parent": {
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": false,
+                  "rd_total_time_ns": 0,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 0,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": false,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 0,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block664",
+                "driver-specific": {
+                  "discard-bytes-ok": 0,
+                  "discard-nb-ok": 0,
+                  "driver": "file",
+                  "discard-nb-failed": 0
+                }
+              },
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 0,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 0,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 0,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 0,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 0,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              },
+              "node-name": "#block796",
+              "qdev": "/machine/peripheral-anon/device[1]"
+            },
+            {
+              "device": "sata-test",
+              "parent": {
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": false,
+                  "rd_total_time_ns": 0,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 0,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": false,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 0,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block858",
+                "driver-specific": {
+                  "discard-bytes-ok": 0,
+                  "discard-nb-ok": 0,
+                  "driver": "file",
+                  "discard-nb-failed": 0
+                }
+              },
+              "stats": {
+                "unmap_operations": 0,
+                "unmap_merged": 0,
+                "failed_zone_append_operations": 0,
+                "flush_total_time_ns": 0,
+                "wr_highest_offset": 0,
+                "wr_total_time_ns": 0,
+                "failed_wr_operations": 0,
+                "failed_rd_operations": 0,
+                "wr_merged": 0,
+                "wr_bytes": 0,
+                "timed_stats": [],
+                "failed_unmap_operations": 0,
+                "zone_append_merged": 0,
+                "failed_flush_operations": 0,
+                "account_invalid": true,
+                "rd_total_time_ns": 0,
+                "invalid_unmap_operations": 0,
+                "flush_operations": 0,
+                "wr_operations": 0,
+                "unmap_bytes": 0,
+                "rd_merged": 0,
+                "rd_bytes": 0,
+                "unmap_total_time_ns": 0,
+                "invalid_flush_operations": 0,
+                "account_failed": true,
+                "zone_append_total_time_ns": 0,
+                "zone_append_operations": 0,
+                "rd_operations": 0,
+                "zone_append_bytes": 0,
+                "invalid_zone_append_operations": 0,
+                "invalid_wr_operations": 0,
+                "invalid_rd_operations": 0
+              },
+              "node-name": "#block925",
+              "qdev": "/machine/peripheral-anon/device[2]"
+            }
+          ],
+          "after_guest_shutdown": {
+            "guest_status": {
+              "status": "shutdown",
+              "singlestep": false,
+              "running": false
+            },
+            "blockstats": [
+              {
+                "device": "nvme-test",
+                "parent": {
+                  "stats": {
+                    "unmap_operations": 0,
+                    "unmap_merged": 0,
+                    "failed_zone_append_operations": 0,
+                    "flush_total_time_ns": 0,
+                    "wr_highest_offset": 0,
+                    "wr_total_time_ns": 0,
+                    "failed_wr_operations": 0,
+                    "failed_rd_operations": 0,
+                    "wr_merged": 0,
+                    "wr_bytes": 0,
+                    "timed_stats": [],
+                    "failed_unmap_operations": 0,
+                    "zone_append_merged": 0,
+                    "failed_flush_operations": 0,
+                    "account_invalid": false,
+                    "rd_total_time_ns": 0,
+                    "invalid_unmap_operations": 0,
+                    "flush_operations": 0,
+                    "wr_operations": 0,
+                    "unmap_bytes": 0,
+                    "rd_merged": 0,
+                    "rd_bytes": 0,
+                    "unmap_total_time_ns": 0,
+                    "invalid_flush_operations": 0,
+                    "account_failed": false,
+                    "zone_append_total_time_ns": 0,
+                    "zone_append_operations": 0,
+                    "rd_operations": 0,
+                    "zone_append_bytes": 0,
+                    "invalid_zone_append_operations": 0,
+                    "invalid_wr_operations": 0,
+                    "invalid_rd_operations": 0
+                  },
+                  "node-name": "#block664",
+                  "driver-specific": {
+                    "discard-bytes-ok": 0,
+                    "discard-nb-ok": 0,
+                    "driver": "file",
+                    "discard-nb-failed": 0
+                  }
+                },
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": true,
+                  "rd_total_time_ns": 0,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 0,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": true,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 0,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block796",
+                "qdev": "/machine/peripheral-anon/device[1]"
+              },
+              {
+                "device": "sata-test",
+                "parent": {
+                  "stats": {
+                    "unmap_operations": 0,
+                    "unmap_merged": 0,
+                    "failed_zone_append_operations": 0,
+                    "flush_total_time_ns": 0,
+                    "wr_highest_offset": 0,
+                    "wr_total_time_ns": 0,
+                    "failed_wr_operations": 0,
+                    "failed_rd_operations": 0,
+                    "wr_merged": 0,
+                    "wr_bytes": 0,
+                    "timed_stats": [],
+                    "failed_unmap_operations": 0,
+                    "zone_append_merged": 0,
+                    "failed_flush_operations": 0,
+                    "account_invalid": false,
+                    "rd_total_time_ns": 0,
+                    "invalid_unmap_operations": 0,
+                    "flush_operations": 0,
+                    "wr_operations": 0,
+                    "unmap_bytes": 0,
+                    "rd_merged": 0,
+                    "rd_bytes": 0,
+                    "unmap_total_time_ns": 0,
+                    "invalid_flush_operations": 0,
+                    "account_failed": false,
+                    "zone_append_total_time_ns": 0,
+                    "zone_append_operations": 0,
+                    "rd_operations": 0,
+                    "zone_append_bytes": 0,
+                    "invalid_zone_append_operations": 0,
+                    "invalid_wr_operations": 0,
+                    "invalid_rd_operations": 0
+                  },
+                  "node-name": "#block858",
+                  "driver-specific": {
+                    "discard-bytes-ok": 0,
+                    "discard-nb-ok": 0,
+                    "driver": "file",
+                    "discard-nb-failed": 0
+                  }
+                },
+                "stats": {
+                  "unmap_operations": 0,
+                  "unmap_merged": 0,
+                  "failed_zone_append_operations": 0,
+                  "flush_total_time_ns": 0,
+                  "wr_highest_offset": 0,
+                  "wr_total_time_ns": 0,
+                  "failed_wr_operations": 0,
+                  "failed_rd_operations": 0,
+                  "wr_merged": 0,
+                  "wr_bytes": 0,
+                  "timed_stats": [],
+                  "failed_unmap_operations": 0,
+                  "zone_append_merged": 0,
+                  "failed_flush_operations": 0,
+                  "account_invalid": true,
+                  "rd_total_time_ns": 0,
+                  "invalid_unmap_operations": 0,
+                  "flush_operations": 0,
+                  "wr_operations": 0,
+                  "unmap_bytes": 0,
+                  "rd_merged": 0,
+                  "rd_bytes": 0,
+                  "unmap_total_time_ns": 0,
+                  "invalid_flush_operations": 0,
+                  "account_failed": true,
+                  "zone_append_total_time_ns": 0,
+                  "zone_append_operations": 0,
+                  "rd_operations": 0,
+                  "zone_append_bytes": 0,
+                  "invalid_zone_append_operations": 0,
+                  "invalid_wr_operations": 0,
+                  "invalid_rd_operations": 0
+                },
+                "node-name": "#block925",
+                "qdev": "/machine/peripheral-anon/device[2]"
+              }
+            ]
+          },
+          "sentinel_sha256_before": {
+            "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+            "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+          },
+          "sentinel_sha256_after_shutdown": {
+            "nvme-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0",
+            "sata-test": "e09320c5b00b34bb704802136c599a95b3996332ba84d7c7f21112b6231b6bd0"
+          }
+        },
+        "uid": 1000,
+        "live": true,
+        "efi_diagnostics": {
+          "bootctl": {
+            "status": "collected",
+            "command": [
+              "bootctl",
+              "status",
+              "--no-pager"
+            ],
+            "returncode": 0,
+            "stdout": "System:\n      Firmware: UEFI 2.70 (Ubuntu distribution of EDK II 1.00)\n Firmware Arch: x64\n   Secure Boot: disabled (setup)\n  TPM2 Support: no\n  Measured UKI: no\n   Measured OS: no\n  Boot into FW: supported\n Platform Lang: n/a\n\nCurrent Boot Loader:\n        Product: systemd-boot 262.1-1-arch\n       Features: \u2713 Boot counting\n                 \u2713 Menu timeout control\n                 \u2713 One-shot menu timeout control\n                 \u2713 Default entry control\n                 \u2713 One-shot entry control\n                 \u2713 Support for XBOOTLDR partition\n                 \u2713 Support for passing random seed to OS\n                 \u2713 Load drop-in drivers\n                 \u2713 Support Type #1 sort-key field\n                 \u2713 Support @saved pseudo-entry\n                 \u2713 Support Type #1 devicetree field\n                 \u2713 Enroll SecureBoot keys\n                 \u2713 Retain SHIM protocols\n                 \u2713 Menu can be disabled\n                 \u2713 Multi-Profile UKIs are supported\n                 \u2713 Loader reports network boot URL\n                 \u2713 Support Type #1 uki field\n                 \u2713 Support Type #1 uki-url field\n                 \u2713 Loader reports active TPM2 PCR banks\n                 \u2713 Loader reports firmware keyboard layout\n                 \u2713 Loader measures SMBIOS information\n      Partition: /dev/disk/by-partuuid/36323032-3031-4532-b033-303732323136\n         Loader: \u2514\u2500(null)//EFI/BOOT/BOOTX64.EFI\nKeyboard Layout: n/a (not reported by firmware)\n  Current Entry: 01-archiso-linux.conf\n\nRandom Seed:\n System Token: not set\n\nNo boot loaders listed in EFI Variables.\n\n",
+            "stderr": "Couldn't find EFI system partition. It is recommended to mount it to /boot/ or /efi/.\nAlternatively, use --esp-path= to specify path to mount point.\n"
+          },
+          "variables_mount": {
+            "status": "collected",
+            "command": [
+              "findmnt",
+              "--json",
+              "--mountpoint",
+              "/sys/firmware/efi/efivars"
+            ],
+            "returncode": 0,
+            "stdout": "{\n   \"filesystems\": [\n      {\n         \"target\": \"/sys/firmware/efi/efivars\",\n         \"source\": \"efivarfs\",\n         \"fstype\": \"efivarfs\",\n         \"options\": \"rw,nosuid,nodev,noexec,relatime\"\n      }\n   ]\n}\n",
+            "stderr": ""
+          },
+          "kernel": {
+            "status": "collected",
+            "command": [
+              "journalctl",
+              "-b",
+              "-k",
+              "--no-pager",
+              "-o",
+              "cat",
+              "--grep",
+              "[Ss]ecure|[Ee][Ff][Ii]|initcall"
+            ],
+            "returncode": 0,
+            "stdout": "Command line: initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% module_blacklist=nvme,ahci,vmd initcall_blacklist=ahci_pci_driver_init noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target\nefi: EFI v2.7 by Ubuntu distribution of EDK II\nefi: SMBIOS=0x7e9d5000 SMBIOS 3.0=0x7e9d3000 ACPI=0x7eb7e000 ACPI 2.0=0x7eb7e014 MEMATTR=0x7d6b6018 INITRD=0x7d6afe18 \nSecure boot disabled\nclocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns\nKernel command line: initrd=\\arch\\boot\\x86_64\\initramfs-linux.img archisobasedir=arch archisosearchuuid=2026-10-25-07-22-16-00  cow_spacesize=50% module_blacklist=nvme,ahci,vmd initcall_blacklist=ahci_pci_driver_init noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target\nblacklisting initcall ahci_pci_driver_init\nefi: Freeing EFI boot services memory: 26196K\nefivars: Registered efivars operations\ninitcall ahci_pci_driver_init blacklisted\nLoad Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore\nClear SysFail Entry If The Boot Is Successful skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/LoaderEntrySysFail-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f\nClear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67\n",
+            "stderr": ""
+          },
+          "variable_names": [
+            "SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c",
+            "SetupMode-8be4df61-93ca-11d2-aa0d-00e098032b8c"
+          ]
+        },
+        "screenshots": [
+          {
+            "path": "desktop-start.png",
+            "sha256": "4d613662e64e5072b8d5f284bea2d4e2fdf88af67cd8245f018e3c367de1eb87"
+          },
+          {
+            "path": "desktop-terminal.png",
+            "sha256": "85e86228507c6e5dd0626235d4e43d5145b99d833d8b502b4d0281660a67ed6c"
+          },
+          {
+            "path": "uefi-usb-edited-options.png",
+            "sha256": "a3a2d2df54a842c5793735dfa898291bd966b65f289bc84b3bdeeab1f37ddb22"
+          },
+          {
+            "path": "uefi-usb-menu.png",
+            "sha256": "3e0abfc95381d53d4b9b003aab16c587e83d3d9792ee9c969a5336d4d0810ba8"
+          }
+        ],
+        "summary_scope": "Exact guest observations; QMP lists restricted to both sentinel disks; EFI variable-name list restricted to SecureBoot/SetupMode. Full raw-result and archive digests preserved."
+      }
+    },
+    "screenshots_inspected": [
+      "protected UEFI menu",
+      "protected edited-line tail (full exact flags verified in /proc/cmdline)",
+      "protected rendered Husk desktop",
+      "protected native Foot window",
+      "control native Foot window"
+    ]
+  },
+  "verification": {
+    "ci": {
+      "source_run": 40524446117,
+      "source_job": 122260030646,
+      "tests": 541,
+      "source_skips": 72,
+      "actual_gtk_skips": 1,
+      "syntax": 188,
+      "native_sanitizers": "normal CI passed",
+      "wayland_run": 40524455846,
+      "status": "PASSED",
+      "independent_source_run": 40524455863
+    },
+    "local": {
+      "tests": 541,
+      "skips": 119,
+      "syntax": 188,
+      "native_compilation": "PASSED",
+      "sanitizers": "ASan/UBSan passed; local leak detection disabled only"
+    },
+    "recipe": {
+      "sha256": "d2f93e5f804032c65a1f2308e66353056694fa4ef211deb88047c94196804b84",
+      "pinned_source": "96f3efeeed35bbafb40fc9f9ca273b27d2513b0d",
+      "guards": [
+        "download failure stops execution",
+        "digest mismatch stops execution",
+        "failed cd stops execution",
+        "valid digest reaches execution"
+      ],
+      "status": "PASSED"
+    },
+    "review": "Scoped independent code/procedure/artifact review: no remaining substantive findings; EFI label and boot-path scope clarified"
+  }
+}

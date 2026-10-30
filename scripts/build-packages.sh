@@ -27,7 +27,19 @@ printf '%s:6:\n' "$OWNOS_SIGNING_KEY" > .build/keys/ownos-trusted
 python3 scripts/source-tar.py
 ownos_checksum="$(sha256sum .build/packages/ownos/ownos-source.tar.gz | cut -d ' ' -f 1)"
 sed "s/__SOURCE_SHA256__/$ownos_checksum/" packaging/ownos/PKGBUILD > .build/packages/ownos/PKGBUILD
-cp packaging/calamares/PKGBUILD .build/packages/calamares/PKGBUILD
+cp packaging/calamares/{HuskDiskGuard.h,HuskClockSelector.h,husk-finished.qml} .build/packages/calamares/
+cp scripts/patch-calamares-{safety,ui}.py .build/packages/calamares/
+python3 - <<'PY'
+import hashlib
+from pathlib import Path
+directory = Path('.build/packages/calamares')
+names = ('HuskDiskGuard.h','HuskClockSelector.h','husk-finished.qml',
+         'patch-calamares-safety.py','patch-calamares-ui.py')
+checksums = ' '.join("'" + hashlib.sha256((directory/name).read_bytes()).hexdigest() + "'" for name in names)
+recipe = Path('packaging/calamares/PKGBUILD').read_text()
+assert recipe.count('__HUSK_SOURCE_SHA256S__') == 1
+(directory/'PKGBUILD').write_text(recipe.replace('__HUSK_SOURCE_SHA256S__', checksums))
+PY
 ownos_packages=(ownos)
 if (( ownos_with_installer )); then ownos_packages=(calamares ownos); fi
 for ownos_package in "${ownos_packages[@]}"; do

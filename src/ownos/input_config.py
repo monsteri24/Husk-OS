@@ -37,8 +37,9 @@ def write_input_config(directory, template, settings):
         el.text = value
     environment = directory / 'environment'
     lines = environment.read_text().splitlines() if environment.exists() else []
-    lines = [line for line in lines if not line.startswith('XKB_DEFAULT_LAYOUT=')]
+    lines = [line for line in lines if not line.startswith(('XKB_DEFAULT_LAYOUT=', 'XKB_DEFAULT_VARIANT='))]
     lines.append('XKB_DEFAULT_LAYOUT=' + settings['keymap'])
+    lines.append('XKB_DEFAULT_VARIANT=' + settings['keymap_variant'])
     directory.mkdir(parents=True, exist_ok=True)
     _replace(target, ET.tostring(root, encoding='utf-8', xml_declaration=True))
     _replace(environment, ('\n'.join(lines) + '\n').encode())

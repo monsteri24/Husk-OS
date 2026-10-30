@@ -92,8 +92,13 @@ def main():
         argv = args.game[1:] if args.game and args.game[0] == '--' else args.game
         command = game_command(argv, ConfigStore().load()); os.execvp(command[0], command)
     elif name == 'own-install-app':
+        parser.add_argument('--graphical', action='store_true', help='Open the graphical application installer')
         parser.add_argument('application', choices=['steam', 'heroic', 'lutris', 'discord', 'firefox'])
-        args = parser.parse_args(); return install_app(args.application)
+        args = parser.parse_args()
+        if args.graphical:
+            from ownos.ui.app_install import main as app_install_main
+            return app_install_main(args.application)
+        return install_app(args.application)
     elif name == 'own-shell':
         parser.add_argument('--preview', action='store_true'); args = parser.parse_args()
         from ownos.ui.shell import main as shell_main
@@ -103,9 +108,10 @@ def main():
         from ownos.ui.file_manager import main as files_main
         files_main(args.path)
     elif name == 'own-control':
-        parser.parse_args()
+        parser.add_argument('--page', choices=['appearance', 'system', 'input', 'gaming', 'updates'])
+        args = parser.parse_args()
         from ownos.ui.control import main as control_main
-        control_main()
+        control_main(page=args.page)
     elif name in ('own-status','own-live-smoke'):
         parser.parse_args()
         from ownos.live import desktop_status, validate_live_status

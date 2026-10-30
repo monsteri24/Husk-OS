@@ -1,5 +1,184 @@
 # Download, USB boot and installation status
 
+<a name="v3-first-lenovo-hardware-test--live-only-2026-10-27"></a>
+
+## V3 first ASUS ROG hardware test — Live only (2026-10-30)
+
+This section applies to the **unpublished V3 candidate**, not the historical
+System 2 download below. The user corrected the target on 2026-10-30: it is an
+**ASUS ROG with an RTX 3070 Laptop GPU**, not a Lenovo. The exact model/CPU,
+Wi-Fi chip, display routing/MUX and storage
+controller are still unknown. Physical compatibility is **NOT TESTED**. See
+[current hardware assessment](HARDWARE-COMPATIBILITY.md) and [V3 status](V3-PHASE2-STATUS.md).
+Do not run the installer during this first test. The guarded UEFI USB
+boot path passed [VM acceptance](https://github.com/monsteri24/Husk-OS/actions/runs/40524446117)
+with disposable NVMe/AHCI disks, zero final write/unmap/failure counters and
+unchanged complete disk hashes through normal shutdown. This remains VM proof.
+
+**Current decision: preflight only; physical boot is not yet approved.** The
+ASUS model, UEFI/Secure Boot state and internal storage controllers still need
+verification. No new runtime defect has been demonstrated and no ISO rebuild
+is justified by the manufacturer correction. Obtain the user's explicit
+confirmation before physical testing or writing/booting the test USB. These
+instructions alone are not that confirmation.
+
+### Before writing or booting
+
+1. Back up important Windows files. Confirm that you can access your own
+   BitLocker/device-encryption recovery information privately if encryption is
+   enabled, before changing
+   boot media. Never post a recovery key in an issue or diagnostic report.
+   [Microsoft documents boot-order changes as a recovery trigger](https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/faq).
+2. Record the exact ASUS ROG model code, BIOS version, **BIOS Mode = UEFI** and
+   current Secure Boot state from Windows System Information (`msinfo32`).
+   **If BIOS Mode is not UEFI or Secure Boot is enabled or unknown,
+   STOP.** This candidate has no accepted Secure Boot signing/trust chain.
+   This procedure does not disable Secure Boot, suspend/decrypt BitLocker,
+   clear the TPM, enroll keys, or change firmware settings.
+3. Read-only PowerShell inventory can help identify the hardware:
+
+   ```powershell
+   Get-CimInstance Win32_ComputerSystem | Select-Object Manufacturer,Model
+   Get-CimInstance Win32_VideoController | Select-Object Name,PNPDeviceID
+   Get-Disk | Select-Object Number,FriendlyName,BusType,Size,IsBoot,IsSystem
+   Get-CimInstance Win32_PnPSignedDriver |
+     Where-Object { $_.DeviceClass -in @('SCSIAdapter','HDC') } |
+     Select-Object DeviceName,InfName,DriverProviderName
+   ```
+
+   The controller/driver output is needed as well as disk bus labels. This is
+   read-only inventory, not permission to change drivers. If the command fails
+   or the disk-to-controller mapping is unclear, STOP and review the exact
+   model/output. Check device-encryption/BitLocker status separately in Windows;
+   `manage-bde -status C:` is a read-only alternative when permitted. Do not use
+   `-off`, `-disable`, unlock or repair commands. Never send a recovery key.
+
+   Continue only after confirming that **all internal disks use standard NVMe
+   or SATA/AHCI**. RAID/VMD, eMMC, internal USB, unknown controllers or ambiguous
+   inventory require separate assessment first. A SATA bus label alone does
+   not prove AHCI mode. Do not change RAID/AHCI/MUX settings to pass this check.
+4. After the preflight has been reviewed and the user has confirmed the physical
+   test, disconnect other removable storage. Choose one spare USB stick and positively
+   identify its model/capacity. Writing the image erases **that USB only**;
+   never choose an internal disk. **Complete the size/hash checks below before
+   writing.** Then use the image writer's complete-disk/raw-image
+   mode and verification, not file copying. Do not accept Windows prompts to
+   initialize, format or repair the resulting Linux USB.
+
+Download `HuskOS-v3-phase2.iso` from the existing
+[candidate artifact](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876/artifacts/12590858411)
+(GitHub sign-in may be needed; expires **2026-11-01 09:43 Europe/Helsinki**,
+07:43 UTC). Extract the ZIP.
+This is a temporary development artifact, not a V3 release. Verify **both**:
+
+- ISO bytes: **2,080,997,376**
+- ISO SHA-256: `496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715`
+
+```powershell
+(Get-Item .\HuskOS-v3-phase2.iso).Length
+Get-FileHash .\HuskOS-v3-phase2.iso -Algorithm SHA256
+```
+
+Stop on an expired/missing artifact or any mismatch. Do not substitute a source
+ZIP, older image or an unverified rebuild. Existing VM tests reused this exact
+runtime (`96a0a02`) after integrity checks.
+
+### One-time guarded UEFI USB boot
+
+After confirmation, keep AC power connected and fully shut down the ASUS.
+**Hold Esc, press the power button, and release Esc when the one-time boot
+menu appears**, as described in [ASUS's official boot-menu instructions](https://www.asus.com/global/support/faq/1013017/).
+Select the USB's UEFI entry. If the menu or USB entry does not appear, STOP and
+check the exact ROG model's manual; do not apply firmware workarounds.
+Only the one-time hotkey/menu portion of that ASUS article applies here, not
+its optional format, Fast Boot or Secure Boot changes. Do not reformat the
+raw-written hybrid ISO or alter the permanent boot order.
+
+The candidate uses **systemd-boot**. Repeatedly press **Space** during USB
+startup to display its menu. Select `Husk OS live (x86_64, UEFI)`, press **e**,
+then **End**. Preserve the existing line and append one space followed by:
+
+```text
+module_blacklist=nvme,ahci,vmd initcall_blacklist=ahci_pci_driver_init noresume systemd.gpt_auto=0 rd.systemd.gpt_auto=0 systemd.mask=udisks2.service systemd.mask=swap.target rd.systemd.mask=swap.target
+```
+
+Check every character **before Enter**. The long line scrolls horizontally;
+use Home and the arrow keys to review the entire line, not only its visible tail.
+The editor uses a US keyboard layout;
+Finnish physical keys for `=`, `_` and punctuation differ. If the edited line
+cannot be verified, cancel the boot. **Enter** boots that edited entry once;
+do not save a new default. [Official menu/editor keys](https://www.freedesktop.org/software/systemd/man/latest/systemd-boot.html).
+
+This ISO has a built-in AHCI driver: module-only blocking failed the actual VM
+test and must not be used. The extra initcall guard is essential. These options
+block the known internal storage drivers for this boot, disable
+resume/GPT auto-discovery and runtime-mask swap/UDisks. They deliberately make
+internal NVMe/SATA drives unavailable. They are **not universal write protection
+for every controller**. Never use the unprotected VM control configuration on
+the laptop. Do not add `nomodeset` or force a different GPU/MUX for this test.
+
+### First checks and diagnostics
+
+The expected desktop runs as unprivileged `live` on Labwc/Wayland. Open Foot
+with **Super+Return**. Before browsing disks or further testing, inspect:
+
+```sh
+cat /proc/cmdline
+lsblk --tree -o PATH,TYPE,TRAN,MOUNTPOINTS
+findmnt -n -o SOURCE,FSTYPE,OPTIONS /run/archiso/bootmnt
+swapon --show
+systemctl show udisks2.service --property=LoadState --value
+```
+
+Require the exact appended flags, only the boot USB disk and its partitions
+(Live loop devices are expected), its `iso9660` read-only boot mount, no swap
+rows, and `masked` for UDisks. **Any internal/extra/unknown disk, missing guard,
+active swap or writable boot mount means STOP and power off.** Do not mount,
+unlock, repair, format, benchmark or browse Windows/internal partitions.
+
+The improved collector is a **standalone sidecar, not installed in this ISO**.
+If Wi-Fi/Ethernet works, fetch the reviewed script into session RAM, verify its
+digest, and run without sudo. Use a fresh output filename if one already exists:
+
+```sh
+cd "$XDG_RUNTIME_DIR" &&
+curl -fL https://raw.githubusercontent.com/monsteri24/Husk-OS/96f3efeeed35bbafb40fc9f9ca273b27d2513b0d/scripts/collect-system-report.py -o husk-hardware-report.py &&
+printf '%s  %s\n' d2f93e5f804032c65a1f2308e66353056694fa4ef211deb88047c94196804b84 husk-hardware-report.py | sha256sum -c - &&
+python3 ./husk-hardware-report.py --live-usb --output "$XDG_RUNTIME_DIR/husk-live-hardware.json"
+```
+
+Run the last command **only if checksum verification succeeds**. It returns
+nonzero and records `STOP` if required observations fail or are unavailable.
+Reports are private mode 0600 and never replace an existing file. Optional
+missing tools (for example `nvidia-smi`) are recorded, not treated as hardware
+success. If the network/script is unavailable, retain the read-only observations
+(a photo is enough), stop the automated test and power off; do not mount Windows
+or add another storage device to retrieve the script. Review device identifiers
+and personal names before sharing any diagnostics. RAM reports disappear at
+shutdown; copy only chosen text through an already working network if desired.
+
+After the safety checks, record each result separately: internal panel image
+and native mode, keyboard letters/Fn keys, touchpad, USB mouse buttons/wheel,
+Wi-Fi connection and DNS, and quiet speaker/headphone playback at low volume.
+Do not infer audible sound from a detected sink. `lspci -nnk`, `wpctl status`,
+`aplay -l` and `glxinfo -B` are detection aids; a software renderer is not NVIDIA
+acceleration. Note renderer and PCI IDs, rather than guessing from a logo.
+External displays, microphone, Bluetooth, Vulkan/Proton/games, suspend and long
+soak testing are later tests. Do not install drivers, upgrade packages or set an
+administrator password during this first run.
+
+If the display stays black, Ctrl+Alt+F2 may reach the unprivileged rescue TTY;
+record the observation without changing drivers. If neither desktop nor TTY is
+usable, stop instead of improvising firmware/storage changes. For a responsive
+session use `systemctl poweroff` and wait for complete power-off before removing
+the USB. Then start Windows normally from its existing internal boot entry.
+If Windows requests recovery, use your private recovery procedure; never select
+format/reset/reinstall as part of this test. Record model/BIOS, ISO hash, boot
+flags and each PASS/FAIL/NOT TESTED result. No hardware acceptance is claimed
+until those physical observations exist.
+
+## Preserved System 2 download and installation status
+
 Husk OS is an experimental Arch-based gaming operating system with its own GTK
 Husk Desktop on Labwc/Wayland. **System 2 was published on 2026-10-17 as an
 experimental Live USB/VM release.** It has no completed permanent graphical

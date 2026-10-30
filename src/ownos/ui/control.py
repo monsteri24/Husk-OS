@@ -5,15 +5,15 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from ownos.identity import OS_NAME, VERSION
 from ownos.i18n import _, configure_saved
-from ownos.config import ConfigStore, KEYMAPS
+from ownos.config import ConfigStore, HUSK_YELLOW, keymap_options
 from ownos.metrics import SystemSampler
 from ownos.library import discover_steam_games
 from ownos.input_config import write_input_config
-from ownos.ui.common import Gtk, GLib, load_style, remove_style, row_box, spawn, terminal, error, confirm, require_display
+from ownos.ui.common import Gtk, Gdk, GLib, load_style, remove_style, row_box, spawn, terminal, error, confirm, require_display
 
 
 class ControlWindow(Gtk.Window):
-    def __init__(self, store=None):
+    def __init__(self, store=None, page=None):
         store = store if store is not None else ConfigStore()
         configure_saved(store)
         require_display()
@@ -29,11 +29,17 @@ class ControlWindow(Gtk.Window):
         outer.pack_start(title, False, False, 0)
         outer.pack_start(Gtk.Label(label=_('{os} · {version} · Gaming Control Center · Experimental').format(os=OS_NAME, version=VERSION), xalign=0), False, False, 0)
         notebook = Gtk.Notebook(); outer.pack_start(notebook, True, True, 0)
-        for title, create in [(_('Gaming'), self.gaming_page), (_('System'), self.system_page),
-                              (_('Input'), self.input_page), (_('Appearance'), self.appearance_page), (_('Updates'), self.updates_page)]:
+        selected_page = None
+        for name, title, create in [('gaming', _('Gaming'), self.gaming_page), ('system', _('System'), self.system_page),
+                                    ('input', _('Input'), self.input_page), ('appearance', _('Appearance'), self.appearance_page),
+                                    ('updates', _('Updates'), self.updates_page)]:
             box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16); box.set_border_width(20)
             create(box); scroll = Gtk.ScrolledWindow(); scroll.add(box)
-            notebook.append_page(scroll, Gtk.Label(label=title))
+            index = notebook.append_page(scroll, Gtk.Label(label=title))
+            if name == page: selected_page = index
+        if selected_page is not None:
+            notebook.show_all()
+            notebook.set_current_page(selected_page)
         self.status = Gtk.Label(xalign=0); outer.pack_start(self.status, False, False, 0)
         self.timer = GLib.timeout_add_seconds(2, self.sample)
         self.sample()
@@ -45,9 +51,16 @@ class ControlWindow(Gtk.Window):
 
     def save(self, key, value):
         settings = dict(self.settings); settings[key] = value
+        if key == 'keymap' and value != self.settings['keymap']:
+            settings['keymap_variant'] = ''
         try: self.store.save(settings)
         except (OSError, ValueError) as exc: error(self, exc); return False
-        self.settings = settings; self.status.set_text(_('Setting saved.'))
+        self.settings = settings
+        if key in ('accent', 'animations'):
+            provider = load_style(self.settings, self.store.path.parent / 'desktop.css')
+            remove_style(self.provider)
+            self.provider = provider
+        self.status.set_text(_('Setting saved.'))
         return True
 
     def switch_row(self, box, title, detail, key):
@@ -134,7 +147,7 @@ class ControlWindow(Gtk.Window):
     def input_page(self, box):
         box.pack_start(row_box(_('Husk Desktop input settings'), _('These settings apply to the Husk labwc session. KDE and GNOME use their own input settings.')), False, False, 0)
         self.keymap = Gtk.ComboBoxText()
-        for code in KEYMAPS: self.keymap.append(code, code.upper())
+        for code in keymap_options(): self.keymap.append(code, code.upper())
         self.keymap.set_active_id(self.settings['keymap']); box.pack_start(self.keymap, False, False, 0)
         self.speed = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, -1, 1, 0.05)
         self.speed.set_value(self.settings['pointer_speed'])
@@ -173,14 +186,21 @@ class ControlWindow(Gtk.Window):
         position.set_active_id(self.settings['taskbar_position'])
         position.connect('changed', lambda widget: self.save('taskbar_position', widget.get_active_id()))
         box.pack_start(position, False, False, 0)
+        box.pack_start(row_box(_('Desktop Icons')), False, False, 0)
+        self.trash_switch = self.switch_row(box, _('Show Trash'),
+            _('Show the Trash icon on the desktop.'), 'show_trash')
         box.pack_start(row_box(_('Custom CSS'), _('{path} · Changes load into Husk Desktop without rebuilding the operating system.').format(path=self.store.path.parent / 'desktop.css')), False, False, 0)
         self.switch_row(box, _('Animations'), _('Short interface transitions.'), 'animations')
         box.pack_start(row_box(_('Accent color')), False, False, 0)
-        color = Gtk.ColorButton(); from ownos.ui.common import Gdk
-        rgba = Gdk.RGBA(); rgba.parse(self.settings['accent']); color.set_rgba(rgba)
-        def changed(button):
-            c = button.get_rgba(); self.save('accent', '#%02x%02x%02x' % (int(c.red * 255), int(c.green * 255), int(c.blue * 255)))
-        color.connect('color-set', changed); box.pack_start(color, False, False, 0)
+        self.accent_color = Gtk.ColorButton()
+        self.accent_color.set_title(_('Accent color'))
+        self.accent_color.set_use_alpha(False)
+        rgba = Gdk.RGBA(); rgba.parse(self.settings['accent']); self.accent_color.set_rgba(rgba)
+        self.accent_color.connect('color-set', self.change_accent)
+        box.pack_start(self.accent_color, False, False, 0)
+        self.reset_accent_button = Gtk.Button(label=_('Reset to Default'))
+        self.reset_accent_button.connect('clicked', self.reset_accent)
+        box.pack_start(self.reset_accent_button, False, False, 0)
         self.wallpaper = Gtk.Label(label=self.settings['wallpaper'] or _('Husk OS Desert (default)'), xalign=0)
         self.wallpaper.set_line_wrap(True); box.pack_start(self.wallpaper, False, False, 0)
         button = Gtk.Button(label=_('Choose wallpaper')); button.connect('clicked', self.choose_wallpaper)
@@ -188,6 +208,16 @@ class ControlWindow(Gtk.Window):
         reset = Gtk.Button(label=_('Restore default wallpaper'))
         reset.connect('clicked', lambda _button: (self.save('wallpaper', ''), self.wallpaper.set_text(_('Husk OS Desert (default)'))))
         box.pack_start(reset, False, False, 0)
+
+    def change_accent(self, button):
+        color = button.get_rgba()
+        value = '#%02x%02x%02x' % tuple(round(channel * 255) for channel in (color.red, color.green, color.blue))
+        if not self.save('accent', value):
+            saved = Gdk.RGBA(); saved.parse(self.settings['accent']); button.set_rgba(saved)
+
+    def reset_accent(self, _button):
+        if self.save('accent', HUSK_YELLOW):
+            rgba = Gdk.RGBA(); rgba.parse(HUSK_YELLOW); self.accent_color.set_rgba(rgba)
 
     def change_language(self, widget):
         if self.save('language', widget.get_active_id()):
@@ -222,6 +252,6 @@ class ControlWindow(Gtk.Window):
         driver.connect('clicked', install_driver); box.pack_start(driver, False, False, 0)
 
 
-def main():
-    window = ControlWindow(); window.connect('destroy', lambda _: Gtk.main_quit())
+def main(page=None):
+    window = ControlWindow(page=page); window.connect('destroy', lambda _: Gtk.main_quit())
     window.show_all(); Gtk.main()

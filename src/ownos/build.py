@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -171,10 +172,12 @@ iso_label="HUSK_$(date +%Y%m%d)"
 file_permissions+=( ["/etc/shadow"]="0:0:400" )
 ''')
         if first_boot:
-            stream.write('''
-# Fast, bounded compression for the first boot verification edition.
+            compression_level = 19 if with_installer else 3
+            stream.write(f'''
+# Keep installer images distributable without removing drivers or desktop tools.
+# The smaller first-boot-only verification image retains its fast compression.
 airootfs_image_type="squashfs"
-airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)
+airootfs_image_tool_options=(-comp zstd -Xcompression-level {compression_level} -b 1M -processors 2)
 ''')
     write(output, 'husk-profile.json', json.dumps({'edition': 'first-boot' if first_boot else 'desktop',
                                                   'version': VERSION,
@@ -201,6 +204,18 @@ airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 
             text = text.replace('Arch Linux install medium', 'Husk OS live')
             text = text.replace('Arch Linux installation medium', 'Husk OS live')
             text = text.replace('Arch Linux archiso', 'Husk OS live')
+            if with_installer:
+                # Archiso's 256 MiB default cannot hold ordinary application
+                # transactions. A tmpfs limit scales with RAM without allocating
+                # it up front; retain half for the running Live desktop.
+                lines = []
+                for line in text.splitlines(keepends=True):
+                    if (re.match(r'\s*(options|linux|linuxefi|append)\s+', line, re.IGNORECASE)
+                            and re.search(r'\barchisobasedir=\S+', line)):
+                        ending = '\n' if line.endswith('\n') else ''
+                        line = re.sub(r'(?<!\S)cow_spacesize=\S+\s*', '', line).rstrip() + ' cow_spacesize=50%' + ending
+                    lines.append(line)
+                text = ''.join(lines)
             path.write_text(text)
     # The live ISO logs in as an unprivileged disposable live user.
     for name in ('getty@tty1.service.d/autologin.conf', 'sshd.service',
@@ -232,6 +247,11 @@ Relogin=false
     write(root, 'etc/systemd/system/sddm.service.d/husk-live.conf',
           '[Unit]\nRequires=ownos-live-setup.service\nAfter=ownos-live-setup.service\n')
     write(root, 'etc/NetworkManager/conf.d/husk-wifi.conf', '[device]\nwifi.backend=wpa_supplicant\n')
+    # NetworkManager owns DHCP and resolver state. The inherited releng
+    # resolved symlink cannot survive when networkd/resolved are disabled.
+    write(root, 'etc/NetworkManager/conf.d/husk-network.conf',
+          '[main]\ndns=default\nrc-manager=symlink\ndhcp=internal\n')
+    overlay_link(root, 'etc/resolv.conf', '/run/NetworkManager/resolv.conf')
     for name, destination in [('display-manager.service', '/usr/lib/systemd/system/sddm.service'),
                               ('default.target', '/usr/lib/systemd/system/graphical.target')]:
         overlay_link(root, 'etc/systemd/system/' + name, destination)

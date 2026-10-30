@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-20",
+  "source": "7a190ec010307676bf5b6b3c26235c2ed75bf4a5",
+  "run": 39438711556,
+  "run_url": "https://github.com/monsteri24/Husk-OS/actions/runs/39438711556",
+  "iso": {
+    "bytes": 2079227904,
+    "sha256": "2bc0374737c0ea0225847db3a2a1b03282c6b6f6b5afc77f5f3dbb5264d725d8",
+    "artifact": 12274621886
+  },
+  "evidence_artifact": 12274384502,
+  "overall": "FAILED: first installed login did not start Husk Desktop",
+  "live": {
+    "accelerator": "kvm",
+    "boot": "PASSED",
+    "terminal": "PASSED",
+    "shutdown": "PASSED"
+  },
+  "installation": {
+    "installation": "PASSED",
+    "installed_boot": "FAILED",
+    "live_shutdown": "PASSED",
+    "installed_shutdown": "NOT TESTED",
+    "installed_problems": [
+      "The real local SDDM Wayland session was not observed",
+      "No valid graphical VT was observed in the actual Wayland session",
+      "Installed Husk Desktop/version acceptance failed"
+    ],
+    "polkit": "NOT TESTED: test-only root serial console delivered the input fixture"
+  },
+  "target_checks": {
+    "efi_partition": true,
+    "root_partition": true,
+    "fstab": true,
+    "user": true,
+    "kernel": true,
+    "initramfs": true,
+    "grub": true,
+    "efi_fallback": true,
+    "version": true,
+    "live_cleanup": true,
+    "guard_job": true,
+    "copy_job": true,
+    "users_job": true,
+    "initramfs_job": true,
+    "bootloader_job": true,
+    "timezone": true,
+    "keyboard": true,
+    "english_locale": true,
+    "hostname": true
+  },
+  "restart_postponed": true,
+  "offline": true,
+  "cancellation_qmp": {
+    "wr_bytes": 0,
+    "wr_operations": 0,
+    "unmap_bytes": 0,
+    "unmap_operations": 0,
+    "flush_operations": 1
+  },
+  "installed_console": {
+    "uid": 1000,
+    "user": "huskcheck",
+    "uefi": true,
+    "live": false,
+    "debug_shell": false,
+    "root_device": "/dev/vda2",
+    "session": {},
+    "status": {}
+  },
+  "observed_greeter": "Manual inspection of installed-sddm-greeter.png: stock labwc selected, username blank.",
+  "root_cause": "The initial SDDM state seed used a basename. Session::setTo resolves an absolute path and SessionModel compares that exact fileName with Last/Session.",
+  "correction": "/usr/share/wayland-sessions/ownos-wayland.desktop; absent-state creation only, remembered choices preserved.",
+  "scope": "Actual disposable VM only; no acceptance of the incorrect default or normal Live polkit flow; no release authorized."
+}
