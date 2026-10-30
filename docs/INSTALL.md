@@ -1,10 +1,13 @@
 # Download, USB boot and installation status
 
-## V3 first Lenovo hardware test — Live only (2026-10-27)
+<a name="v3-first-lenovo-hardware-test--live-only-2026-10-27"></a>
+
+## V3 first ASUS ROG hardware test — Live only (2026-10-30)
 
 This section applies to the **unpublished V3 candidate**, not the historical
-System 2 download below. The target is a Lenovo gaming laptop with an **RTX 3070
-Laptop GPU**. The exact laptop/CPU, Wi-Fi chip, display routing/MUX and storage
+System 2 download below. The user corrected the target on 2026-10-30: it is an
+**ASUS ROG with an RTX 3070 Laptop GPU**, not a Lenovo. The exact model/CPU,
+Wi-Fi chip, display routing/MUX and storage
 controller are still unknown. Physical compatibility is **NOT TESTED**. See
 [current hardware assessment](HARDWARE-COMPATIBILITY.md) and [V3 status](V3-PHASE2-STATUS.md).
 Do not run the installer during this first test. The guarded UEFI USB
@@ -12,14 +15,23 @@ boot path passed [VM acceptance](https://github.com/monsteri24/Husk-OS/actions/r
 with disposable NVMe/AHCI disks, zero final write/unmap/failure counters and
 unchanged complete disk hashes through normal shutdown. This remains VM proof.
 
+**Current decision: preflight only; physical boot is not yet approved.** The
+ASUS model, UEFI/Secure Boot state and internal storage controllers still need
+verification. No new runtime defect has been demonstrated and no ISO rebuild
+is justified by the manufacturer correction. Obtain the user's explicit
+confirmation before physical testing or writing/booting the test USB. These
+instructions alone are not that confirmation.
+
 ### Before writing or booting
 
 1. Back up important Windows files. Confirm that you can access your own
-   BitLocker/device-encryption recovery information privately before changing
+   BitLocker/device-encryption recovery information privately if encryption is
+   enabled, before changing
    boot media. Never post a recovery key in an issue or diagnostic report.
    [Microsoft documents boot-order changes as a recovery trigger](https://learn.microsoft.com/en-us/windows/security/operating-system-security/data-protection/bitlocker/faq).
-2. Record the laptop's exact model and current Secure Boot state from Windows
-   System Information (`msinfo32`). **If Secure Boot is enabled or unknown,
+2. Record the exact ASUS ROG model code, BIOS version, **BIOS Mode = UEFI** and
+   current Secure Boot state from Windows System Information (`msinfo32`).
+   **If BIOS Mode is not UEFI or Secure Boot is enabled or unknown,
    STOP.** This candidate has no accepted Secure Boot signing/trust chain.
    This procedure does not disable Secure Boot, suspend/decrypt BitLocker,
    clear the TPM, enroll keys, or change firmware settings.
@@ -29,13 +41,24 @@ unchanged complete disk hashes through normal shutdown. This remains VM proof.
    Get-CimInstance Win32_ComputerSystem | Select-Object Manufacturer,Model
    Get-CimInstance Win32_VideoController | Select-Object Name,PNPDeviceID
    Get-Disk | Select-Object Number,FriendlyName,BusType,Size,IsBoot,IsSystem
+   Get-CimInstance Win32_PnPSignedDriver |
+     Where-Object { $_.DeviceClass -in @('SCSIAdapter','HDC') } |
+     Select-Object DeviceName,InfName,DriverProviderName
    ```
+
+   The controller/driver output is needed as well as disk bus labels. This is
+   read-only inventory, not permission to change drivers. If the command fails
+   or the disk-to-controller mapping is unclear, STOP and review the exact
+   model/output. Check device-encryption/BitLocker status separately in Windows;
+   `manage-bde -status C:` is a read-only alternative when permitted. Do not use
+   `-off`, `-disable`, unlock or repair commands. Never send a recovery key.
 
    Continue only after confirming that **all internal disks use standard NVMe
    or SATA/AHCI**. RAID/VMD, eMMC, internal USB, unknown controllers or ambiguous
    inventory require separate assessment first. A SATA bus label alone does
    not prove AHCI mode. Do not change RAID/AHCI/MUX settings to pass this check.
-4. Disconnect other removable storage. Choose one spare USB stick and positively
+4. After the preflight has been reviewed and the user has confirmed the physical
+   test, disconnect other removable storage. Choose one spare USB stick and positively
    identify its model/capacity. Writing the image erases **that USB only**;
    never choose an internal disk. **Complete the size/hash checks below before
    writing.** Then use the image writer's complete-disk/raw-image
@@ -62,9 +85,14 @@ runtime (`96a0a02`) after integrity checks.
 
 ### One-time guarded UEFI USB boot
 
-Keep AC power connected and use the Lenovo model's **one-time boot menu**
-(commonly F12/Fn+F12; consult the exact model's instructions). Select the USB's
-UEFI entry. Do not alter the permanent boot order or choose internal installation.
+After confirmation, keep AC power connected and fully shut down the ASUS.
+**Hold Esc, press the power button, and release Esc when the one-time boot
+menu appears**, as described in [ASUS's official boot-menu instructions](https://www.asus.com/global/support/faq/1013017/).
+Select the USB's UEFI entry. If the menu or USB entry does not appear, STOP and
+check the exact ROG model's manual; do not apply firmware workarounds.
+Only the one-time hotkey/menu portion of that ASUS article applies here, not
+its optional format, Fast Boot or Secure Boot changes. Do not reformat the
+raw-written hybrid ISO or alter the permanent boot order.
 
 The candidate uses **systemd-boot**. Repeatedly press **Space** during USB
 startup to display its menu. Select `Husk OS live (x86_64, UEFI)`, press **e**,

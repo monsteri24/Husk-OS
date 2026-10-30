@@ -269,12 +269,13 @@ No V3 release has been published and no PR has been merged. The user's current
 instruction continues to forbid publication, merging, changing main or deleting
 previous releases, even though these acceptance checks passed.
 
-## First Lenovo USB Live hardware preparation — 2026-10-27
+## First USB Live hardware preparation — 2026-10-27; ASUS correction 2026-10-30
 
-The next target is the user's **Lenovo gaming laptop with RTX 3070 Laptop GPU**.
+The user corrected the target on 2026-10-30: **ASUS ROG with RTX 3070 Laptop GPU**,
+not Lenovo. The completed tests below are unchanged VM results.
 The exact model, CPU/iGPU/MUX, Wi-Fi chip, internal storage controller and Secure
 Boot state are unknown. **No physical hardware acceptance is claimed.**
-[First Live-only procedure](INSTALL.md#v3-first-lenovo-hardware-test--live-only-2026-10-27)
+[First Live-only procedure](INSTALL.md#v3-first-asus-rog-hardware-test--live-only-2026-10-30)
 and [component assessment](HARDWARE-COMPATIBILITY.md) cover these prerequisites.
 The default ISO contains Mesa/nouveau/firmware, not the optional NVIDIA driver;
 upstream RTX support does not establish this image's acceleration/display support.
@@ -327,3 +328,12 @@ hash-verified RAM-only sidecar, not an installed component of the reused ISO.
 Actual NVIDIA acceleration, Wi-Fi, audible audio, keyboard/touchpad/mouse,
 internal panel/MUX and external-display behavior remain physical tests.
 Main/releases and the planned `.hpk` format remain unchanged; PR #1 stays draft.
+
+2026-10-30 readiness review: **preflight only; physical boot not yet approved**.
+Exact ROG model, BIOS/UEFI/Secure Boot state, disk-to-controller mapping and
+BitLocker recovery readiness remain unverified. The procedure now uses ASUS's
+official Esc + power one-time menu, with no firmware-setting changes or extra
+driver installation. User confirmation is required before physical testing
+or USB writing/booting. Historical System 1 ASUS boot evidence does not certify
+V3. Only documentation/target metadata changes are needed; the accepted ISO,
+all eight protection options, source tests and raw VM observations are retained.

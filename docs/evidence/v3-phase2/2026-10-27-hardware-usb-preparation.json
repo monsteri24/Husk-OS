@@ -2,7 +2,7 @@
   "schema_version": 1,
   "latest_status": "PASSED: same-ISO normal USB UEFI boot, expected negative control, protected NVMe/AHCI exclusion, disabled EFI SecureBoot value, unprivileged Wayland/Foot, zero final writes/unmaps after observed guest shutdown and unchanged complete sentinel hashes. Physical hardware NOT TESTED.",
   "target": {
-    "vendor": "Lenovo",
+    "vendor": "ASUS",
     "model": null,
     "gpu": "NVIDIA GeForce RTX 3070 Laptop GPU",
     "physical_acceptance": "NOT TESTED",
@@ -12,7 +12,27 @@
       "Wi-Fi chipset",
       "internal storage controller",
       "Secure Boot state"
-    ]
+    ],
+    "family": "ROG",
+    "correction": {
+      "reported_on": "2026-10-30",
+      "source": "Explicit user correction: ASUS ROG, not Lenovo",
+      "previous_assumption": "Lenovo",
+      "vm_evidence_unchanged": true
+    },
+    "preflight_review": {
+      "date": "2026-10-30",
+      "physical_boot": "NOT APPROVED: preflight incomplete",
+      "explicit_confirmation": "PENDING before physical testing or USB writing/booting",
+      "required": [
+        "exact ASUS ROG model and BIOS version",
+        "UEFI mode and existing disabled Secure Boot",
+        "all internal disk bus types AND storage-controller/driver identities",
+        "BitLocker/device-encryption state and private recovery readiness when enabled"
+      ],
+      "runtime_or_iso_change_needed": false,
+      "scope": "Current evidence supports only the existing VM result; no ASUS hardware observations were collected"
+    }
   },
   "image": {
     "source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
