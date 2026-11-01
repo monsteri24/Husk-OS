@@ -137,7 +137,7 @@ installed UEFI/default Husk login and both shutdowns. All 20 graphical Steam
 checks and strict startup passed again: **30.795566443 healthy seconds**,
 **2,978,816,000 free bytes**, zero target data writes/unmaps and clean shutdown.
 
-- [Current candidate ISO and checksums](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876/artifacts/12590858411), retained until 2026-11-01.
+- [Previous candidate ISO and checksums](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876/artifacts/12590858411): the GitHub artifact expired on 2026-11-01 and was confirmed unavailable. No ISO copy was found in the development workspace. A separately saved exact copy requires the size/hash checks above; a rebuilt image requires new VM acceptance before hardware use.
 - [Actual game images, logs, JSON and bounded audio clip](https://github.com/monsteri24/Husk-OS/actions/runs/40202229908/artifacts/12602636886), retained until 2026-11-24.
 - [Permanent game evidence and preserved failed attempts](evidence/v3-phase2/2026-10-25-gaming-acceptance.json).
 

@@ -65,11 +65,14 @@ instructions alone are not that confirmation.
    mode and verification, not file copying. Do not accept Windows prompts to
    initialize, format or repair the resulting Linux USB.
 
-Download `HuskOS-v3-phase2.iso` from the existing
+**Image availability, checked 2026-11-01:** the former GitHub Actions
 [candidate artifact](https://github.com/monsteri24/Husk-OS/actions/runs/40172519876/artifacts/12590858411)
-(GitHub sign-in may be needed; expires **2026-11-01 09:43 Europe/Helsinki**,
-07:43 UTC). Extract the ZIP.
-This is a temporary development artifact, not a V3 release. Verify **both**:
+has expired and GitHub no longer offers it for download. No copy of the ISO
+was found in the development workspace. Do not write or boot a test USB until
+an exact saved copy is located and verified, or a replacement has passed new
+VM acceptance. The artifact was a temporary development image, not a release.
+
+If you already saved `HuskOS-v3-phase2.iso`, verify **both**:
 
 - ISO bytes: **2,080,997,376**
 - ISO SHA-256: `496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715`
@@ -79,9 +82,10 @@ This is a temporary development artifact, not a V3 release. Verify **both**:
 Get-FileHash .\HuskOS-v3-phase2.iso -Algorithm SHA256
 ```
 
-Stop on an expired/missing artifact or any mismatch. Do not substitute a source
-ZIP, older image or an unverified rebuild. Existing VM tests reused this exact
-runtime (`96a0a02`) after integrity checks.
+Stop if no verified image is available or on any mismatch. Do not substitute a
+source ZIP, older image or an unverified rebuild. Existing VM tests reused this
+exact image and runtime (`96a0a02`) after integrity checks; they do not establish
+acceptance of a newly built ISO.
 
 ### One-time guarded UEFI USB boot
 
