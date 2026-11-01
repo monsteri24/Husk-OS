@@ -1,7 +1,7 @@
 # Generated local source checksum is inserted by scripts/build-packages.sh.
 pkgbase=ownos
 pkgname=(ownos-core ownos-ui ownos-desktop ownos-branding ownos-keyring ownos-live)
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=1
 pkgdesc='Husk OS experimental desktop and system tools on an Arch Linux base'
 arch=('x86_64')
@@ -29,6 +29,7 @@ package_ownos-core() {
 }
 
 package_ownos-ui() {
+  license=('MIT' 'GPL-3.0-only' 'custom:Valve')
   depends=('ownos-core' 'python-gobject' 'python-cairo' 'gtk3' 'librsvg' 'foot' 'flatpak' 'adwaita-icon-theme')
   install -dm755 "$pkgdir/usr/lib/ownos/ownos/ui" "$pkgdir/usr/bin" "$pkgdir/usr/share/applications"
   install -m644 ownos/src/ownos/ui/*.py "$pkgdir/usr/lib/ownos/ownos/ui/"
@@ -39,12 +40,17 @@ package_ownos-ui() {
   for icon in ownos/data/icons/*.svg; do
     install -Dm644 "$icon" "$pkgdir/usr/share/icons/hicolor/scalable/apps/${icon##*/}"
   done
+  install -dm755 "$pkgdir/usr/share/ownos/app-icons"
+  install -m644 ownos/data/app-icons/* "$pkgdir/usr/share/ownos/app-icons/"
+  for text in COPYRIGHT.Steam LICENSE.Steam COPYING.Heroic; do
+    install -Dm644 "ownos/data/app-icons/$text" "$pkgdir/usr/share/licenses/$pkgname/$text"
+  done
   install -Dm644 ownos/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE.icons"
 }
 
 package_ownos-desktop() {
   depends=('ownos-ui' 'labwc' 'gtk-layer-shell' 'wayland' 'xorg-xwayland'
-           'polkit-gnome' 'network-manager-applet' 'swaylock' 'swayidle' 'wdisplays'
+           'polkit-gnome' 'networkmanager' 'wpa_supplicant' 'network-manager-applet' 'swaylock' 'swayidle' 'wdisplays'
            'pipewire' 'pipewire-pulse' 'pipewire-alsa' 'wireplumber' 'pavucontrol' 'alsa-utils'
            'bluez' 'bluez-utils' 'blueman' 'upower' 'power-profiles-daemon' 'udisks2' 'gvfs' 'pciutils' 'xdg-utils'
            'xdg-user-dirs' 'xdg-desktop-portal-gtk')
@@ -66,6 +72,7 @@ package_ownos-branding() {
   install -m644 ownos/branding/sddm/* "$pkgdir/usr/share/sddm/themes/ownos/"
   install -m644 ownos/branding/plymouth/* "$pkgdir/usr/share/plymouth/themes/ownos/"
   install -Dm644 ownos/branding/sddm.conf "$pkgdir/etc/sddm.conf.d/ownos-theme.conf"
+  install -Dm644 ownos/branding/ownos-sddm.conf "$pkgdir/usr/lib/tmpfiles.d/ownos-sddm.conf"
 }
 
 package_ownos-keyring() {
@@ -76,13 +83,21 @@ package_ownos-keyring() {
 }
 
 package_ownos-live() {
-  depends=('ownos-desktop' 'sddm' 'networkmanager' 'sudo' 'arch-install-scripts')
+  depends=('ownos-desktop' 'sddm' 'networkmanager' 'sudo' 'arch-install-scripts' 'xorg-xauth')
   optdepends=('calamares: experimental graphical installer')
   install -Dm755 ownos/iso/live-setup "$pkgdir/usr/lib/ownos/live-setup"
   install -Dm755 ownos/iso/live-keyring "$pkgdir/usr/lib/ownos/live-keyring"
   install -dm755 "$pkgdir/etc/calamares" "$pkgdir/usr/lib/calamares/modules/owninstall"
   cp -a ownos/installer/calamares/. "$pkgdir/etc/calamares/"
   install -m644 ownos/installer/owninstall/* "$pkgdir/usr/lib/calamares/modules/owninstall/"
+  install -dm755 "$pkgdir/usr/lib/calamares/modules/husksync"
+  install -m644 ownos/installer/husksync/* "$pkgdir/usr/lib/calamares/modules/husksync/"
+  install -dm755 "$pkgdir/usr/lib/calamares/modules/huskflush"
+  install -m644 ownos/installer/huskflush/* "$pkgdir/usr/lib/calamares/modules/huskflush/"
+  install -Dm755 ownos/bin/husk-install "$pkgdir/usr/bin/husk-install"
+  install -Dm755 ownos/bin/husk-install-guard "$pkgdir/usr/lib/ownos/husk-install-guard"
+  install -Dm755 ownos/bin/husk-installer-root "$pkgdir/usr/lib/ownos/husk-installer-root"
+  install -Dm644 ownos/installer/husk-install.png "$pkgdir/usr/share/icons/hicolor/128x128/apps/husk-install.png"
   install -Dm644 ownos/installer/org.ownos.install.policy "$pkgdir/usr/share/polkit-1/actions/org.ownos.install.policy"
   install -Dm644 ownos/installer/49-ownos-live.rules "$pkgdir/etc/polkit-1/rules.d/49-ownos-live.rules"
   install -Dm644 ownos/installer/org.ownos.Install.desktop "$pkgdir/usr/share/applications/org.ownos.Install.desktop"

@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-20",
+  "run": 39445082106,
+  "source": "cc1aaafedc51998039020a51a5985b1b9383bdf1",
+  "image_source": "7a190ec010307676bf5b6b3c26235c2ed75bf4a5",
+  "iso_sha256": "2bc0374737c0ea0225847db3a2a1b03282c6b6f6b5afc77f5f3dbb5264d725d8",
+  "iso_bytes": 2079227904,
+  "evidence_artifact": 12276382434,
+  "authorization": "NOT REACHED",
+  "harness": "FAILED before the GTK client started",
+  "stage": "terminal-ready",
+  "checks": {
+    "initial_password_empty": true,
+    "live_session_active": true
+  },
+  "observed": "Manual terminal screenshot inspection: US physical slash/minus keys produced the wrong path under the shipped Finnish layout; Python rejected -r.",
+  "correction": "Launch a collision-checked plain filename in fresh Live home; retain the existing keyboard layout and all production helpers/policies.",
+  "proof_scope": "No claim about PAM, polkit or root Qt success/failure from this bootstrap-only result."
+}

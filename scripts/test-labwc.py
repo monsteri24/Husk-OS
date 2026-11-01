@@ -169,18 +169,20 @@ class DesktopTest:
         self.command(['grim', str(path)])
         return Image.open(path).convert('RGB')
 
-    def click(self, rect):
+    def click(self, rect, button=1, count=1):
         if rect is None:
             raise AssertionError('The target has no mapped GTK allocation')
+        assert button in (1, 3) and count in (1, 2), (button, count)
         x, y, width, height = rect
         with (self.artifacts / 'input-events.jsonl').open('a') as stream:
-            stream.write(json.dumps(dict(event='pointer-click', button=1,
+            stream.write(json.dumps(dict(event='pointer-click', button=button, count=count,
                                          x=x + width // 2, y=y + height // 2,
                                          time=time.monotonic())) + '\n')
         # XTest preserves move/click order. --sync can wait forever when two
         # successive targets have the same center (for example nested rows).
+        clicks = ['click', str(button)] if count == 1 else ['click', '--repeat', '2', '--delay', '90', str(button)]
         self.command(['xdotool', 'mousemove', '--window', self.output,
-                      str(x + width // 2), str(y + height // 2), 'click', '1'])
+                      str(x + width // 2), str(y + height // 2), *clicks])
         time.sleep(0.25)
 
     def key(self, key):
@@ -226,6 +228,22 @@ class DesktopTest:
     def native_window(self, kind, predicate=lambda window: True):
         return next((window for window in self.state(kind).get('windows', [])
                      if window.get('mapped') and predicate(window)), None)
+
+    def wait_stable_window(self, kind, predicate, description):
+        sequence, previous, samples = -1, None, 0
+        def stable():
+            nonlocal sequence, previous, samples
+            state = self.state(kind)
+            if state.get('sequence', 0) <= sequence:
+                return None
+            sequence = state['sequence']
+            window = next((w for w in state.get('windows', []) if w.get('mapped') and predicate(w)),None)
+            signature = json.dumps((window.get('id'),window.get('size'),window.get('buttons')),
+                                   sort_keys=True) if window else None
+            samples = samples+1 if signature is not None and signature == previous else 1
+            previous = signature
+            return window if window and samples >= 3 else None
+        return self.wait(description,stable)
 
     def titlebar(self, name):
         # Exact project theme colors identify actual rendered decorations. Glyph
@@ -305,17 +323,65 @@ class DesktopTest:
         self.record('foot-keyboard-command-roundtrip', application=terminal,
                     command=command, content=token + '\n', artifact='foot-command-roundtrip.txt')
 
+    def desktop_context_menu(self):
+        before = self.screenshot('desktop-before-context-menu')
+        target = [before.width * 3 // 4, before.height // 3, 1, 1]
+        expected = ['New Folder', 'New File', 'Paste', 'Refresh', 'Display Settings', 'Change Wallpaper', 'Personalize']
+        def mapped():
+            return next((menu for menu in self.state().get('desktop_menus', []) if menu.get('mapped')), None)
+        def dismissed():
+            menus = self.state().get('desktop_menus', [])
+            return menus and all(not any(menu.get(key) for key in ('active', 'mapped', 'host_present', 'host_mapped'))
+                                 for menu in menus)
+        def open_menu():
+            self.click(target, button=3)
+            menu = self.wait('actual native desktop context menu and keyboard layer host map', mapped)
+            assert menu['type'] == 'Menu' and menu['host_mapped'], menu
+            assert menu['labels'] == expected, menu
+            assert menu['background_keyboard_mode'] == 0 and menu['host_keyboard_mode'] == 1, menu
+            return menu
+        menu = open_menu()
+        image = self.screenshot('desktop-native-context-menu')
+        surface = (21, 30, 46)
+        before_count = list(before.getdata()).count(surface)
+        after_count = list(image.getdata()).count(surface)
+        assert after_count > before_count + 1000, 'Mapped desktop menu has no visible dark native surface'
+        self.key('Home')
+        self.wait('desktop menu receives real keyboard Home', lambda: mapped() and mapped().get('selected') == 'New Folder')
+        self.key('Down')
+        self.wait('desktop menu navigates to New File with real Down', lambda: mapped() and mapped().get('selected') == 'New File')
+        self.screenshot('desktop-context-menu-keyboard-selection')
+        self.key('Escape')
+        self.wait('Escape closes the native menu and releases its layer keyboard host', dismissed)
+        # The server processes the popup/layer destruction asynchronously.
+        # A fresh real motion and wl_pointer enter must precede another press;
+        # a second XTest click at the unchanged location can otherwise vanish
+        # into the old compositor grab even though GTK has destroyed it.
+        self.pointer_event('move',[before.width//2,before.height-95,1,1])
+        self.wait('compositor returns pointer focus to the actual desktop after Escape',lambda:
+                  self.state().get('pointer_window_title') == 'Husk Desktop')
+        self.screenshot('desktop-context-menu-escape-dismissed')
+        open_menu()
+        self.click([before.width // 2, before.height - 95, 1, 1])
+        self.wait('outside pointer click closes the native menu and layer host', dismissed)
+        self.screenshot('desktop-context-menu-dismissed')
+        self.record('desktop-native-context-menu-keyboard-and-outside-click', labels=menu['labels'],
+                    keyboard=['Home', 'Down', 'Escape'], outside_click=True,
+                    visible_dark_pixels=after_count - before_count, status=self.healthy())
+
     def files_navigation(self):
         def current(path):
             return self.native_window('files', lambda window:
                 window.get('files', {}).get('current') == str(path)
-                and window['files'].get('location') == str(path))
+                and window['files'].get('location') == str(path)
+                and all(row.get('rect') and row['rect'][2] >= 100 and row['rect'][3] >= 24
+                        for row in window['files'].get('rows', [])))
         home = Path(self.environment['HOME'])
         window = self.wait('Files starts at the isolated home directory', lambda: current(home))
         steps = []
         for destination in (self.navigation_root, self.navigation_root / 'Nested folder'):
             row = next(row for row in window['files']['rows'] if row['path'] == str(destination))
-            self.click(self.window_rectangle(window, row['rect'], 'files-row-' + str(len(steps))))
+            self.click(self.window_rectangle(window, row['rect'], 'files-row-' + str(len(steps))), count=2)
             window = self.wait('Files directory opens by real row pointer activation', lambda: current(destination))
             steps.append(dict(input='folder-row-pointer', current=window['files']['current']))
         up = next(button for button in window['buttons'] if button['label'] == 'Up')
@@ -361,7 +427,7 @@ class DesktopTest:
                 return None
             sequence = state['sequence']
             row = next((row for row in state.get('rows', [])
-                        if row['name'] == name and row.get('rect') and row['rect'][2] > 0
+                        if row['name'] == name and row.get('rect') and row['rect'][2] >= 200 and row['rect'][3] >= 24
                         and state.get('start_mapped') and state.get('search_text') == name), None)
             signature = (row.get('identity'), tuple(row['rect'])) if row else None
             samples = samples + 1 if signature is not None and signature == previous else 1
@@ -375,9 +441,16 @@ class DesktopTest:
     def firefox_confirmation(self):
         row = self.search_start('Firefox')
         self.click(row['rect'])
-        window = self.wait('real missing-Firefox confirmation from Start', self.confirmation)
-        assert window['confirmation']['primary_text'] == 'Install Firefox?', window
-        assert window['confirmation']['cancel_focused'] and window['confirmation']['cancel_default'], window
+        def focused_confirmation():
+            window = self.confirmation()
+            if window is None: return None
+            assert window['confirmation']['primary_text'] == 'Install Firefox?', window
+            # Mapping precedes asynchronous compositor focus delivery. Require
+            # the actual Cancel focus/default, rather than accepting the first
+            # mapped snapshot or introducing an arbitrary sleep.
+            confirmation = window['confirmation']
+            return window if confirmation['cancel_focused'] and confirmation['cancel_default'] else None
+        window = self.wait('real missing-Firefox confirmation with Cancel focused', focused_confirmation)
         self.wait('Start hides before confirmation interaction', lambda: not self.state().get('start_mapped'))
         return window
 
@@ -403,6 +476,8 @@ class DesktopTest:
                       if entry['id'] not in before and 'foot' in entry['app_id'].lower()]
         assert not unexpected, description + ': unexpected Foot window ' + repr(unexpected)
         assert not self.installer_terminals(), description + ': installer terminal started'
+        assert not any(window.get('app_install') for window in self.state().get('windows', [])), (
+            description + ': graphical installer started')
 
     def held_pointer_confirmation(self, release_over='confirm'):
         """A separate real GTK client maps the production dialog during a hold."""
@@ -485,7 +560,7 @@ Gtk.main()
                 self.assert_no_installer(before, 'OK key press without release', delay=0.2)
             finally:
                 self.key_event('keyup', 'space')
-            name = 'missing-app-deliberate-keyboard-OK-opens-real-terminal'
+            name = 'missing-app-deliberate-keyboard-OK-opens-native-installer'
         else:
             target = self.window_rectangle(dialog, dialog['confirmation']['confirm'], 'firefox-fresh-OK')
             self.pointer_event('mousedown', target)
@@ -493,22 +568,28 @@ Gtk.main()
                 self.assert_no_installer(before, 'OK pointer press without release', delay=0.2)
             finally:
                 self.pointer_event('mouseup')
-            name = 'missing-app-deliberate-pointer-OK-opens-real-terminal'
-        terminal = self.wait('deliberate OK creates real Foot installer terminal', lambda: next((entry for entry
-            in self.entries() if entry['id'] not in before and 'foot' in entry['app_id'].lower()), None))
-        processes = self.wait('real Foot --hold installer command process', self.installer_terminals)
-        expected = str(Path(shutil.which('foot', path=self.environment['PATH'])).resolve())
-        assert all(process['executable'] == expected for process in processes), processes
+            name = 'missing-app-deliberate-pointer-OK-opens-native-installer'
+        def installer():
+            return self.native_window('desktop',lambda window:
+                window.get('app_install',{}).get('appid') == 'firefox')
+        window = self.wait('deliberate OK creates the real native application installer',installer)
         self.wait('confirmation closes after deliberate OK', lambda: self.confirmation() is None)
+        # This Ubuntu source runner has no Arch package manager. Real preflight
+        # must report that failure graphically before requesting authorization.
+        window = self.wait_stable_window('desktop',lambda candidate:
+            candidate.get('app_install',{}).get('appid') == 'firefox' and
+            candidate['app_install']['state'] == 'failed',
+            'native preflight reports missing tools and its Close button finishes allocation')
+        assert 'repository' in window['app_install']['status'].lower(), window
+        assert not self.installer_terminals(), 'The graphical installer started a Foot password sequence'
+        assert not any(entry['id'] not in before and 'foot' in entry['app_id'].lower()
+                       for entry in self.entries()), 'A terminal opened after graphical confirmation'
         self.screenshot(name)
-        (self.artifacts / (name + '.json')).write_text(json.dumps(processes, indent=2) + '\n')
-        self.record(name, application=terminal, processes=processes,
-                    installation='Not assessed: real terminal creation on an Ubuntu source-test host only.')
-        self.wait('installer Foot is active before closing', lambda:
-                  self.entry(terminal['id']) and self.entry(terminal['id'])['active'])
-        self.click(self.titlebar(name + '-before-close')['buttons']['close'])
-        self.wait('installer terminal closes through real decoration input', lambda: self.entry(terminal['id']) is None)
-        self.wait('installer Foot process exits', lambda: not self.installer_terminals())
+        self.record(name, application=window['app_install'], terminal_started=False,
+                    installation='Not assessed: actual graphical preflight fails closed without Arch tools on Ubuntu.')
+        close = next(button for button in window['buttons'] if button['label'] == 'Close')
+        self.click(self.window_rectangle(window,close['rect'],name+'-close'))
+        self.wait('native installer closes through its real Close button',lambda: installer() is None)
 
     def missing_app_confirmation(self):
         from ownos.app_install import app_installed
@@ -544,6 +625,21 @@ Gtk.main()
         self.deliberate_installer_confirmation()
         self.deliberate_installer_confirmation(keyboard=True)
 
+    def wait_task_hover(self, title, description):
+        def candidate(state):
+            return next((button for button in state.get('task_buttons', [])
+                         if button.get('tooltip') == title and button.get('mapped') and
+                         button.get('rect') and min(button['rect'][2:]) > 1), None)
+        task = self.wait(description + ' mapped task button', lambda: candidate(self.state()))
+        sequence = self.state().get('sequence', 0)
+        self.pointer_event('move', task['rect'])
+        def hovered():
+            state = self.state()
+            if state.get('sequence',0) <= sequence or state.get('pointer_window_title') != 'Husk Taskbar': return None
+            button = candidate(state)
+            return button if button and button.get('hovered') else None
+        return self.wait(description + ' actual GTK task button hover', hovered)
+
     def exercise(self, identifier, name, kind=None):
         before = self.titlebar(name + '-normal')
         self.click(before['buttons']['maximize'])
@@ -565,8 +661,7 @@ Gtk.main()
                   and self.entry(identifier)['minimized'])
         self.screenshot(name + '-minimized')
         title = self.entry(identifier)['title']
-        task = self.wait(name + ' taskbar button', lambda: next((button for button in
-            self.state().get('task_buttons', []) if button.get('tooltip') == title), None))
+        task = self.wait_task_hover(title, name)
         self.click(task['rect'])
         self.wait(name + ' restored by taskbar click', lambda: self.entry(identifier)
                   and not self.entry(identifier)['minimized'] and self.entry(identifier)['active'])
@@ -577,6 +672,68 @@ Gtk.main()
             self.wait(name + ' source application exited', lambda: self.state(kind).get('exited'))
         self.record(name + '-close-minimize-maximize', application=title,
                     before=before['bounds'], maximized=maximum['bounds'], desktop=self.healthy())
+
+    def panel_window_states(self):
+        destination = self.runtime / 'panel-client.json'
+        client = self.launch([sys.executable, str(ROOT / 'scripts/labwc-panel-client.py'),
+                              str(destination)], 'panel-client')
+        def state():
+            try:
+                return json.loads(destination.read_text())
+            except (OSError, ValueError):
+                return {}
+        entry = self.wait('real panel state client in the compositor bridge', lambda:
+            next((entry for entry in self.entries() if entry['title'] == 'Husk Panel State Test'), None))
+        identifier = entry['id']
+        self.wait('panel client output identity from actual wl_output membership', lambda:
+                  self.entry(identifier).get('outputs'))
+        outputs = self.entry(identifier)['outputs']
+        assert outputs[0]['name'] or outputs[0]['width'] > 0, outputs
+        self.key('F10')
+        self.wait('native maximize removes the reserved panel strip', lambda:
+                  state().get('maximized') and self.entry(identifier).get('maximized') and
+                  self.state().get('status', {}).get('panel_mode') == 'maximized' and
+                  state().get('height', 0) >= outputs[0]['height'] - 40)
+        image = self.screenshot('panel-maximized-transparent')
+        panel = self.state()['panel']
+        for point in [(20, image.height - 2), (20, panel[1] + 4)]:
+            assert image.getpixel(point) == (36, 80, 74), (point, image.getpixel(point))
+        clicks = len(state().get('clicks', []))
+        self.click([20, image.height - 16, 1, 1])
+        self.wait('a click through the transparent panel gap reaches the real maximized client', lambda:
+                  len(state().get('clicks', [])) > clicks)
+        start = next(button for button in self.state()['panel_buttons']
+                     if (button.get('tooltip') or '').startswith('Start'))
+        self.click(start['rect'])
+        self.wait('centered Start remains clickable above the maximized client', lambda:
+                  self.state().get('start_mapped'))
+        self.click(start['rect'])
+        self.wait('Start dismissed above the maximized client', lambda: not self.state().get('start_mapped'))
+        self.record('panel-maximized-transparent-click-through-and-launcher', outputs=outputs,
+                    panel=panel, native=state())
+        self.click([20, image.height - 16, 1, 1])
+        self.key('F11')
+        self.wait('true fullscreen unmaps every panel icon', lambda:
+                  state().get('fullscreen') and self.entry(identifier).get('fullscreen') and
+                  not self.state().get('status', {}).get('panel_mapped') and
+                  self.state().get('status', {}).get('panel_mode') == 'fullscreen' and
+                  (state().get('width'), state().get('height')) == (image.width, image.height))
+        image = self.screenshot('panel-fullscreen-no-icons')
+        assert image.getcolors(maxcolors=2) == [(image.width * image.height, (36, 80, 74))], (
+            'Fullscreen must contain only the native client canvas; panel/wallpaper pixels remain')
+        self.key('F11')
+        self.wait('exiting fullscreen restores the compact panel', lambda:
+                  not state().get('fullscreen') and self.state().get('status', {}).get('panel_mapped') and
+                  self.state().get('status', {}).get('panel_mode') == 'maximized')
+        self.key('F10')
+        self.wait('restoring the window restores the desktop panel reservation', lambda:
+                  not state().get('maximized') and
+                  self.state().get('status', {}).get('panel_mode') == 'desktop')
+        self.screenshot('panel-restored-desktop')
+        self.key('alt+F4')
+        self.wait('panel test client closed by actual keyboard input', lambda:
+                  client.poll() is not None and self.entry(identifier) is None)
+        self.record('panel-true-fullscreen-hide-and-restore', native=state(), desktop=self.healthy())
 
     def run(self):
         self.compositor = self.launch(['labwc', '-C', str(self.config), '--debug'], 'labwc')
@@ -608,19 +765,16 @@ Gtk.main()
                   self.state().get('status', {}).get('panel_mapped'))
         self.record('wayland-desktop-started', status=self.healthy())
         self.wallpaper('01-desktop-wallpaper')
-        button = next(button for button in self.state()['panel_buttons']
-                      if (button.get('tooltip') or '').startswith('Start'))
-        self.click(button['rect'])
-        self.wait('Start popup mapped and allocated after taskbar click', lambda:
-                  self.state().get('start_mapped') and self.state().get('start', [0, 0, 0, 0])[2] >= 400)
+        image = self.screenshot('desktop-normal-panel-background')
+        probes = [(10,image.height-4),(300,image.height-4)]
+        assert all(image.getpixel(point)[2]>image.getpixel(point)[0] and
+                   image.getpixel(point)[2]>image.getpixel(point)[1] for point in probes), (
+            'The normal desktop panel must paint its configured CSS background',
+            [(point,image.getpixel(point)) for point in probes])
+        self.record('desktop-normal-panel-background',pixels=[image.getpixel(point) for point in probes])
+        self.desktop_context_menu()
+        row = self.search_start('Husk Integration Terminal')
         self.screenshot('02-start-popup')
-        self.click(self.state()['search'])
-        self.command(['xdotool', 'type', '--clearmodifiers', '--delay', '30', 'Husk Integration Terminal'])
-        self.wait('search text delivered through real keyboard input', lambda:
-                  self.state().get('search_text') == 'Husk Integration Terminal' and
-                  len(self.state().get('rows', [])) == 1)
-        row = self.wait('real launcher search result', lambda: next((row for row in
-            self.state().get('rows', []) if row['name'] == 'Husk Integration Terminal'), None))
         self.click(row['rect'])
         terminal = self.wait('Foot launched from Start', lambda: next((entry for entry in self.entries()
             if entry['app_id'] == 'husk-integration-terminal'), None))
@@ -653,6 +807,7 @@ Gtk.main()
             if entry['id'] not in before and 'foot' in entry['app_id'].lower()), None))
         self.terminal_roundtrip(terminal)
         self.exercise(terminal['id'], '06-foot')
+        self.panel_window_states()
         for kind, shortcut in (('files', 'super+e'), ('control', 'super+i')):
             before = {entry['id'] for entry in self.entries()}
             self.key(shortcut)

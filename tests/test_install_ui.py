@@ -267,14 +267,16 @@ class InstallationGTKTests(unittest.TestCase):
         self.key(dialog.confirm_button, self.Gdk.EventType.KEY_RELEASE, self.Gdk.KEY_space)
         self.assertEqual(responses, [self.Gtk.ResponseType.OK])
 
-    def test_gui_install_keeps_terminal_progress_and_outcome_after_exit(self):
+    def test_gui_install_opens_native_progress_window_without_a_terminal(self):
         with patch.object(self.common, 'installed', return_value=False), \
                 patch.object(self.common, 'confirm', return_value=True), \
-                patch.object(self.common.shutil, 'which', return_value='/usr/bin/foot'), \
-                patch.object(self.common, 'spawn') as spawn:
-            self.common.launch_app('firefox')
-        spawn.assert_called_once_with(
-            ['/usr/bin/foot', '--hold', '-e', '/usr/bin/husk-install-app', 'firefox'], None)
+                patch('ownos.ui.app_install.AppInstallWindow') as window, \
+                patch.object(self.common, 'terminal') as terminal:
+            result = self.common.launch_app('firefox')
+        window.assert_called_once_with('firefox', None)
+        window.return_value.begin.assert_called_once_with()
+        self.assertIs(result, window.return_value)
+        terminal.assert_not_called()
 
     def test_cancel_does_not_start_a_terminal_or_an_installer(self):
         with patch.object(self.common, 'installed', return_value=False), \

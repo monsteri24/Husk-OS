@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "test_source": "4fc0a00637a94187b15534ffe89ecc4e757bed0b",
+  "run": 39725599486,
+  "job": 119648642460,
+  "artifact": 12402812886,
+  "artifact_zip_sha256": "cd896e9c42d8ad8aea310a88c0fde4400e01a3d447c40338e3f5654d976f2004",
+  "image": {
+    "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "run": 39720818758,
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "rebuilt": false
+  },
+  "guest_memory_mib": 4096,
+  "package_installation": "PASSED",
+  "client_startup": "FAILED",
+  "live_shutdown": "PASSED",
+  "checks": {
+    "live_write_space": true,
+    "initial_package_absent": true,
+    "initial_password_empty": true,
+    "live_session_active": true,
+    "unprivileged_launcher": true,
+    "no_extra_terminal": true,
+    "confirmation_cancel_unchanged": true,
+    "password_cancel_unchanged": true,
+    "authorization_cancel_unchanged": true,
+    "polkit_authenticated": true,
+    "root_helper": true,
+    "pkexec_caller": true,
+    "no_test_injection": true,
+    "retry_existing_password": true,
+    "package_installed": true,
+    "full_upgrade": true,
+    "matching_graphics": true,
+    "signatures_required": true,
+    "official_icon": true,
+    "gtk_verified": true
+  },
+  "package": "steam 1.0.0.87-3",
+  "initial_live_write_space": {
+    "total_bytes": 2044715008,
+    "available_bytes": 2043953152,
+    "mount": "tmpfs  1.9G  1.9G"
+  },
+  "final_live_write_space": {
+    "total_bytes": 2044715008,
+    "available_bytes": 0
+  },
+  "vendor_update": {
+    "download_completed": true,
+    "bootstrap_log_tail": [
+      "[2026-10-22 05:03:26] Downloading update (495129 of 504927 KB)...",
+      "[2026-10-22 05:03:26] Downloading update (504927 of 504927 KB)...",
+      "[2026-10-22 05:03:26] Download Complete.",
+      "[2026-10-22 05:03:26] Saving metrics to disk (/home/live/.local/share/Steam/package/steam_client_metrics.bin)",
+      "[2026-10-22 05:03:26] uninstalled manifest found in /home/live/.local/share/Steam/package/steam_client_ubuntu12 (1).",
+      "[2026-10-22 05:03:26] Extracting package...",
+      "[2026-10-22 05:03:48] Error: Failed to unzip item 8 (package/tmp/ubuntu12_64/libcef.so_)",
+      "[2026-10-22 05:03:48] Error: Failed to unzip package (/home/live/.local/share/Steam/package/webkit_ubuntu12.zip.vz.91dd89f0aa150567deedadd7b86c13cdf5a62b36_89726448)",
+      "[2026-10-22 05:03:48] Shutdown"
+    ],
+    "wrapper_exit": 0,
+    "surviving_native_client_processes": [],
+    "mapped_native_client_windows": []
+  },
+  "setup_windows": [
+    {
+      "event": "upsert",
+      "id": 3,
+      "title": "Steam setup",
+      "app_id": "zenity",
+      "active": true,
+      "minimized": false,
+      "maximized": false,
+      "fullscreen": false,
+      "outputs": [
+        {
+          "name": "Virtual-1",
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 800
+        }
+      ]
+    }
+  ],
+  "launch_environment": {
+    "DISPLAY": ":0",
+    "WAYLAND_DISPLAY": "wayland-0",
+    "GDK_BACKEND": "wayland",
+    "XDG_SESSION_TYPE": "wayland",
+    "XDG_CURRENT_DESKTOP": "Husk:OwnOS",
+    "XDG_RUNTIME_DIR": "/run/user/1000",
+    "STEAM_RUNTIME": null,
+    "STEAM_LAUNCHER_VERBOSE": "1"
+  },
+  "diagnostic_errors": [],
+  "additional_warning": "The vendor log also warns that en_US.UTF-8 is unavailable; locale falls back to C. This is separate from the observed full Live write space.",
+  "assessment": "The downloaded vendor runtime failed while extracting libcef with zero Live write space remaining. Capacity is the leading causal explanation; a bounded 8 GiB guest-RAM experiment on the unchanged ISO is pending.",
+  "source_verification": {
+    "source_job": 119648642903,
+    "run": 39725599486,
+    "tests": 500,
+    "local_skips": 72,
+    "actual_gtk_tests": 500,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 183,
+    "native_sanitizers": "PASSED",
+    "real_labwc_run": 39725604847,
+    "real_labwc_job": 119648660277,
+    "real_labwc": "PASSED"
+  },
+  "limits": [
+    "This does not establish that the final Steam UI works.",
+    "No Steam account, game, physical GPU or hardware compatibility is claimed.",
+    "Main and releases are unchanged; no ISO rebuild is needed for the resource experiment."
+  ]
+}

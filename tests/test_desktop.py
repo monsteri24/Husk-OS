@@ -46,7 +46,7 @@ class DesktopPolicyTests(unittest.TestCase):
             self.assertEqual(xml.find('keyboard/keybind').get('key'), 'W-e')
             self.assertEqual(xml.find("libinput/device[@category='mouse']/pointerSpeed").text, '-0.35')
             self.assertEqual(xml.find("libinput/device[@category='mouse']/accelProfile").text, 'flat')
-            self.assertEqual((config / 'environment').read_text(), 'CUSTOM=keep\nXKB_DEFAULT_LAYOUT=fi\n')
+            self.assertEqual((config / 'environment').read_text(), 'CUSTOM=keep\nXKB_DEFAULT_LAYOUT=fi\nXKB_DEFAULT_VARIANT=\n')
             self.assertEqual(list(config.glob('*.tmp')), [])
 
     def test_invalid_input_settings_do_not_create_configuration(self):

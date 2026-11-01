@@ -1,0 +1,5 @@
+---
+type: job
+name: huskflush
+interface: python
+script: main.py

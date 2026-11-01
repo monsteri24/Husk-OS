@@ -2,9 +2,15 @@ border.width: 1
 padding.width: 8
 window.active.title.bg.color: #1c304c
 window.active.label.text.color: #eaf1ff
-window.active.border.color: #4d94ff
+window.active.border.color: #f5cf3b
 window.inactive.title.bg.color: #162033
 window.inactive.label.text.color: #a7b9d5
 window.inactive.border.color: #30415c
 window.active.button.unpressed.image.color: #eaf1ff
 window.inactive.button.unpressed.image.color: #a7b9d5
+menu.items.bg.color: #151e2e
+menu.items.text.color: #eaf1ff
+menu.items.active.bg.color: #f5cf3b
+menu.items.active.text.color: #151710
+menu.title.bg.color: #151e2e
+menu.title.text.color: #eaf1ff

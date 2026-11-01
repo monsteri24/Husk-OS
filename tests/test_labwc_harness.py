@@ -1,8 +1,12 @@
 import importlib.util
+import ast
+import gc
+import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+import weakref
 
 
 class LabwcHarnessTests(unittest.TestCase):
@@ -13,6 +17,84 @@ class LabwcHarnessTests(unittest.TestCase):
         harness = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(harness)
         cls.harness = harness
+
+    def observer_registration(self):
+        path = Path(__file__).resolve().parents[1] / 'scripts/labwc-test-observer/sitecustomize.py'
+        functions = [node for node in ast.walk(ast.parse(path.read_text()))
+                     if isinstance(node,ast.FunctionDef) and node.name == 'observe_widget']
+        self.assertEqual(len(functions),1,'The observer must track native GTK identities until destroy')
+        namespace=dict(observed=set(),observe_input=Mock(return_value=False))
+        exec(compile(ast.Module(body=functions,type_ignores=[]),'<observer-registration>','exec'),namespace)
+        return namespace
+
+    def test_native_observer_identity_survives_wrapper_gc_without_duplicate_handlers(self):
+        observer = self.observer_registration()
+        class Native:
+            def __init__(self): self.handlers={}
+        class Widget:
+            def __init__(self,native): self.native=native
+            def __hash__(self): return 17429
+            def connect(self,signal,callback,*args): self.native.handlers.setdefault(signal,[]).append((callback,args))
+            def destroy(self):
+                for callback,args in self.native.handlers.get('destroy',[]): callback(self,*args)
+        native=Native(); widget=Widget(native); reference=weakref.ref(widget)
+        self.assertTrue(observer['observe_widget'](widget,'test-window'))
+        del widget; gc.collect()
+        self.assertIsNone(reference(),'Passive observation must not retain a dead Python wrapper')
+        replacement=Widget(native)
+        self.assertFalse(observer['observe_widget'](replacement,'test-window'))
+        self.assertEqual(len(native.handlers['event']),1)
+        replacement.destroy()
+        self.assertEqual(observer['observed'],set())
+
+    @unittest.skipUnless(os.environ.get('OWNOS_UI_TESTS') == '1','Needs real GTK widget ownership')
+    def test_real_gtk_owned_widget_is_observed_once_and_released_at_destroy(self):
+        from ownos.ui.common import Gtk,Gdk
+        observer=self.observer_registration()
+        box=Gtk.Box(); widget=Gtk.Button(label='Task observation test'); box.add(widget)
+        self.assertTrue(observer['observe_widget'](widget,'test-window'))
+        identity=hash(widget); del widget; gc.collect()
+        widget=box.get_children()[0]
+        self.assertEqual(hash(widget),identity)
+        self.assertFalse(observer['observe_widget'](widget,'test-window'))
+        widget.emit('event',Gdk.Event.new(Gdk.EventType.BUTTON_RELEASE))
+        self.assertEqual(observer['observe_input'].call_count,1)
+        widget.destroy(); box.destroy()
+        self.assertEqual(observer['observed'],set())
+
+    def test_task_click_waits_for_fresh_actual_panel_focus_and_button_hover(self):
+        test=self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        button=dict(tooltip='Husk Files',rect=[743,746,43,54],mapped=True,hovered=False)
+        state=dict(sequence=1,pointer_window_title='Husk Files',task_buttons=[button])
+        test.state=lambda:state
+        test.pointer_event=Mock()
+        def wait(description,predicate):
+            if description.endswith('mapped task button'): return predicate()
+            self.assertIsNone(predicate())
+            state['sequence']=2; button['hovered']=True
+            self.assertIsNone(predicate(),'A different focused surface must not receive a task click')
+            state['sequence']=3; state['pointer_window_title']='Husk Taskbar'; button['hovered']=False
+            self.assertIsNone(predicate(),'A panel enter alone does not mean the target GTK button has hover')
+            state['sequence']=4; button['hovered']=True
+            return predicate()
+        test.wait=wait
+        self.assertEqual(test.wait_task_hover('Husk Files','files'),button)
+        test.pointer_event.assert_called_once_with('move',button['rect'])
+
+    def test_missing_app_waits_for_actual_cancel_focus_after_mapping(self):
+        test=self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        window=dict(confirmation=dict(primary_text='Install Firefox?',cancel_focused=False,
+                                      cancel_default=True,confirm_focused=False))
+        test.search_start=Mock(return_value=dict(rect=[0,0,200,40]))
+        test.click=Mock();test.confirmation=lambda:window
+        test.state=lambda:dict(start_mapped=False)
+        def wait(description,predicate):
+            if description.startswith('Start hides'): return predicate()
+            self.assertIsNone(predicate(),'A mapped dialog may precede its compositor focus event')
+            window['confirmation']['cancel_focused']=True
+            return predicate()
+        test.wait=wait
+        self.assertIs(test.firefox_confirmation(),window)
 
     def test_output_discovery_accepts_a_visible_window_without_name_or_class(self):
         tree = '''xwininfo: Window id: 0x50d (the root window) (has no name)
@@ -89,6 +171,46 @@ class LabwcHarnessTests(unittest.TestCase):
         self.assertEqual(commands[0][-2:], ['click', '1'])
         self.assertEqual(commands[1][-2:], ['click', '1'])
 
+    def test_native_context_and_double_clicks_record_the_actual_pointer_buttons(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        test.output = '0x200004'; commands = []
+        test.command = lambda argv: commands.append(argv)
+        with tempfile.TemporaryDirectory() as directory, patch.object(self.harness.time, 'sleep'):
+            test.artifacts = Path(directory)
+            test.click([900, 200, 1, 1], button=3)
+            test.click([240, 188, 800, 40], count=2)
+            import json
+            events = [json.loads(line) for line in (test.artifacts / 'input-events.jsonl').read_text().splitlines()]
+        self.assertEqual(commands[0][-2:], ['click', '3'])
+        self.assertEqual(commands[1][-6:], ['click', '--repeat', '2', '--delay', '90', '1'])
+        self.assertEqual([(event['button'], event['count']) for event in events], [(3, 1), (1, 2)])
+
+    def test_cancel_guard_detects_a_graphical_installer_as_a_side_effect(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        test.entries = lambda: []
+        test.installer_terminals = lambda: []
+        test.state = lambda: dict(windows=[dict(app_install=dict(appid='firefox',state='checking'))])
+        with patch.object(self.harness.time,'sleep'), self.assertRaisesRegex(AssertionError,'graphical'):
+            test.assert_no_installer(set(),'Cancel')
+
+    def test_native_buttons_must_finish_reallocation_before_input(self):
+        test=self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        window=dict(id='installer',mapped=True,size=[640,470],buttons=[dict(label='Close',rect=[361,402,65,44])])
+        state=dict(sequence=1,windows=[window]); test.state=lambda kind='desktop':state
+        def wait(description,predicate):
+            self.assertIsNone(predicate())
+            state['sequence']=2; self.assertIsNone(predicate())
+            window['size']=[640,472]; window['buttons'][0]['rect']=[490,404,58,44]
+            for seq in (3,4):
+                state['sequence']=seq; self.assertIsNone(predicate())
+            # Rereading a sample does not count toward stable observations.
+            self.assertIsNone(predicate())
+            state['sequence']=5
+            return predicate()
+        test.wait=wait
+        result=test.wait_stable_window('desktop',lambda candidate:True,'actual Close allocation')
+        self.assertEqual(result['buttons'][0]['rect'],[490,404,58,44])
+
     def test_reopening_same_query_keeps_text_and_waits_for_fresh_stable_row(self):
         test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
         current = dict(sequence=40, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],
@@ -114,3 +236,26 @@ class LabwcHarnessTests(unittest.TestCase):
         test.wait = wait
         row = test.search_start('Firefox')
         self.assertEqual(row['identity'], 'new')
+
+    def test_search_result_rejects_unallocated_one_pixel_rows(self):
+        test = self.harness.DesktopTest.__new__(self.harness.DesktopTest)
+        current = dict(sequence=1, panel_buttons=[dict(tooltip='Start', rect=[0, 0, 40, 40])],
+                       start_mapped=True, start=[385, 180, 510, 540], search=[406, 254, 468, 50],
+                       search_text='Terminal', rows=[dict(name='Terminal', identity='new', rect=[405, 317, 1, 1])])
+        test.state = lambda: current
+        test.click = lambda rectangle: None
+        test.key = lambda key: self.fail('The matching query is already typed')
+        test.type_text = lambda text: self.fail('The matching query is already typed')
+        def wait(description, predicate):
+            if description.startswith('Start mapped'): return predicate()
+            for sequence in (2, 3, 4, 5):
+                current['sequence'] = sequence
+                self.assertIsNone(predicate(), 'A stable 1×1 GTK allocation is not a clickable row')
+            current['rows'][0]['rect'] = [406, 318, 468, 48]
+            for sequence in (6, 7):
+                current['sequence'] = sequence
+                self.assertIsNone(predicate())
+            current['sequence'] = 8
+            return predicate()
+        test.wait = wait
+        self.assertEqual(test.search_start('Terminal')['rect'], [406, 318, 468, 48])

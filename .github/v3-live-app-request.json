@@ -1,0 +1,10 @@
+{
+  "attempt": 13,
+  "memory_mib": 4096,
+  "source": "96a0a02c67d0d85d819bfdc82c448508c3153441",
+  "run": 40172519876,
+  "sha256": "496bd1508307d3ac6d7affff0e813b64ad8517d680ec0edd4dd2a447b512e715",
+  "bytes": 2080997376,
+  "scope": "Storage exclusion passed in attempt12, but strict overall gate correctly stopped on unobservable Secure Boot. Use explicit SMM-capable OVMF with a fresh unenrolled variable template and retain actual disabled EFI/kernel evidence requirement. Preserve all driver, USB-only, final shutdown counters and full hash gates. Add read-only EFI diagnostics; no runtime or ISO changes.",
+  "application": "hardware"
+}

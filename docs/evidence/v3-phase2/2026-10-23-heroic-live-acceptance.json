@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "latest_status": "Heroic actual graphical user installation and native client startup PASSED on the preserved ISO; no account or game acceptance",
+  "iso": {
+    "source": "285fb33c7395ba622092079beeac1a9b09f084d3",
+    "run": 39720818758,
+    "bytes": 2079227904,
+    "sha256": "3202758c52c029d98be852a6cc1217f863afffd8735e692368d0d51eb5ceea05",
+    "rebuilt": false
+  },
+  "initial_run": {
+    "run": 39985820566,
+    "job": 120524596465,
+    "source": "621eddb5603ff69e08bb3c93b5db163cf4cd4534",
+    "memory_mib": 12288,
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/39985820566",
+    "artifact": {
+      "id": 12515423742,
+      "bytes": 543508,
+      "sha256": "74f62d240f5e41a8b9ea7fda448d28303b7c6297ec608c1436b5f3c7fc8fe99a",
+      "download_hash_verified": true
+    },
+    "package_installation": "FAILED",
+    "client_startup": "NOT TESTED",
+    "live_shutdown": "NOT TESTED",
+    "guest": {
+      "phase": "installation",
+      "stage": "confirmation-cancelled",
+      "finished": true,
+      "success": false,
+      "checks": {
+        "initial_app_absent": true,
+        "initial_system_app_absent": true,
+        "live_session_active": true,
+        "unprivileged_launcher": true,
+        "no_extra_terminal": true,
+        "confirmation_cancel_unchanged": false
+      },
+      "app_id": "com.heroicgameslauncher.hgl",
+      "live_session": [
+        "Name=live",
+        "Remote=no",
+        "Active=yes"
+      ],
+      "gtk": {
+        "pid": 1254,
+        "uid": 1000,
+        "phase": "confirmation-cancelled",
+        "password_dialogs": 0,
+        "password_submitted": false,
+        "confirmations": [
+          "confirm-cancel"
+        ],
+        "windows": [],
+        "all_windows": [],
+        "dialog": null,
+        "ui_state": "ready",
+        "status": "Ready to install.",
+        "detail": "",
+        "result_code": 1,
+        "begun": true
+      },
+      "error": "RuntimeError: Cancel changed package/repository state",
+      "client_output": ""
+    },
+    "interpretation": [
+      "Actual GTK confirmation was cancelled before begin/preflight; the UI remained ready, result code 1, no password dialog or transaction output.",
+      "The combined cancellation check failed. The old observer did not retain separate package/repository/absence comparisons, so this artifact alone cannot identify which differed.",
+      "A confirmed harness ordering defect records repository configuration before its own first Flatpak info query. Flatpak may initialize a writable empty repository during that query.",
+      "The retry captures a post-query baseline and compares both pre-query and post-query Cancel hashes with it. This also rejects a deleted repository recreated by the final query. Package state and app absence remain independently required; no trust/native/capacity/stability gate is waived."
+    ]
+  },
+  "source_trace": {
+    "ref": "1.16.1",
+    "urls": [
+      "https://github.com/flatpak/flatpak/blob/1.16.1/app/flatpak-builtins-info.c",
+      "https://github.com/flatpak/flatpak/blob/1.16.1/app/flatpak-builtins-utils.c",
+      "https://github.com/flatpak/flatpak/blob/1.16.1/common/flatpak-dir.c"
+    ],
+    "path": [
+      "flatpak_builtin_info",
+      "flatpak_find_installed_pref",
+      "flatpak_dir_find_installed_ref",
+      "flatpak_dir_get_all_installed_refs",
+      "flatpak_dir_maybe_ensure_repo",
+      "_flatpak_dir_ensure_repo",
+      "ostree_repo_create"
+    ],
+    "scope": "Explains the possible query side effect; the original artifact did not record its installed Flatpak version."
+  },
+  "validation": {
+    "source_run": 39985820566,
+    "source_job": 120524597171,
+    "source_tests": 511,
+    "source_environment_skips": 72,
+    "actual_gtk_tests": 511,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 185,
+    "native_sanitizers": "PASSED",
+    "real_wayland_run": 39985826976,
+    "real_wayland_job": 120524640293,
+    "real_wayland": "PASSED"
+  },
+  "exclusions": [
+    "No Heroic deployment/startup/account/game acceptance from the failed run.",
+    "No administrator authorization claim for the user Flatpak flow.",
+    "No target installation, main/release changes, or general minimum-RAM claim."
+  ],
+  "corrected_observer_validation": {
+    "local_source_tests": 513,
+    "environment_skips": 72,
+    "syntax_checks": 185,
+    "focused_tests": 63,
+    "focused_environment_skips": 1,
+    "local_native_asan_ubsan": "PASSED with sandbox leak detection disabled",
+    "scoped_review": "No open findings; both query initialization and deletion-regeneration regressions observed RED then GREEN",
+    "actual_retry": "PASSED in 39988433895"
+  },
+  "accepted_run": {
+    "run": 39988433895,
+    "job": 120533611703,
+    "source": "de87760c9b0c9820758721497c19ac9a667172d7",
+    "url": "https://github.com/monsteri24/Husk-OS/actions/runs/39988433895",
+    "memory_mib": 12288,
+    "artifact": {
+      "id": 12517555256,
+      "bytes": 788686,
+      "sha256": "3b8dcc1d1b235bcbbbe2f88304befca5913971c2075bfb6a4a690e9e2098cfe1",
+      "download_hash_verified": true
+    },
+    "package_installation": "PASSED",
+    "client_startup": "PASSED",
+    "live_shutdown": "PASSED",
+    "problems": [],
+    "checks": {
+      "initial_app_absent": true,
+      "initial_system_app_absent": true,
+      "live_session_active": true,
+      "unprivileged_launcher": true,
+      "no_extra_terminal": true,
+      "confirmation_cancel_unchanged": true,
+      "password_unchanged": true,
+      "user_install_record": true,
+      "trusted_origin": true,
+      "system_packages_unchanged": true,
+      "no_system_install": true,
+      "official_icon": true,
+      "gtk_verified": true
+    },
+    "flatpak_version": "Flatpak 1.18.4",
+    "app_id": "com.heroicgameslauncher.hgl",
+    "deployment_commit": "8f930918e5b8a0901969e036a2b274d2b2bcd5f820c80b2f79819aba51043267",
+    "origin": "flathub",
+    "remote_url": "https://dl.flathub.org/repo/",
+    "flatpak_info": "\nHeroic - Play Epic, GOG and Amazon Games\n\n            ID: com.heroicgameslauncher.hgl\n           Ref: app/com.heroicgameslauncher.hgl/x86_64/stable\n          Arch: x86_64\n        Branch: stable\n       Version: v2.22.4\n       License: GPL-3.0\n        Origin: flathub\n    Collection: org.flathub.Stable\n  Installation: user\nInstalled Size: 623.3\u00a0MB\n       Runtime: org.freedesktop.Platform/x86_64/26.08\n           Sdk: org.freedesktop.Sdk/x86_64/26.08\n\n        Commit: 8f930918e5b8a0901969e036a2b274d2b2bcd5f820c80b2f79819aba51043267\n        Parent: e45c08d5dc21ba7558d71e87574dc9e9278b6f3194624006554879c9c59f74b1\n       Subject: Merge pull request #301 from flathub/v2.22.4 (1b6bc9882ce7)\n          Date: 2026-10-15 13:32:32 +0000\n",
+    "initial_observation": {
+      "app_absent": true,
+      "packages": "e2825f0846529368b51a268b736c323d67b6439f421d7287e19c92b92a581c25",
+      "repository": "2e3fcc1095510ad8f1135db8ec36296a628c10608f03c176beec6525d49dcacd",
+      "repository_before_query": null
+    },
+    "cancel_observation": {
+      "app_absent": true,
+      "packages": "e2825f0846529368b51a268b736c323d67b6439f421d7287e19c92b92a581c25",
+      "repository": "2e3fcc1095510ad8f1135db8ec36296a628c10608f03c176beec6525d49dcacd",
+      "repository_before_query": "2e3fcc1095510ad8f1135db8ec36296a628c10608f03c176beec6525d49dcacd",
+      "system_packages_unchanged": true,
+      "repository_unchanged_before_query": true,
+      "repository_unchanged": true
+    },
+    "client_launch": {
+      "windows": [
+        {
+          "id": 3,
+          "title": "Heroic Games Launcher",
+          "app_id": "com.heroicgameslauncher.hgl",
+          "active": true,
+          "minimized": false,
+          "maximized": false,
+          "fullscreen": false,
+          "outputs": [
+            {
+              "name": "Virtual-1",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 800
+            }
+          ]
+        }
+      ],
+      "processes": [
+        {
+          "pid": 1636,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "com.heroicgameslauncher.hgl",
+          "executable": "/app/bin/heroic/heroic"
+        },
+        {
+          "pid": 1648,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "com.heroicgameslauncher.hgl",
+          "executable": "/app/bin/heroic/heroic"
+        },
+        {
+          "pid": 1664,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "com.heroicgameslauncher.hgl",
+          "executable": "/app/bin/heroic/heroic"
+        },
+        {
+          "pid": 1718,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "com.heroicgameslauncher.hgl",
+          "executable": "/app/bin/heroic/heroic"
+        },
+        {
+          "pid": 1727,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "com.heroicgameslauncher.hgl",
+          "executable": "/app/bin/heroic/heroic"
+        },
+        {
+          "pid": 1772,
+          "uid": 1000,
+          "elf": true,
+          "flatpak_id": "com.heroicgameslauncher.hgl",
+          "executable": "/app/bin/heroic/heroic"
+        }
+      ],
+      "available_bytes": 946995200,
+      "healthy_seconds": 30.561342121000003
+    },
+    "target_blockstats": {
+      "wr_bytes": 0,
+      "wr_operations": 0,
+      "unmap_bytes": 0,
+      "unmap_operations": 0
+    },
+    "gtk": {
+      "pid": 1250,
+      "uid": 1000,
+      "password_dialogs": 0,
+      "confirmations": [
+        "confirm-cancel",
+        "install"
+      ],
+      "ui_state": "complete",
+      "status": "Heroic \u00b7 Epic / GOG is installed (verified).",
+      "result_code": 0,
+      "transaction_output": "Installing runtime/org.freedesktop.Platform.Compat.i386/x86_64/26.08\nInstalling runtime/org.freedesktop.Platform.GL.default/x86_64/26.08\nInstalling runtime/org.freedesktop.Platform.GL.default/x86_64/26.08-extra\nInstalling runtime/org.freedesktop.Platform.GL32.default/x86_64/26.08\nInstalling runtime/org.freedesktop.Platform.Locale/x86_64/26.08\nInstalling runtime/org.freedesktop.Platform.codecs-extra/x86_64/26.08-extra\nInstalling runtime/org.freedesktop.Platform/x86_64/26.08\nInstalling app/com.heroicgameslauncher.hgl/x86_64/stable\n"
+    },
+    "screenshots": {
+      "installation": "heroic-installation-verified.png",
+      "startup": "heroic-client-startup.png",
+      "visually_inspected": true,
+      "observation": "Actual unprivileged installer completion and rendered Heroic 2.22.4 launcher with first-start changelog; no account session."
+    },
+    "backend_observations": [
+      "Frontend Ready reported at 16:40:17.",
+      "Automatic first-start DXVK/VKD3D/NVAPI tool updates completed; Proton-CachyOS installation completed at 16:40:34 before acceptance at 16:40:48.",
+      "The virtual GPU reports no Vulkan 1.1 support. DXVK/VKD3D/game compatibility is not established by this launcher-only result."
+    ],
+    "interpretation": [
+      "Flatpak 1.18.4 created the initial empty repo during the observer query: pre-query hash null, post-query hash present.",
+      "Both Cancel hashes equal that post-query baseline and package hashes match, demonstrating the query-initialization mechanism consistent with the earlier combined-check failure. The earlier artifact did not retain its individual comparisons.",
+      "All 13 checks passed; native UID-1000 ELF processes in the exact Flatpak namespace and a current unminimized window remained for 30.561342121 seconds with 946995200 free bytes.",
+      "No account, game, administrator authentication or physical GPU acceptance is claimed."
+    ]
+  },
+  "latest_validation": {
+    "source_run": 39988433895,
+    "source_job": 120533612251,
+    "source_tests": 513,
+    "source_environment_skips": 72,
+    "actual_gtk_tests": 513,
+    "actual_gtk_skips": 1,
+    "syntax_checks": 185,
+    "native_sanitizers": "PASSED without local sandbox override",
+    "real_wayland_run": 39988440075,
+    "real_wayland_job": 120533632121,
+    "real_wayland": "PASSED"
+  }
+}

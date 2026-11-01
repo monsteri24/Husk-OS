@@ -1,0 +1,8 @@
+QWidget { background: #151b20; color: #f2f3ef; font-size: 14px; }
+QPushButton, QComboBox, QLineEdit { background: #252e34; border: 1px solid #465057; border-radius: 9px; padding: 10px; }
+QPushButton:hover, QComboBox:hover { border-color: #f5cf3b; }
+QPushButton:checked, QPushButton:default, QAbstractItemView::item:selected { background: #f5cf3b; color: #151710; }
+QPushButton:disabled { color: #778087; }
+QProgressBar { border: 1px solid #465057; border-radius: 8px; text-align: center; }
+QProgressBar::chunk { background: #f5cf3b; border-radius: 8px; }
+QToolTip { color: #f2f3ef; background: #252e34; border: 1px solid #f5cf3b; }

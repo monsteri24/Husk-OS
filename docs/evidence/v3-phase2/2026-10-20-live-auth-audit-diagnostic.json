@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-20",
+  "run": 39448260566,
+  "source": "29d34116f942ce31cc2fa2247acbbd37ee51fda1",
+  "image_source": "7a190ec010307676bf5b6b3c26235c2ed75bf4a5",
+  "iso_sha256": "2bc0374737c0ea0225847db3a2a1b03282c6b6f6b5afc77f5f3dbb5264d725d8",
+  "evidence_artifact": 12277278684,
+  "overall": "FAILED: audit evidence query was limited to polkit.service",
+  "checks": {
+    "initial_password_empty": true,
+    "live_session_active": true,
+    "unprivileged_launcher": true,
+    "password_was_set": true,
+    "root_calamares": true,
+    "no_test_injection": true,
+    "private_xauthority": true,
+    "qt_english": true,
+    "polkit_authenticated": false
+  },
+  "gtk_uid": 1000,
+  "helper_pid": 1240,
+  "initial_password_state": "NP",
+  "final_password_state": "P",
+  "qt_environment": {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "QT_QPA_PLATFORM": "xcb",
+    "QT_STYLE_OVERRIDE": "Fusion",
+    "QT_QUICK_CONTROLS_STYLE": "Basic"
+  },
+  "observed": "Manual screenshot: actual Authenticate dialog for the system installer, captured before password input; root observer then saw uninjected Calamares after input.",
+  "missing": "The service-unit journal contained startup messages only, so it could not prove the required authorization audit.",
+  "correction": "Collect polkit/pkexec/agent identifiers across caller sessions; require matching trusted journal PID, exact privileged helper/root target and actual PKEXEC_UID.",
+  "proof_scope": "Root launch and password-state observations passed; graphical welcome capture, complete authorization audit and safe shutdown await the corrected smoke test."
+}

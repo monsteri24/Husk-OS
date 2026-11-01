@@ -46,6 +46,25 @@ class ProfileTests(unittest.TestCase):
         self.assertIn('airootfs_image_tool_options=(-comp zstd -Xcompression-level 3 -b 1M -processors 2)', definition)
         self.assertEqual(self.build.validate_profile(out), [])
 
+    def test_installer_live_entries_have_memory_scaled_write_space_without_changing_other_boots(self):
+        entries = {
+            'efiboot/loader/entries/live.conf': 'title Arch Linux install medium\noptions archisobasedir=arch archisolabel=ARCH quiet\n',
+            'syslinux/live.cfg': 'LABEL live\n APPEND archisobasedir=arch archisosearchuuid=UUID cow_spacesize=256M\n',
+            'grub/grub.cfg': 'linux /arch/vmlinuz-linux archisobasedir=arch quiet\nlinux /other/vmlinuz root=UUID=installed quiet\n',
+        }
+        for relative, text in entries.items():
+            path = self.releng/relative; path.parent.mkdir(parents=True, exist_ok=True); path.write_text(text)
+        out = self.generate(with_installer=True, first_boot=True)
+        for relative in entries:
+            lines = (out/relative).read_text().splitlines()
+            live = next(line for line in lines if 'archisobasedir=' in line)
+            self.assertEqual(live.count('cow_spacesize='), 1)
+            self.assertIn('cow_spacesize=50%', live)
+            self.assertIn('archisobasedir=arch', live)
+        self.assertIn('linux /other/vmlinuz root=UUID=installed quiet\n', (out/'grub/grub.cfg').read_text())
+        plain = self.generate(self.root/'without-installer', first_boot=True)
+        self.assertNotIn('cow_spacesize=50%', (plain/'grub/grub.cfg').read_text())
+
     def test_default_profile_keeps_desktop_graphics_and_upstream_compression(self):
         from ownos.installer import GAME_PACKAGES, MESA_PACKAGES
         with (self.releng / 'profiledef.sh').open('a') as stream:
@@ -56,6 +75,22 @@ class ProfileTests(unittest.TestCase):
         self.assertFalse(set(GAME_PACKAGES).intersection(packages))
         self.assertEqual(json.loads((out / 'husk-profile.json').read_text())['edition'], 'desktop')
         self.assertNotIn('-processors 2', (out / 'profiledef.sh').read_text())
+
+    def test_installer_profile_uses_distribution_compression_without_dropping_payload(self):
+        basic = self.generate(self.root / 'basic', first_boot=True)
+        installer = self.generate(self.root / 'installer', first_boot=True, with_installer=True)
+        import shlex
+        definition = (installer / 'profiledef.sh').read_text()
+        options = definition.split('airootfs_image_tool_options=(', 1)[1].split(')', 1)[0]
+        options = shlex.split(options)
+        self.assertEqual(options[options.index('-comp') + 1], 'zstd')
+        self.assertEqual(options[options.index('-Xcompression-level') + 1], '19')
+        self.assertEqual(options[options.index('-processors') + 1], '2')
+        basic_packages = set((basic / 'packages.x86_64').read_text().splitlines())
+        installer_packages = set((installer / 'packages.x86_64').read_text().splitlines())
+        self.assertEqual(installer_packages, basic_packages | {'calamares'})
+        self.assertEqual((installer / 'airootfs/opt/ownos/repo-key.gpg').read_bytes(), self.key.read_bytes())
+        self.assertEqual(self.build.validate_profile(installer), [])
 
     def test_both_editions_remove_inherited_optional_apps_and_keep_boot_recovery_tools(self):
         optional = ('steam', 'proton', 'proton-ge-custom', 'wine', 'winetricks', 'lutris',

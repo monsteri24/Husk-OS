@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -82,8 +83,12 @@ class PackagingTests(unittest.TestCase):
                 'source "$1"; pkgname=ownos-core; package_ownos-core', 'package-test',
                 str(ROOT / 'packaging/ownos/PKGBUILD')], cwd=path, env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            command = 'import sys; sys.path.insert(0, sys.argv[1]); from ownos.config import defaults; assert defaults()["gaming_mode"] is True'
-            result = subprocess.run(['python3', '-I', '-c', command, str(dest / 'usr/lib/ownos')], capture_output=True, text=True)
+            empty=path/'without-game-tools';empty.mkdir()
+            command = ('import sys; sys.path.insert(0, sys.argv[1]); from ownos.config import defaults; '
+                       'from ownos.gaming import game_command; assert defaults()["gaming_mode"] is False; '
+                       'assert game_command(["/usr/bin/test-game"],defaults()) == ["/usr/bin/test-game"]')
+            result = subprocess.run([sys.executable, '-I', '-c', command, str(dest / 'usr/lib/ownos')],
+                                    env=dict(os.environ,PATH=str(empty)),capture_output=True,text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue((dest / 'usr/bin/own-game').is_file())
 

@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-10-22",
+  "observed_utc": "2026-10-21T17:57:09Z",
+  "test_source": "09b8d64132dba3db4dcf3bdb1fe862c192a88321",
+  "runtime_source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
+  "run": 39647788339,
+  "job": 119387838327,
+  "evidence_artifact": 12368602378,
+  "evidence_zip_sha256": "3884834952c2c6da09761998243bea009b7c6876b75128762d10121cc8c5b7b4",
+  "iso_sha256": "14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec",
+  "iso_bytes": 2079227904,
+  "installation": "FAILED: insufficient Live write space",
+  "steam_client": "NOT TESTED",
+  "actual_checks": {
+    "initial_package_absent": true,
+    "initial_password_empty": true,
+    "live_session_active": true,
+    "unprivileged_launcher": true,
+    "no_extra_terminal": true,
+    "confirmation_cancel_unchanged": true,
+    "password_cancel_unchanged": true,
+    "authorization_cancel_unchanged": true,
+    "polkit_authenticated": true,
+    "root_helper": true,
+    "pkexec_caller": true,
+    "no_test_injection": true
+  },
+  "actual_polkit_journal": [
+    {
+      "SYSLOG_IDENTIFIER": "polkitd",
+      "_PID": "614",
+      "MESSAGE": "Started polkitd version 128"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "polkit-agent-helper-1",
+      "_PID": "1316",
+      "MESSAGE": "pam_unix(polkit-1:auth): conversation failed"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "polkit-agent-helper-1",
+      "_PID": "1316",
+      "MESSAGE": "pam_unix(polkit-1:auth): auth could not identify password for [live]"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "polkitd",
+      "_PID": "614",
+      "MESSAGE": "Operator of unix-session:2 FAILED to authenticate to gain authorization for action org.ownos.admin for unix-process:1215:1873 [python3 huskappcheck.py] (owned by unix-user:live)"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "pkexec",
+      "_PID": "1293",
+      "MESSAGE": "live: Error executing command as another user: Request dismissed [USER=root] [TTY=unknown] [CWD=/home/live] [COMMAND=/usr/lib/ownos/own-admin install-confirmed steam]"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "polkit-agent-helper-1",
+      "_PID": "1316",
+      "MESSAGE": "polkit-agent-helper-1: pam_authenticate failed: Authentication token manipulation error"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "pkexec",
+      "_PID": "1358",
+      "MESSAGE": "pam_unix(polkit-1:session): session opened for user root(uid=0) by live(uid=1000)"
+    },
+    {
+      "SYSLOG_IDENTIFIER": "pkexec",
+      "_PID": "1358",
+      "MESSAGE": "live: Executing command [USER=root] [TTY=unknown] [CWD=/home/live] [COMMAND=/usr/lib/ownos/own-admin install-confirmed steam]"
+    }
+  ],
+  "actual_transaction_output": "OWNOS-STAGE:preflight\nChecking core connectivity and DNS\u2026\nChecking extra connectivity and DNS\u2026\nChecking multilib connectivity and DNS\u2026\nChecking ownos connectivity and DNS\u2026\nHusk OS: verified full-system transaction: /usr/bin/pacman -Syu --needed steam --noconfirm\n:: Synchronizing package databases...\n core downloading...\n extra downloading...\n multilib downloading...\n ownos downloading...\n:: Starting full system upgrade...\nresolving dependencies...\n:: There are 13 providers available for lib32-vulkan-driver:\n:: Repository multilib\n   1) lib32-nvidia-utils  2) lib32-vulkan-asahi  3) lib32-vulkan-broadcom  4) lib32-vulkan-dzn  5) lib32-vulkan-freedreno  6) lib32-vulkan-gfxstream  7) lib32-vulkan-intel  8) lib32-vulkan-nouveau  9) lib32-vulkan-panfrost  10) lib32-vulkan-powervr  11) lib32-vulkan-radeon  12) lib32-vulkan-swrast  13) lib32-vulkan-virtio\n\nEnter a number (default=1): \nlooking for conflicting packages...\n\nPackages (96) alsa-plugins-1:1.2.12-6  bind-9.20.30-1  egl-gbm-1.1.4-1  egl-wayland-4:1.1.24-1  egl-wayland2-1.0.2-1  egl-x11-1.0.6-1  eglexternalplatform-1.2.1-1  ethtool-1:7.2-1  gperftools-2.19-1  lib32-alsa-lib-1.2.16.1-1  lib32-alsa-plugins-1.2.12-1  lib32-brotli-1.2.0-2  lib32-bzip2-1.0.8-4  lib32-curl-8.23.0-1  lib32-dbus-1.16.2-1  lib32-e2fsprogs-1.47.4-1  lib32-expat-2.9.0-1  lib32-fontconfig-2:2.18.3-1  lib32-freetype2-2.15.0-1  lib32-gcc-libs-16.2.1+r23+gd564253eb6c8-1  lib32-glib2-2.90.1-1  lib32-glibc-2.44+r50+g1848099f063e-1  lib32-gmp-6.3.0-2  lib32-gnutls-3.8.13-3  lib32-icu-78.3-1  lib32-json-c-0.19-1  lib32-keyutils-1.6.3-4  lib32-krb5-1.22.2-1  lib32-libdrm-2.4.134-1  lib32-libelf-0.197-1  lib32-libffi-3.8.0-1  lib32-libgcrypt-1.12.4-1  lib32-libglvnd-1.7.0-1  lib32-libgpg-error-1.61-1  lib32-libidn2-2.3.8-1  lib32-libldap-2.7.1-1  lib32-libnghttp2-1.70.0-1  lib32-libnghttp3-1.18.0-1  lib32-libngtcp2-1.25.0-1  lib32-libnm-1.58.1-2  lib32-libpciaccess-0.19-1  lib32-libpipewire-1:1.6.9-1  lib32-libpng-1.6.59-1  lib32-libpsl-0.21.5-1  lib32-libssh2-1.11.1-5  lib32-libtasn1-4.21.0-1  lib32-libunistring-1.4.2-1  lib32-libva-2.24.1-1  lib32-libx11-1.8.13-1  lib32-libxau-1.0.12-1  lib32-libxcb-1.17.0-1  lib32-libxcrypt-4.5.2-1  lib32-libxcrypt-compat-4.5.2-1  lib32-libxdmcp-1.1.5-1  lib32-libxext-1.3.7-1  lib32-libxfixes-6.0.2-1  lib32-libxinerama-1.1.6-1  lib32-libxml2-2.15.4-1  lib32-libxshmfence-1.3.3-1  lib32-libxss-1.2.5-1  lib32-libxxf86vm-1.1.7-1  lib32-llvm-libs-1:23.1.3-1  lib32-lm_sensors-1:3.6.2-2  lib32-mesa-1:26.2.5-1  lib32-ncurses-6.6-2  lib32-nettle-4.0-2  lib32-nspr-4.40-1  lib32-nss-3.131.1-1  lib32-nvidia-utils-615.78.08-1  lib32-openssl-1:3.6.5-1  lib32-opus-1.6.1-1  lib32-p11-kit-0.26.5-1  lib32-pcre2-10.49-1  lib32-pipewire-1:1.6.9-1  lib32-spirv-tools-1:1.4.363.0-1  lib32-sqlite-3.54.0-1  lib32-systemd-262.1-1  lib32-util-linux-2.42.4-1  lib32-vulkan-icd-loader-1.4.363.0-1  lib32-wayland-1.26.0-1  lib32-xz-5.8.4-1  lib32-zlib-1.3.2-1  lib32-zstd-1.5.7-2  libadwaita-1:1.10.0-1  libelf-0.197-1  libxcrypt-compat-4.5.2-1  lsof-4.99.7-1  ministream-0.99.1-1  nvidia-utils-615.78.08-1  python-platformdirs-4.13.5-1  qt6-declarative-6.12.0-2  steam-devices-1.0.0.87-3  virtualbox-guest-utils-nox-7.2.22-1  xorg-xrandr-1.5.4-1  zenity-4.2.2-1  steam-1.0.0.87-3\n\nTotal Download Size:    584.14 MiB\nTotal Installed Size:  2087.44 MiB\nNet Upgrade Size:      1936.41 MiB\n\n:: Proceed with installation? [Y/n] error: Partition / too full: 152870 blocks needed, 62830 blocks free\nerror: failed to commit transaction (not enough free disk space)\n\nErrors occurred, no packages were upgraded.\n",
+  "actual_pacman_log": "[2026-10-21T17:57:07+0000] [PACMAN] Running '/usr/bin/pacman -Syu --needed --noconfirm steam'\n[2026-10-21T17:57:07+0000] [PACMAN] synchronizing package lists\n[2026-10-21T17:57:08+0000] [PACMAN] starting full system upgrade\n",
+  "causes": [
+    "Archiso default Live CoW limit is 256 MiB; pacman CheckSpace rejected the transaction.",
+    "Unattended lib32-vulkan-driver resolution selected the first provider, lib32-nvidia-utils, on the clean Mesa Live system."
+  ],
+  "source_fixes_pending_image_acceptance": [
+    "Explicitly match 32-bit Vulkan providers to the installed graphics stack.",
+    "Set installer Live kernel entries to cow_spacesize=50%, retaining half of RAM for the running session.",
+    "Classify space failures separately and explain temporary Live memory limits."
+  ],
+  "limitations": [
+    "No Steam package or client success is claimed for this run.",
+    "No packages were upgraded.",
+    "Cancellation and real system authorization passed; physical GPU compatibility remains untested.",
+    "The old immutable ISO still carries its previously accepted installer implementation; fixes require a new image."
+  ],
+  "actual_live_cow_mount_line": ":: Mounting /run/archiso/cowspace (tmpfs) filesystem, size=256M..."
+}

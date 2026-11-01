@@ -1,0 +1,131 @@
+name: Husk OS V3 recovered candidate acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/v3-phase2]
+    paths: [.github/v3-acceptance-request]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: husk-v3-recovered-acceptance-39377861570
+  cancel-in-progress: true
+jobs:
+  source:
+    uses: ./.github/workflows/tests.yml
+  desktop:
+    uses: ./.github/workflows/system2-desktop.yml
+  recovered-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      HUSK_IMAGE_SOURCE: 812d74c248ca4696fd6cda27f87ffaef0f9a14ec
+      HUSK_BOOT_EVIDENCE_RUN: '39377861570'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Recover the exact completed ISO and verify its digest
+        id: recover
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/39377861570" --jq .head_sha)" = "$HUSK_IMAGE_SOURCE"
+          mkdir -p out
+          gh run download 39377861570 --repo "$GITHUB_REPOSITORY" \
+            --name HuskOS-v3-UNVERIFIED-candidate-39377861570 --dir out
+          test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = 2079227904
+          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = 860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21
+          (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
+          mkdir -p .build/prior-evidence
+          gh run download 39377861570 --repo "$GITHUB_REPOSITORY" \
+            --name v3-candidate-evidence-39377861570 --dir .build/prior-evidence
+          if [ "$HUSK_BOOT_EVIDENCE_RUN" != 39377861570 ]; then
+            mkdir -p .build/prior-boot
+            gh run download "$HUSK_BOOT_EVIDENCE_RUN" --repo "$GITHUB_REPOSITORY" \
+              --name "v3-recovered-acceptance-$HUSK_BOOT_EVIDENCE_RUN" --dir .build/prior-boot
+          fi
+          python3 - <<'PY'
+          import importlib.util, json, os
+          from pathlib import Path
+          prior = Path('.build/prior-evidence')
+          build = json.loads((prior/'v3-build.json').read_text())
+          directory = prior if os.environ['HUSK_BOOT_EVIDENCE_RUN'] == '39377861570' else Path('.build/prior-boot')
+          boot_file = directory/'boot-v3/result.json'
+          if not boot_file.exists(): boot_file = directory/'reused-live-boot.json'
+          boot = json.loads(boot_file.read_text()) if boot_file.exists() else None
+          spec = importlib.util.spec_from_file_location('boot_proof', 'scripts/ci-test-system1.py')
+          verifier = importlib.util.module_from_spec(spec); spec.loader.exec_module(verifier)
+          proof = verifier.verified_recovered_boot(build, boot, os.environ['HUSK_IMAGE_SOURCE'],
+              '860c264492199262fe413876d3477006729119dbe198e2cf640155f2bfacbc21', 2079227904)
+          if proof is not None:
+              proof['proof_reused_from_run'] = int(os.environ['HUSK_BOOT_EVIDENCE_RUN'])
+              proof['proof_scope'] = 'Prior real Live UEFI boot of this exact immutable image; not rerun in this workflow'
+              Path('out/reused-live-boot.json').write_text(json.dumps(proof,indent=2)+'\n')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as stream:
+              stream.write('boot_proof_reused='+str(proof is not None).lower()+'\n')
+          PY
+          printf 'image_source=%s\nacceptance_source=%s\n' "$HUSK_IMAGE_SOURCE" "$GITHUB_SHA" > out/recovered-image-source.txt
+          git diff --stat "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging > out/changes-since-image.txt
+          # Require identical runtime sources and record any build-only profile
+          # difference separately; no changed runtime is accepted as this ISO.
+          git diff "$HUSK_IMAGE_SOURCE" HEAD -- src/ownos/build.py > out/build-profile-changes-not-in-image.txt
+          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging ':(exclude)src/ownos/build.py'
+      - name: Install VM tools and inspect the exact recovered payload
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils ovmf python3-pil python3-yaml xorriso squashfs-tools
+          # Only this disposable hosted runner owns the optional KVM device.
+          if [ -c /dev/kvm ]; then
+            sudo chown "$(id -u):$(id -g)" /dev/kvm
+            sudo chmod 0600 /dev/kvm
+          fi
+          mkdir -p .build
+          xorriso -osirrox on -indev out/HuskOS-v3-phase2.iso \
+            -extract /arch/x86_64/airootfs.sfs "$PWD/.build/v3-rootfs.sfs" \
+            -extract /arch/boot/x86_64 "$PWD/.build/v3-iso-boot" > out/iso-extraction.log 2>&1
+          sudo unsquashfs -processors 2 -d .build/v3-iso-root .build/v3-rootfs.sfs > out/squashfs-extraction.log 2>&1
+          cat .build/v3-iso-root/etc/locale.conf | tee out/live-locale.txt
+          /usr/bin/python3 scripts/check-rootfs.py .build/v3-iso-root --boot .build/v3-iso-boot > out/iso-rootfs-check.json
+          sudo /usr/bin/python3 scripts/check-v3-rootfs.py .build/v3-iso-root --boot .build/v3-iso-boot > out/v3-rootfs-check.json
+      - name: Compile only the current test driver against the candidate Qt runtime
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" \
+            -e HUSK_HOST_UID="$(id -u)" -e HUSK_HOST_GID="$(id -g)" \
+            archlinux:base-devel bash -euc '
+              pacman -Sy --noconfirm archlinux-keyring
+              pacman -Syu --noconfirm --needed qt6-base qt6-declarative pkgconf
+              cd /src
+              c++ -std=c++17 -Wall -Wextra -Werror -fPIC -shared \
+                scripts/v3-installer-driver.cpp -o out/v3-installer-driver.so \
+                $(pkg-config --cflags --libs Qt6Widgets Qt6Test Qt6Quick)
+              chown "$HUSK_HOST_UID:$HUSK_HOST_GID" out/v3-installer-driver.so
+            '
+      - name: Boot the exact recovered ISO when no matching Live proof exists
+        if: steps.recover.outputs.boot_proof_reused != 'true'
+        run: |
+          timeout 780 /usr/bin/python3 scripts/ci-test-system1.py \
+            --iso out/HuskOS-v3-phase2.iso --artifacts out/boot-v3 --expected-version v3-phase2
+      - name: Cancel without writes, install offline and boot the installed UEFI disk
+        run: timeout 3000 /usr/bin/python3 scripts/ci-test-v3-install.py --artifacts out/install-v3 --expected-version v3-phase2 --timeout 1800 --boot-timeout 600
+      - name: Preserve bounded evidence for this exact image, without publishing a release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-recovered-acceptance-${{ github.run_id }}
+          path: |
+            out/*.json
+            out/*.txt
+            out/*.log
+            out/boot-v3/*.json
+            out/boot-v3/*.log
+            out/boot-v3/*.png
+            out/install-v3/*.json
+            out/install-v3/*.log
+            out/install-v3/*.png
+          if-no-files-found: warn
+          retention-days: 30

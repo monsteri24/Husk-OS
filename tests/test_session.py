@@ -36,7 +36,7 @@ class SessionTests(unittest.TestCase):
             config = ET.parse(directory / 'rc.xml')
             self.assertEqual(config.find('keyboard/keybind/action').get('command'), 'custom-files')
             self.assertEqual(config.find("libinput/device[@category='mouse']/pointerSpeed").text, '-0.65')
-            self.assertEqual((directory / 'environment').read_text(), 'CUSTOM=keep\nXKB_DEFAULT_LAYOUT=de\n')
+            self.assertEqual((directory / 'environment').read_text(), 'CUSTOM=keep\nXKB_DEFAULT_LAYOUT=de\nXKB_DEFAULT_VARIANT=\n')
             self.assertEqual((directory / 'autostart').read_text(), custom)
 
     def test_only_exact_stock_lock_binding_is_migrated(self):

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Heroic · Epic / GOG
 Comment=Install the official Heroic Flatpak for this user
-Exec=foot -e own-install-app heroic
+Exec=husk-install-app --graphical heroic
 Icon=husk-games
 Type=Application
 Categories=Game;

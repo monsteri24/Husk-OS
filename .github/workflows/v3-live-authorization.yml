@@ -1,0 +1,90 @@
+name: Husk OS V3 normal Live authorization
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/v3-phase2]
+    paths: [.github/v3-live-auth-request.json]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: husk-v3-live-authorization
+  cancel-in-progress: true
+jobs:
+  source:
+    uses: ./.github/workflows/tests.yml
+  live-authorization:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Validate the immutable image request
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          request=json.loads(Path('.github/v3-live-auth-request.json').read_text())
+          for name,pattern in [('source','[0-9a-f]{40}'),('sha256','[0-9a-f]{64}'),('run','[1-9][0-9]{8,15}'),('bytes','[1-9][0-9]{8,12}')]:
+              value=str(request[name])
+              if re.fullmatch(pattern,value) is None: raise ValueError('Invalid image '+name)
+              with open(os.environ['GITHUB_ENV'],'a') as stream: stream.write('HUSK_IMAGE_'+name.upper()+'='+value+'\n')
+          PY
+      - name: Recover the completed ISO without rebuilding it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$HUSK_IMAGE_RUN" --jq .head_sha)" = "$HUSK_IMAGE_SOURCE"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$HUSK_IMAGE_RUN" --jq .head_branch)" = codex/v3-phase2
+          mkdir -p out
+          gh run download "$HUSK_IMAGE_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "HuskOS-v3-UNVERIFIED-candidate-$HUSK_IMAGE_RUN" --dir out
+          test "$(stat -c '%s' out/HuskOS-v3-phase2.iso)" = "$HUSK_IMAGE_BYTES"
+          test "$(cut -d ' ' -f1 out/HuskOS-v3-phase2-SHA256.txt)" = "$HUSK_IMAGE_SHA256"
+          (cd out && sha256sum -c HuskOS-v3-phase2-SHA256.txt)
+          # This Live-only scenario does not run SDDM. Permit only the exact
+          # basename-to-absolute seed correction, recording it separately;
+          # every other installed runtime input must match the image.
+          git diff --exit-code "$HUSK_IMAGE_SOURCE" HEAD -- src bin config data branding installer iso native packaging ':(exclude)branding/ownos-sddm.conf'
+          git diff "$HUSK_IMAGE_SOURCE" HEAD -- branding/ownos-sddm.conf > out/sddm-seed-not-in-image.diff
+          python3 - <<'PY'
+          import os, subprocess
+          from pathlib import Path
+          before=subprocess.check_output(['git','show',os.environ['HUSK_IMAGE_SOURCE']+':branding/ownos-sddm.conf'])
+          after=Path('branding/ownos-sddm.conf').read_bytes()
+          corrected=before.replace(b'Session=ownos-wayland.desktop\\n',
+              b'Session=/usr/share/wayland-sessions/ownos-wayland.desktop\\n',1)
+          if after not in (before,corrected): raise ValueError('Unexpected SDDM seed difference')
+          PY
+          printf 'image_source=%s\ntest_source=%s\n' "$HUSK_IMAGE_SOURCE" "$GITHUB_SHA" > out/authorization-image-source.txt
+      - name: Prepare disposable VM tools and the exact image kernel
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils ovmf python3-pil xorriso
+          if [ -c /dev/kvm ]; then
+            sudo chown "$(id -u):$(id -g)" /dev/kvm
+            sudo chmod 0600 /dev/kvm
+          fi
+          mkdir -p .build
+          xorriso -osirrox on -indev out/HuskOS-v3-phase2.iso \
+            -extract /arch/boot/x86_64 "$PWD/.build/v3-iso-boot" > out/auth-kernel-extraction.log 2>&1
+      - name: Exercise actual GTK password setup and system authorization
+        run: timeout 900 /usr/bin/python3 scripts/ci-test-v3-live-auth.py --timeout 600
+      - name: Preserve observations without disks, credentials or a release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-live-authorization-${{ github.run_id }}
+          path: |
+            out/*.txt
+            out/*.diff
+            out/*.log
+            out/live-auth-v3/*.json
+            out/live-auth-v3/*.log
+            out/live-auth-v3/*.png
+          if-no-files-found: warn
+          retention-days: 30

@@ -6,7 +6,7 @@ Rectangle {
   ColumnLayout {
     anchors.centerIn: parent; width: 380; spacing: 18
     Label { text: qsTr("Husk OS"); color: "#eaf1ff"; font.pixelSize: 46; Layout.alignment: Qt.AlignHCenter }
-    Label { text: qsTr("Experimental · system-2"); color: "#8fb9f4"; Layout.alignment: Qt.AlignHCenter }
+    Label { text: qsTr("Experimental · V3 Phase 2"); color: "#f5cf3b"; Layout.alignment: Qt.AlignHCenter }
     TextField { id: loginName; Layout.fillWidth: true; placeholderText: qsTr("Username"); text: userModel.lastUser }
     TextField { id: password; Layout.fillWidth: true; placeholderText: qsTr("Password");
                 echoMode: TextInput.Password; focus: true; onAccepted: sddm.login(loginName.text, password.text, session.currentIndex) }

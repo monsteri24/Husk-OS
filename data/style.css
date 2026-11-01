@@ -1,16 +1,38 @@
-@define-color accent #4d94ff;
+@define-color accent #f5cf3b;
 @define-color surface #151e2e;
 @define-color text #eaf1ff;
+@define-color accent_text #151710;
 * { font-family: "Noto Sans", sans-serif; font-size: 13px; }
-window { background-color: #0b1321; color: @text; }
+window, dialog, .background { background-color: #0b1321; color: @text; }
+headerbar { background-image: none; background-color: #151e2e; color: @text;
+            border-color: #30415c; box-shadow: none; }
 button { background-image: none; background-color: #1d2a40; color: @text;
          border: 1px solid #30415c; border-radius: 10px; padding: 9px 12px;
          box-shadow: none; text-shadow: none; }
 button:hover { background-color: #293e5c; border-color: @accent; }
-button:checked, button.active { background-color: #254a79; border-color: @accent; }
-entry, combobox { background-color: #111b2c; color: @text; border-radius: 9px; padding: 8px; }
+button:checked, button.active { background-color: alpha(@accent, 0.22); border-color: @accent; }
+button.suggested-action { background-color: @accent; color: @accent_text; border-color: @accent; }
+entry, spinbutton, combobox { background-color: #111b2c; color: @text; border-radius: 9px; padding: 8px; }
+entry:focus, spinbutton:focus { border-color: @accent; }
+entry selection, textview text selection, treeview.view:selected, iconview.view:selected {
+  background-color: @accent; color: @accent_text;
+}
+menu, .menu, popover, .popover { background-color: @surface; color: @text;
+                              border: 1px solid #30415c; border-radius: 12px; padding: 6px; }
+menuitem, .menuitem { background-image: none; background-color: transparent; color: @text;
+                    border-radius: 7px; padding: 7px 12px; }
+menuitem:hover, menuitem:selected, .menuitem:hover {
+  background-color: @accent; color: @accent_text;
+}
+menuitem:hover label, menuitem:selected label { color: @accent_text; }
+menuitem:disabled, menuitem:disabled label { color: #708099; }
+separator { background-color: #30415c; min-height: 1px; }
+treeview.view, iconview.view, textview, textview text, .view {
+  background-color: #111b2c; color: @text;
+}
 list, list row { background-color: transparent; color: @text; }
 list row:hover { background-color: #223754; border-radius: 9px; }
+list row:selected { background-color: alpha(@accent, 0.22); color: @text; border-radius: 9px; }
 .panel { background-color: rgba(16, 25, 41, 0.97); border-top: 1px solid #345073; padding: 7px 14px; }
 .panel button { padding: 8px; min-width: 25px; }
 .popup { border: 1px solid #375172; border-radius: 16px; background-color: @surface; padding: 20px; }
@@ -19,7 +41,10 @@ list row:hover { background-color: #223754; border-radius: 9px; }
 .heading { font-size: 17px; font-weight: bold; }
 .title { font-size: 28px; font-weight: bold; }
 .muted { color: #a7b9d5; }
-switch:checked { background-color: @accent; }
+switch:checked, check:checked, radio:checked { background-image: none; background-color: @accent;
+                                            color: @accent_text; border-color: @accent; }
+scale highlight { background-color: @accent; border-color: @accent; }
+colorswatch:selected { border-color: @accent; }
 progressbar trough { background-color: #20304a; border-radius: 5px; }
 progressbar progress { background-color: @accent; border-radius: 5px; }
 notebook header { background-color: #121c2b; border: none; }

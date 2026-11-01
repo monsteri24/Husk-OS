@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "observed_utc": "2026-10-21T15:01:47Z",
+  "runtime_source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
+  "final_test_source": "1e567c06a1b5f65f0c71fe19b6bea6fcd18e133a",
+  "iso": {
+    "build_run": 39449998340,
+    "artifact": 12279651558,
+    "expires": "2026-10-27",
+    "sha256": "14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec",
+    "bytes": 2079227904,
+    "rebuilt_during_this_continuation": false
+  },
+  "normal_live_authorization": {
+    "result": "PASSED",
+    "run": 39609995495,
+    "evidence_artifact": 12350063227,
+    "checks": 10,
+    "driver_or_policy_injection": false
+  },
+  "offline_install_and_default_session": {
+    "result": "PASSED",
+    "run": 39449998340,
+    "all_jobs": 30,
+    "target_checks": 19,
+    "session_selection_keys_sent": false
+  },
+  "restart_later": {
+    "result": "PASSED",
+    "run": 39449998340,
+    "countdown_from": 30,
+    "countdown_to": 26,
+    "automatic_restart_cancelled": true
+  },
+  "restart_now": {
+    "result": "PASSED",
+    "run": 39613704162,
+    "job": 119268985330,
+    "evidence_artifact": 12352660922,
+    "click_seconds": 26,
+    "request_seconds": 26,
+    "timer_stopped": true,
+    "guest_reset": true,
+    "independent_installed_boot": true
+  },
+  "automatic_restart": {
+    "result": "PASSED",
+    "run": 39620742691,
+    "job": 119293203873,
+    "evidence_artifact": 12355561324,
+    "countdown": [
+      30,
+      29,
+      28,
+      27,
+      26,
+      25,
+      24,
+      23,
+      22,
+      21,
+      20,
+      19,
+      18,
+      17,
+      16,
+      15,
+      14,
+      13,
+      12,
+      11,
+      10,
+      9,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "guest_reset": true,
+    "independent_installed_boot": true
+  },
+  "source_validation": {
+    "real_gtk_tests": 487,
+    "real_gtk_skips": 0,
+    "source_checks": 181,
+    "native_sanitizers": "PASSED",
+    "run": 39620742691,
+    "job": 119293154006,
+    "local_tests": 487,
+    "local_environment_skips": 71
+  },
+  "real_labwc": {
+    "result": "PASSED",
+    "run": 39620752139,
+    "job": 119293183328,
+    "evidence_artifact": 12353744493,
+    "maximized_panel_transparency_and_launcher": true,
+    "fullscreen_hide_and_restore": true,
+    "controls_menus_and_confirmation": true
+  },
+  "remaining_limits": [
+    "Physical Wi-Fi/Bluetooth adapters, GPU/firmware, USB removal and nonempty real disks require independent hardware testing.",
+    "Normal graphical package authorization and Steam/Heroic/game launch remain unverified.",
+    "Supported installer mode is UEFI whole-drive erase; no alongside-install claim.",
+    "The VM renderer is pixman; no hardware GPU acceleration claim."
+  ],
+  "main_modified": false,
+  "release_published": false,
+  "pr_merged": false
+}

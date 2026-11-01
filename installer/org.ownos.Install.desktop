@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Install Husk OS (Experimental)
-Exec=pkexec calamares
-TryExec=/usr/bin/calamares
-Icon=system-software-install
+Name=Install Husk OS
+Exec=/usr/bin/husk-install
+TryExec=/usr/bin/husk-install
+Icon=husk-install
 Categories=System;
 Terminal=false

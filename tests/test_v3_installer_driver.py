@@ -1,0 +1,237 @@
+"""Compile the separate Qt fixture and prove it refuses an ordinary host app.
+
+These are fixture safety tests, never installation or VM acceptance results.
+"""
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class InstallerDriverSafetyTests(unittest.TestCase):
+    def test_countdown_zero_is_observed_synchronously_before_qml_shutdown(self):
+        code=(ROOT/'scripts/v3-installer-driver.cpp').read_text()
+        self.assertTrue('observeCountdown(' in code,'Polling can miss zero before shutdown; use the native property notifier')
+        flags=subprocess.run(['pkg-config','--cflags','--libs','Qt6Widgets','Qt6Test','Qt6Quick'],
+                             capture_output=True,text=True)
+        if flags.returncode: self.skipTest('Qt6 development packages unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary);source=path/'countdown.cpp'
+            source.write_text('#include '+json.dumps(str(ROOT/'scripts/v3-installer-driver.cpp'))+'\n'+r'''
+#include <QQmlComponent>
+#include <QQmlEngine>
+#include <vector>
+int main(int argc,char** argv) {
+    QApplication app(argc,argv); QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.setData(R"(import QtQuick
+Item {
+    property int secondsRemaining: 2
+    function advance() { secondsRemaining -= 1 }
+    function shutdown() { secondsRemaining = 0; Qt.quit() }
+})",QUrl("file:///clock-observation.qml"));
+    auto* root=qobject_cast<QQuickItem*>(component.create());
+    if (!root) { qWarning()<<component.errors(); return 1; }
+    std::vector<int> values; bool quit=false,zeroBeforeQuit=false;
+    if (observeCountdown(nullptr,&app,[](int){}) ||
+        !observeCountdown(root,&app,[&](int value){ values.push_back(value); })) return 2;
+    QObject::connect(&engine,&QQmlEngine::quit,&app,[&] {
+        quit=true; zeroBeforeQuit=!values.empty() && values.back()==0;
+    });
+    if (values!=std::vector<int>{2}) return 3;
+    if (!QMetaObject::invokeMethod(root,"advance",Qt::DirectConnection) || values!=std::vector<int>{2,1}) return 4;
+    // No event-loop pump or polling opportunity exists between setting zero
+    // and the real QML shutdown signal on the next instruction.
+    if (!QMetaObject::invokeMethod(root,"shutdown",Qt::DirectConnection)) return 5;
+    if (!quit || !zeroBeforeQuit || values!=std::vector<int>{2,1,0}) return 6;
+    if (root->property("secondsRemaining").toInt()!=0) return 7;
+    delete root; return 0;
+}
+''')
+            executable=path/'countdown'
+            built=subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-fPIC',
+                str(source),'-o',str(executable),*shlex.split(flags.stdout)],capture_output=True,text=True)
+            self.assertEqual(built.returncode,0,built.stderr)
+            environment=dict(os.environ,QT_QPA_PLATFORM='offscreen',QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE',None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                qt=Path(environment['HUSK_TEST_SYSROOT'])/'usr/lib/x86_64-linux-gnu/qt6'
+                environment.update(QT_PLUGIN_PATH=str(qt/'plugins'),QML_IMPORT_PATH=str(qt/'qml'),QML2_IMPORT_PATH=str(qt/'qml'))
+            result=subprocess.run([str(executable)],env=environment,capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    def test_navigation_must_be_visible_inside_the_window_and_screen(self):
+        flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Widgets', 'Qt6Test', 'Qt6Quick'],
+                               capture_output=True, text=True)
+        if flags.returncode:
+            self.skipTest('Qt6 development packages are unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / 'navigation.cpp'
+            source.write_text('#include ' + json.dumps(str(ROOT / 'scripts/v3-installer-driver.cpp')) + '\n' + r'''
+int main(int argc, char** argv) {
+    QApplication app(argc, argv);
+    QWidget window; window.setGeometry(20,20,400,300);
+    QPushButton button("Install", &window); button.setGeometry(30,220,140,45);
+    window.show(); QTest::qWait(30);
+    if (!navigationFitsScreen(&button)) return 1;
+    button.move(30,320); // Visible property alone misses parent clipping.
+    if (navigationFitsScreen(&button)) return 2;
+    button.move(30,220);
+    window.move(window.screen()->availableGeometry().bottomRight());
+    QTest::qWait(30);
+    if (navigationFitsScreen(&button)) return 3;
+    window.move(20,20); button.hide();
+    if (navigationFitsScreen(&button) || navigationFitsScreen(nullptr)) return 4;
+    return 0;
+}
+''')
+            executable = directory / 'navigation'
+            built = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-fPIC',
+                str(source), '-o', str(executable), *shlex.split(flags.stdout)], capture_output=True, text=True)
+            self.assertEqual(built.returncode, 0, built.stderr)
+            environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE', None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                environment['QT_PLUGIN_PATH'] = str(Path(environment['HUSK_TEST_SYSROOT']) / 'usr/lib/x86_64-linux-gnu/qt6/plugins')
+            result = subprocess.run([str(executable)], env=environment, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_real_combo_selection_reaches_a_scrolled_item_using_actual_keys(self):
+        flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Widgets', 'Qt6Test', 'Qt6Quick'],
+                               capture_output=True, text=True)
+        if flags.returncode:
+            self.skipTest('Qt6 development packages are unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / 'combo.cpp'
+            source.write_text('#include ' + json.dumps(str(ROOT / 'scripts/v3-installer-driver.cpp')) + '\n' + r'''
+int main(int argc, char** argv) {
+    QApplication app(argc, argv);
+    QFile style(QString::fromLocal8Bit(argv[1]));
+    if (!style.open(QIODevice::ReadOnly)) return 1;
+    app.setStyleSheet(QString::fromUtf8(style.readAll()));
+    QWidget window; QComboBox combo(&window); combo.resize(400,50);
+    combo.addItem("Choose a region / city", "");
+    for (int index=1; index<100; ++index) combo.addItem(QString("Region %1").arg(index), index);
+    combo.setMaxVisibleItems(6); window.resize(420,80); window.show();
+    QTest::qWait(50);
+    if (selectComboRowWithKeys(&combo, -1) || selectComboRowWithKeys(&combo, 100)) return 2;
+    if (combo.currentIndex()!=0) return 3;
+    if (!selectComboRowWithKeys(&combo,72) || combo.currentData().toInt()!=72) return 4;
+    combo.setEnabled(false);
+    if (selectComboRowWithKeys(&combo,3) || combo.currentIndex()!=72) return 5;
+    combo.setEnabled(true); combo.setCurrentIndex(-1);
+    if (!selectComboRowWithKeys(&combo,0) || combo.currentIndex()!=0) return 6;
+    // Captured from the real pinned Calamares summary, including word markup.
+    const QString summary="<strong>Erase</strong> disk <strong>/dev/vda</strong>; new <strong>GPT</strong>; EFI fat32; root ext4";
+    if (!reviewedDiskSummary(summary)) return 7; // Users has no upstream summary.
+    if (reviewedDiskSummary(summary+" /dev/sr0") || reviewedDiskSummary("/dev/vda only")) return 8;
+    return 0;
+}
+''')
+            executable = directory / 'combo'
+            result = subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-fPIC',
+                str(source), '-o', str(executable), *shlex.split(flags.stdout)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE', None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                environment['QT_PLUGIN_PATH'] = str(Path(environment['HUSK_TEST_SYSROOT']) / 'usr/lib/x86_64-linux-gnu/qt6/plugins')
+            result = subprocess.run([str(executable), str(ROOT / 'installer/calamares/husk.qss')],
+                                    env=environment, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_unexpected_dialog_is_bounded_and_diagnostics_exclude_password_inputs(self):
+        if not shutil.which('pkg-config') or not shutil.which('c++'):
+            self.skipTest('Qt6 C++ development tools are unavailable')
+        flags = subprocess.run(['pkg-config','--cflags','--libs','Qt6Widgets','Qt6Test','Qt6Quick'],
+                               capture_output=True,text=True)
+        if flags.returncode: self.skipTest('Qt6 Widgets/Test/Quick development packages are unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            source = directory / 'modal.cpp'
+            source.write_text('#include '+json.dumps(str(ROOT/'scripts/v3-installer-driver.cpp'))+'\n'+r'''
+int main(int argc,char** argv) {
+    QApplication app(argc,argv);
+    QDialog first; first.setWindowTitle("Installer module unavailable");
+    QLabel explanation("A required backend could not load",&first);
+    QLineEdit password(&first); password.setEchoMode(QLineEdit::Password);
+    password.setText("PrivateInputMustNotBeDiagnosed");
+    ModalWatchdog watch;
+    if (watch.observe(&first,1000) || watch.observe(&first,30999)) return 1;
+    if (!watch.observe(&first,31000)) return 2;
+    const QJsonObject details = modalDetails(&first);
+    const QByteArray json = QJsonDocument(details).toJson();
+    if (!json.contains("required backend") || json.contains("PrivateInputMustNotBeDiagnosed")) return 3;
+    QDialog second;
+    if (watch.observe(&second,32000)) return 4;
+    watch.reset();
+    if (watch.observe(&second,100000)) return 5;
+    QMessageBox failure(QMessageBox::Critical,"Installation Failed","Filesystem synchronization failed");
+    failure.setDetailedText("The backend reported an I/O error");
+    if (!QJsonDocument(modalDetails(&failure)).toJson().contains("I/O error")) return 6;
+    return 0;
+}
+''')
+            executable = directory / 'modal'
+            result = subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-fPIC',
+                str(source),'-o',str(executable),*shlex.split(flags.stdout)],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            environment=dict(os.environ,QT_QPA_PLATFORM='offscreen',QT_QUICK_BACKEND='software')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE',None)
+            if environment.get('HUSK_TEST_SYSROOT'):
+                environment['QT_PLUGIN_PATH']=str(Path(environment['HUSK_TEST_SYSROOT'])/'usr/lib/x86_64-linux-gnu/qt6/plugins')
+            result=subprocess.run([str(executable)],env=environment,capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    def test_driver_is_inert_without_opt_in_and_refuses_an_unmarked_process(self):
+        source = ROOT/'scripts/v3-installer-driver.cpp'
+        self.assertTrue(source.is_file(), 'The test-only Qt input fixture is missing')
+        if not shutil.which('pkg-config') or not shutil.which('c++'):
+            self.skipTest('Qt6 C++ development tools are unavailable')
+        flags = subprocess.run(['pkg-config','--cflags','--libs','Qt6Widgets','Qt6Test','Qt6Quick'],
+                               capture_output=True,text=True)
+        if flags.returncode: self.skipTest('Qt6 Widgets/Test/Quick development packages are unavailable')
+        with tempfile.TemporaryDirectory() as temporary:
+            directory=Path(temporary)
+            driver=directory/'driver.so'
+            result=subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-fPIC','-shared',
+                str(source),'-o',str(driver),*shlex.split(flags.stdout)],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            app_source=directory/'app.cpp'
+            app_source.write_text('#include <QApplication>\n#include <QTimer>\n'
+                'int main(int argc,char** argv) { QApplication app(argc,argv); '
+                'QTimer::singleShot(1700,&app,&QCoreApplication::quit); return app.exec(); }\n')
+            app=directory/'app'
+            result=subprocess.run(['c++','-std=c++17','-fPIC',str(app_source),'-o',str(app),
+                *shlex.split(flags.stdout)],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            log=directory/'events.jsonl'
+            environment=dict(os.environ,LD_PRELOAD=str(driver),QT_QPA_PLATFORM='offscreen',
+                QT_QUICK_BACKEND='software',HUSK_INSTALL_DRIVER_LOG=str(log),
+                HUSK_INSTALL_TEST_USER='huskcheck',HUSK_INSTALL_TEST_PASSWORD='DisposableTestSecret732')
+            if environment.get('HUSK_TEST_SYSROOT'):
+                prefix=Path(environment['HUSK_TEST_SYSROOT'])/'usr/lib/x86_64-linux-gnu/qt6'
+                environment['QT_PLUGIN_PATH']=str(prefix/'plugins')
+            environment.pop('HUSK_INSTALL_ACCEPTANCE',None)
+            result=subprocess.run([str(app)],env=environment,capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            self.assertFalse(log.exists(), 'An ordinary Qt process must not start automation')
+            environment['HUSK_INSTALL_ACCEPTANCE']='1'
+            result=subprocess.run([str(app)],env=environment,capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,85,result.stdout+result.stderr)
+            events=[json.loads(line) for line in log.read_text().splitlines()]
+            self.assertEqual([event['event'] for event in events],['driver-failed'])
+            self.assertIn('marked disposable UEFI Live guest',events[0]['message'])
+
+
+if __name__ == '__main__':
+    unittest.main()

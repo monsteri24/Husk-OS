@@ -1,0 +1,430 @@
+{
+  "schema_version": 1,
+  "evidence_created_utc": "2026-10-21T15:01:47Z",
+  "proof_scope": "Actual countdown from 30 to zero, guest reset and independent installed UEFI normal-user Wayland boot",
+  "runtime_source": "c677d2193a6cb542db9e3a60e8a1b91981b6fb17",
+  "test_source": "1e567c06a1b5f65f0c71fe19b6bea6fcd18e133a",
+  "acceptance_run": 39620742691,
+  "job_id": 119293203873,
+  "evidence_artifact": 12355561324,
+  "iso_sha256": "14a42898997dd30dc5838d4f254da218c322e9bae132917fdafd0e3819a15aec",
+  "iso_bytes": 2079227904,
+  "vm_results": {
+    "installation": "PASSED",
+    "installed_boot": "PASSED",
+    "live_restart": "PASSED",
+    "live_shutdown": "PASSED",
+    "installed_shutdown": "PASSED"
+  },
+  "cancellation_qemu_blockstats": {
+    "unmap_operations": 0,
+    "unmap_merged": 0,
+    "failed_zone_append_operations": 0,
+    "flush_total_time_ns": 16354,
+    "wr_highest_offset": 0,
+    "wr_total_time_ns": 0,
+    "failed_wr_operations": 0,
+    "failed_rd_operations": 0,
+    "wr_merged": 0,
+    "wr_bytes": 0,
+    "timed_stats": [],
+    "failed_unmap_operations": 0,
+    "zone_append_merged": 0,
+    "failed_flush_operations": 0,
+    "account_invalid": true,
+    "rd_total_time_ns": 3416805,
+    "invalid_unmap_operations": 0,
+    "flush_operations": 1,
+    "wr_operations": 0,
+    "unmap_bytes": 0,
+    "rd_merged": 1,
+    "rd_bytes": 21934080,
+    "unmap_total_time_ns": 0,
+    "invalid_flush_operations": 0,
+    "account_failed": true,
+    "idle_time_ns": 718310303,
+    "zone_append_total_time_ns": 0,
+    "zone_append_operations": 0,
+    "rd_operations": 226,
+    "zone_append_bytes": 0,
+    "invalid_zone_append_operations": 0,
+    "invalid_wr_operations": 0,
+    "invalid_rd_operations": 0
+  },
+  "target_checks": {
+    "efi_partition": true,
+    "root_partition": true,
+    "fstab": true,
+    "user": true,
+    "kernel": true,
+    "initramfs": true,
+    "grub": true,
+    "efi_fallback": true,
+    "version": true,
+    "live_cleanup": true,
+    "guard_job": true,
+    "copy_job": true,
+    "users_job": true,
+    "initramfs_job": true,
+    "bootloader_job": true,
+    "timezone": true,
+    "keyboard": true,
+    "english_locale": true,
+    "hostname": true
+  },
+  "restart_evidence": {
+    "completion": "automatic",
+    "qemu_exit": 0,
+    "qmp_events": [
+      {
+        "timestamp": {
+          "seconds": 1792594613,
+          "microseconds": 745719
+        },
+        "event": "RTC_CHANGE",
+        "data": {
+          "offset": 0,
+          "qom-path": "/machine/unattached/device[4]/rtc"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792594614,
+          "microseconds": 399911
+        },
+        "event": "RTC_CHANGE",
+        "data": {
+          "offset": -1,
+          "qom-path": "/machine/unattached/device[4]/rtc"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792594622,
+          "microseconds": 918088
+        },
+        "event": "NIC_RX_FILTER_CHANGED",
+        "data": {
+          "path": "/machine/unattached/device[29]/virtio-backend"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792594624,
+          "microseconds": 504182
+        },
+        "event": "RTC_CHANGE",
+        "data": {
+          "offset": 0,
+          "qom-path": "/machine/unattached/device[4]/rtc"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1792594819,
+          "microseconds": 28828
+        },
+        "event": "SHUTDOWN",
+        "data": {
+          "guest": true,
+          "reason": "guest-reset"
+        }
+      }
+    ],
+    "events": [
+      {
+        "elapsed_ms": 20673,
+        "event": "application-quit",
+        "time": "2026-10-21T14:57:36.698Z"
+      },
+      {
+        "elapsed_ms": 128143,
+        "event": "installation-success",
+        "seconds": 30,
+        "time": "2026-10-21T14:59:47.182Z",
+        "title": "Installation Complete"
+      },
+      {
+        "elapsed_ms": 128146,
+        "event": "countdown-tick",
+        "observed_ms": 3,
+        "seconds": 30,
+        "time": "2026-10-21T14:59:47.185Z"
+      },
+      {
+        "elapsed_ms": 128149,
+        "event": "automatic-restart-awaited",
+        "time": "2026-10-21T14:59:47.187Z"
+      },
+      {
+        "elapsed_ms": 128680,
+        "event": "countdown-tick",
+        "observed_ms": 537,
+        "seconds": 29,
+        "time": "2026-10-21T14:59:47.718Z"
+      },
+      {
+        "elapsed_ms": 129680,
+        "event": "countdown-tick",
+        "observed_ms": 1537,
+        "seconds": 28,
+        "time": "2026-10-21T14:59:48.719Z"
+      },
+      {
+        "elapsed_ms": 130681,
+        "event": "countdown-tick",
+        "observed_ms": 2538,
+        "seconds": 27,
+        "time": "2026-10-21T14:59:49.719Z"
+      },
+      {
+        "elapsed_ms": 131681,
+        "event": "countdown-tick",
+        "observed_ms": 3538,
+        "seconds": 26,
+        "time": "2026-10-21T14:59:50.719Z"
+      },
+      {
+        "elapsed_ms": 132143,
+        "event": "countdown-observed",
+        "first": 30,
+        "last": 26,
+        "observed_ms": 4000,
+        "time": "2026-10-21T14:59:51.181Z"
+      },
+      {
+        "elapsed_ms": 132680,
+        "event": "countdown-tick",
+        "observed_ms": 4537,
+        "seconds": 25,
+        "time": "2026-10-21T14:59:51.718Z"
+      },
+      {
+        "elapsed_ms": 133681,
+        "event": "countdown-tick",
+        "observed_ms": 5538,
+        "seconds": 24,
+        "time": "2026-10-21T14:59:52.719Z"
+      },
+      {
+        "elapsed_ms": 134680,
+        "event": "countdown-tick",
+        "observed_ms": 6537,
+        "seconds": 23,
+        "time": "2026-10-21T14:59:53.718Z"
+      },
+      {
+        "elapsed_ms": 135681,
+        "event": "countdown-tick",
+        "observed_ms": 7538,
+        "seconds": 22,
+        "time": "2026-10-21T14:59:54.719Z"
+      },
+      {
+        "elapsed_ms": 136680,
+        "event": "countdown-tick",
+        "observed_ms": 8537,
+        "seconds": 21,
+        "time": "2026-10-21T14:59:55.719Z"
+      },
+      {
+        "elapsed_ms": 137681,
+        "event": "countdown-tick",
+        "observed_ms": 9538,
+        "seconds": 20,
+        "time": "2026-10-21T14:59:56.719Z"
+      },
+      {
+        "elapsed_ms": 138680,
+        "event": "countdown-tick",
+        "observed_ms": 10537,
+        "seconds": 19,
+        "time": "2026-10-21T14:59:57.718Z"
+      },
+      {
+        "elapsed_ms": 139681,
+        "event": "countdown-tick",
+        "observed_ms": 11538,
+        "seconds": 18,
+        "time": "2026-10-21T14:59:58.719Z"
+      },
+      {
+        "elapsed_ms": 140680,
+        "event": "countdown-tick",
+        "observed_ms": 12537,
+        "seconds": 17,
+        "time": "2026-10-21T14:59:59.719Z"
+      },
+      {
+        "elapsed_ms": 141681,
+        "event": "countdown-tick",
+        "observed_ms": 13538,
+        "seconds": 16,
+        "time": "2026-10-21T15:00:00.719Z"
+      },
+      {
+        "elapsed_ms": 142680,
+        "event": "countdown-tick",
+        "observed_ms": 14537,
+        "seconds": 15,
+        "time": "2026-10-21T15:00:01.719Z"
+      },
+      {
+        "elapsed_ms": 143680,
+        "event": "countdown-tick",
+        "observed_ms": 15537,
+        "seconds": 14,
+        "time": "2026-10-21T15:00:02.718Z"
+      },
+      {
+        "elapsed_ms": 144680,
+        "event": "countdown-tick",
+        "observed_ms": 16537,
+        "seconds": 13,
+        "time": "2026-10-21T15:00:03.719Z"
+      },
+      {
+        "elapsed_ms": 145681,
+        "event": "countdown-tick",
+        "observed_ms": 17538,
+        "seconds": 12,
+        "time": "2026-10-21T15:00:04.719Z"
+      },
+      {
+        "elapsed_ms": 146680,
+        "event": "countdown-tick",
+        "observed_ms": 18537,
+        "seconds": 11,
+        "time": "2026-10-21T15:00:05.718Z"
+      },
+      {
+        "elapsed_ms": 147680,
+        "event": "countdown-tick",
+        "observed_ms": 19537,
+        "seconds": 10,
+        "time": "2026-10-21T15:00:06.719Z"
+      },
+      {
+        "elapsed_ms": 148681,
+        "event": "countdown-tick",
+        "observed_ms": 20538,
+        "seconds": 9,
+        "time": "2026-10-21T15:00:07.719Z"
+      },
+      {
+        "elapsed_ms": 149680,
+        "event": "countdown-tick",
+        "observed_ms": 21537,
+        "seconds": 8,
+        "time": "2026-10-21T15:00:08.719Z"
+      },
+      {
+        "elapsed_ms": 150681,
+        "event": "countdown-tick",
+        "observed_ms": 22538,
+        "seconds": 7,
+        "time": "2026-10-21T15:00:09.720Z"
+      },
+      {
+        "elapsed_ms": 151681,
+        "event": "countdown-tick",
+        "observed_ms": 23538,
+        "seconds": 6,
+        "time": "2026-10-21T15:00:10.719Z"
+      },
+      {
+        "elapsed_ms": 152680,
+        "event": "countdown-tick",
+        "observed_ms": 24537,
+        "seconds": 5,
+        "time": "2026-10-21T15:00:11.719Z"
+      },
+      {
+        "elapsed_ms": 153681,
+        "event": "countdown-tick",
+        "observed_ms": 25538,
+        "seconds": 4,
+        "time": "2026-10-21T15:00:12.719Z"
+      },
+      {
+        "elapsed_ms": 154680,
+        "event": "countdown-tick",
+        "observed_ms": 26537,
+        "seconds": 3,
+        "time": "2026-10-21T15:00:13.719Z"
+      },
+      {
+        "elapsed_ms": 155681,
+        "event": "countdown-tick",
+        "observed_ms": 27538,
+        "seconds": 2,
+        "time": "2026-10-21T15:00:14.719Z"
+      },
+      {
+        "elapsed_ms": 156680,
+        "event": "countdown-tick",
+        "observed_ms": 28537,
+        "seconds": 1,
+        "time": "2026-10-21T15:00:15.718Z"
+      },
+      {
+        "elapsed_ms": 157681,
+        "event": "countdown-tick",
+        "observed_ms": 29538,
+        "seconds": 0,
+        "time": "2026-10-21T15:00:16.720Z"
+      },
+      {
+        "elapsed_ms": 157874,
+        "event": "application-quit",
+        "seconds": 0,
+        "time": "2026-10-21T15:00:16.912Z"
+      }
+    ]
+  },
+  "installed": {
+    "uid": 1000,
+    "user": "huskcheck",
+    "live": false,
+    "uefi": true,
+    "debug_shell": false,
+    "root_device": "/dev/vda2",
+    "root_fstype": "ext4",
+    "optical_media": [],
+    "session": {
+      "Name": "huskcheck",
+      "VTNr": "1",
+      "Remote": "no",
+      "Type": "wayland",
+      "State": "online"
+    },
+    "cmdline": "BOOT_IMAGE=/boot/vmlinuz-linux root=UUID=6048eae0-0982-4c0f-86ff-5c4c097be8d6 rw loglevel=3 quiet"
+  },
+  "installed_status": {
+    "backend": "wayland",
+    "bridge_connected": true,
+    "desktop": "Husk Desktop",
+    "desktop_surfaces": 1,
+    "keyring_ready": false,
+    "live": false,
+    "os": "Husk OS",
+    "panel_mapped": true,
+    "panel_mode": "desktop",
+    "panel_visible": true,
+    "renderer": "pixman",
+    "version": "v3-phase2",
+    "window_count": 0
+  },
+  "installed_boot_has_no_iso_kernel_override_or_debug_console": true,
+  "screenshots": {
+    "installation-complete-before-restart.png": "f5b79b5e24642a45143c54b58573262894299e8b8a4f744e005b648306b92345",
+    "installed-sddm-greeter.png": "9f02ca11995a168f8b86fe36b337239cb403194052d8d74287ca8affbceec9b7",
+    "installed-husk-desktop.png": "2d4c638277216448e5ac793ef1590bd587293f99ff209e4e31cfc1f867a87e06"
+  },
+  "limitations": [
+    "Normal Live graphical authorization is covered separately by 39609995495.",
+    "No physical Wi-Fi/Bluetooth/GPU/USB-removal, nonempty hardware target or Steam/game launch claim."
+  ],
+  "release_authorized": false,
+  "main_modified": false
+}
